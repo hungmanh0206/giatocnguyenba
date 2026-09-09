@@ -8,7 +8,6 @@ import {
   Handle,
   Position,
   useReactFlow,
-  MiniMap,
   type NodeProps,
   type Node,
 } from '@xyflow/react';
@@ -70,6 +69,7 @@ function HouseholdNode({ data }: NodeProps<FamilyNode>) {
           />
           <button
             className={`tree-person nodrag nopan branch-${p.branch} ${data.selected === p.id ? 'chosen' : ''} ${data.dimmed.includes(p.id) ? 'dimmed' : ''}`}
+            data-tree-person-id={p.id}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
@@ -313,22 +313,24 @@ function TreeCanvas() {
           <RotateCcw />
         </Button>
       </div>
-      <div className="tree-legend" aria-label="Chú thích các chi trong gia phả">
-        <span>
-          <i className="branch-dot b1" />
-          Chi trưởng
-        </span>
-        <span>
-          <i className="branch-dot b2" />
-          Chi hai
-        </span>
-        <span>
-          <i className="branch-dot b3" />
-          Chi ba
-        </span>
-        <small>Dữ liệu gia phả</small>
-      </div>
       <div className="tree-canvas">
+        <div className="tree-legend" aria-label="Chú thích các chi trong gia phả">
+          <strong>Chú thích</strong>
+          <div>
+            <span>
+              <i className="branch-dot b1" />
+              Chi trưởng
+            </span>
+            <span>
+              <i className="branch-dot b2" />
+              Chi hai
+            </span>
+            <span>
+              <i className="branch-dot b3" />
+              Chi ba
+            </span>
+          </div>
+        </div>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -350,13 +352,6 @@ function TreeCanvas() {
           onMove={(_, v) => setZoom(v.zoom)}
         >
           <Background color="#d6d8ce" gap={24} size={1} />
-          <MiniMap
-            nodeColor="#c3b59a"
-            maskColor="#fafaf8b0"
-            pannable
-            zoomable
-            className="family-minimap"
-          />
         </ReactFlow>
         <div className="tree-controls">
           <Button

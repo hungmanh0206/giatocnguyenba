@@ -13,7 +13,6 @@ import {
   CornerDownRight,
   MapPin,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFamily } from './provider';
 import { Footer } from './header';
@@ -75,15 +74,11 @@ export function HomePage() {
             Cùng gìn giữ những câu chuyện của gia đình.
           </p>
           <div className="hero-actions">
-            <Button
-              className="action-button"
-              render={<Link href="/family-tree" />}
-              nativeButton={false}
-            >
+            <Link className="action-button hero-tree-link" href="/family-tree">
               <GitFork />
               Khám phá cây gia phả
               <ArrowRight />
-            </Button>
+            </Link>
             <Link className="text-link" href="/history">
               Lịch sử dòng họ <ArrowRight size={17} />
             </Link>

@@ -147,7 +147,7 @@ a:focus-visible {
 button[data-slot='button'] {
   border-radius: var(--radius-md);
 }
-button[data-slot='button'][class*='bg-primary'] {
+[data-slot='button'][class*='bg-primary'] {
   color: #fff !important;
 }
 input,
@@ -408,6 +408,17 @@ h1 > span {
   border-radius: 6px !important;
   font-size: 14px !important;
   font-weight: 500 !important;
+}
+.hero-tree-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff !important;
+}
+.hero-tree-link:hover {
+  background: #661d1d;
+  color: #fff !important;
 }
 .text-link {
   display: inline-flex;
@@ -1741,6 +1752,7 @@ h1 > span {
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     transform 0.2s ease;
+  pointer-events: auto !important;
 }
 .tree-person.branch-0 {
   border-top-color: #8f6d35;
@@ -1825,22 +1837,40 @@ h1 > span {
   border-radius: 50%;
   z-index: 4;
   box-shadow: 0 3px 10px #3d321b20;
+  pointer-events: auto !important;
 }
 .tree-legend {
+  position: absolute;
+  top: 20px;
+  left: 23px;
+  z-index: 5;
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 18px;
-  padding: 9px 28px;
-  border-bottom: 1px solid var(--border);
-  background: #fcfcfa;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 13px;
+  border: 1px solid #ddd9cf;
+  background: #fffefa;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 18px #3d463114;
+  color: #6f695d;
+  font-size: 11px;
+  pointer-events: none;
+}
+.tree-legend > strong {
+  color: #41392e;
   font-size: 12px;
-  color: #7d786a;
+  font-weight: 600;
+}
+.tree-legend > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
 }
 .tree-legend span {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 .branch-dot {
   width: 7px;
@@ -1856,13 +1886,6 @@ h1 > span {
 }
 .b3 {
   background: #b59259;
-}
-.tree-legend small {
-  font-size: 11px;
-  border-left: 1px solid var(--border);
-  padding-left: 18px;
-  color: #a29680;
-  margin-left: auto;
 }
 .tree-controls {
   position: absolute;
@@ -1888,18 +1911,9 @@ h1 > span {
   background: var(--border);
   margin: 0 5px;
 }
-.family-minimap {
-  border: 1px solid #dfddd4;
-  border-radius: 5px;
-  overflow: hidden !important;
-  bottom: 24px !important;
-  right: 6px !important;
-  width: 165px !important;
-  height: 100px !important;
-}
 .active-filter {
   position: absolute;
-  top: 48px;
+  top: 112px;
   left: 23px;
   padding: 4px 7px 4px 12px;
   border: 1px solid #d6c6ac;
@@ -2494,6 +2508,22 @@ h1 > span {
 .tree-person {
   border-radius: var(--radius-lg) !important;
 }
+.hero-search,
+.search-results,
+.ancestor,
+.branch-preview,
+.anniversary-row,
+.calendar-link,
+.heritage-seal,
+.memorial-link {
+  border-radius: var(--radius-lg) !important;
+}
+.generation-tag,
+.branch-badge,
+.lunar-label,
+.family-relations h3 small {
+  border-radius: var(--radius-sm) !important;
+}
 @media (max-width: 1150px) {
   .member-results {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2514,8 +2544,9 @@ h1 > span {
     min-width: 145px;
   }
   .tree-legend {
-    font-size: 11px;
-    padding: 8px 20px;
+    top: 16px;
+    left: 20px;
+    padding: 10px 12px;
   }
   .profile-layout {
     gap: 28px;
@@ -2646,9 +2677,6 @@ h1 > span {
   }
   .tree-toolbar > .icon-button {
     flex-shrink: 0;
-  }
-  .tree-legend small {
-    margin-left: 0;
   }
 }
 @media (max-width: 560px) {
@@ -2801,9 +2829,17 @@ h1 > span {
     height: 39px;
   }
   .tree-legend {
-    gap: 12px;
-    padding: 8px 14px;
+    top: 14px;
+    left: 14px;
+    gap: 6px;
+    padding: 9px 11px;
     font-size: 10px;
+  }
+  .tree-legend > strong {
+    font-size: 11px;
+  }
+  .tree-legend > div {
+    gap: 5px 9px;
   }
   .tree-controls {
     bottom: 17px;
@@ -2817,11 +2853,8 @@ h1 > span {
     width: 43px;
     font-size: 11px;
   }
-  .family-minimap {
-    display: none;
-  }
   .active-filter {
-    top: 37px;
+    top: 94px;
     left: 14px;
     font-size: 11px;
   }
