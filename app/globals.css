@@ -80,7 +80,12 @@ body {
   font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  background: var(--background);
+  background-color: #f4f1e9;
+  background-image:
+    linear-gradient(#f7f5eedf, #f7f5eedf),
+    url('/vietnamese-heritage-pattern.png');
+  background-repeat: repeat;
+  background-size: auto, 720px 720px;
   color: var(--foreground);
 }
 button,
@@ -232,11 +237,13 @@ svg {
 }
 .site-header {
   height: 78px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
+  background: #fffefaef;
+  border-bottom: 1px solid #d9cfbf;
   position: sticky;
   top: 0;
   z-index: 40;
+  box-shadow: 0 7px 18px #3d2e170d;
+  backdrop-filter: blur(14px);
 }
 .header-inner {
   max-width: 1480px;
@@ -1321,6 +1328,67 @@ h1 > span {
 .hero-search:focus-within {
   border-color: var(--bronze);
   outline: 2px solid #a87d4520;
+}
+.hero-clock {
+  display: grid;
+  max-width: 570px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  margin-top: 13px;
+  padding: 11px 14px;
+  border: 1px solid #d8cfbf;
+  border-radius: var(--radius-lg);
+  background: #fffdf8e8;
+  box-shadow: 0 4px 12px #3d2e1708;
+}
+.clock-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+.clock-date,
+.clock-time {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+.clock-date > svg,
+.clock-time > svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  color: #9b7541;
+}
+.clock-date > span,
+.clock-time > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.35;
+}
+.clock-date small,
+.clock-time small {
+  color: #8a8175;
+  font-size: 10px;
+}
+.clock-date strong {
+  color: #4a443b;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.clock-time {
+  min-width: 98px;
+  padding-left: 14px;
+  border-left: 1px solid #e5ddd1;
+}
+.clock-time strong {
+  color: #7e2424;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
 }
 .choice {
   height: 44px !important;
@@ -4205,5 +4273,49 @@ button:disabled,
     max-width: none;
     margin-top: 18px;
     padding: 15px;
+  }
+}
+
+/* Keep the shared background ceremonial but quiet enough for long-form reading. */
+.site-header {
+  background: #fffefaf2;
+  border-bottom-color: #d6c9b7;
+  box-shadow: 0 8px 20px #3d2e1712;
+}
+
+@media (max-width: 960px) {
+  .main-nav.is-open {
+    background: #fffefa;
+    border-bottom-color: #d6c9b7;
+    box-shadow: 0 12px 22px #3d2e1714;
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    background-size: auto, 560px 560px;
+  }
+
+  .hero-clock {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .clock-dates {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .clock-date + .clock-date {
+    padding-top: 9px;
+    border-top: 1px solid #e9e1d5;
+  }
+
+  .clock-time {
+    min-width: 0;
+    padding: 10px 0 0;
+    border-top: 1px solid #e5ddd1;
+    border-left: 0;
   }
 }

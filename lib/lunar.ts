@@ -9,16 +9,20 @@ import {
 
 export { getLunarYearCanChi as getYearCanChi };
 
-export function vietnamToday() {
+export function vietnamDate(now: Date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Ho_Chi_Minh',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).formatToParts(new Date());
+  }).formatToParts(now);
   const value = (type: string) =>
     Number(parts.find((part) => part.type === type)?.value);
   return new Date(value('year'), value('month') - 1, value('day'));
+}
+
+export function vietnamToday() {
+  return vietnamDate();
 }
 
 export function lunarOf(date: Date) {

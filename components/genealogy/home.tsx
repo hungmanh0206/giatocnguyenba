@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
   Search,
@@ -12,12 +12,21 @@ import {
   ChevronRight,
   CornerDownRight,
   MapPin,
+  CalendarDays,
+  MoonStar,
+  Clock3,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useFamily } from './provider';
 import { Footer } from './header';
 import { branchName, initials, searchMembers, type Member } from '@/lib/family';
-import { upcomingAnniversaries, vietnamToday } from '@/lib/lunar';
+import {
+  getYearCanChi,
+  lunarOf,
+  upcomingAnniversaries,
+  vietnamDate,
+  vietnamToday,
+} from '@/lib/lunar';
 export function Avatar({
   person,
   large = false,
@@ -48,6 +57,79 @@ export function MemberTile({ person }: { person: Member }) {
     </Link>
   );
 }
+
+function VietnamClock() {
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    let interval: number | undefined;
+    const update = () => setNow(new Date());
+    const frame = window.requestAnimationFrame(update);
+    const timeout = window.setTimeout(() => {
+      update();
+      interval = window.setInterval(update, 1000);
+    }, 1000 - new Date().getMilliseconds());
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+      if (interval) window.clearInterval(interval);
+    };
+  }, []);
+
+  const displayTime = now
+    ? new Intl.DateTimeFormat('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23',
+      }).format(now)
+    : '--:--:--';
+  const solarDate = now
+    ? new Intl.DateTimeFormat('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(now)
+    : 'Đang cập nhật ngày dương';
+  const lunar = now ? lunarOf(vietnamDate(now)) : null;
+
+  return (
+    <div className="hero-clock" aria-live="polite">
+      <div className="clock-dates">
+        <div className="clock-date">
+          <CalendarDays aria-hidden="true" />
+          <span>
+            <small>Dương lịch</small>
+            <strong>{solarDate}</strong>
+          </span>
+        </div>
+        <div className="clock-date">
+          <MoonStar aria-hidden="true" />
+          <span>
+            <small>Âm lịch</small>
+            <strong>
+              {lunar
+                ? `Ngày ${lunar.day} tháng ${lunar.month}${lunar.leap ? ' nhuận' : ''}, năm ${getYearCanChi(lunar.year)}`
+                : 'Đang cập nhật ngày âm'}
+            </strong>
+          </span>
+        </div>
+      </div>
+      <time className="clock-time" dateTime={now?.toISOString()}>
+        <Clock3 aria-hidden="true" />
+        <span>
+          <strong>{displayTime}</strong>
+          <small>Giờ Việt Nam</small>
+        </span>
+      </time>
+    </div>
+  );
+}
+
 export function HomePage() {
   const { members, connection } = useFamily();
   const [query, setQuery] = useState('');
@@ -105,6 +187,7 @@ export function HomePage() {
               </div>
             )}
           </div>
+          <VietnamClock />
           <div className="sample-note">
             <span />
             {connection.mode === 'demo'
