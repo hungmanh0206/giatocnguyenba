@@ -32,6 +32,7 @@ import { QuickView } from './members';
 import { Choice, branchOptions, generationOptions, SearchBox } from './common';
 import { branchName, searchMembers, type Member } from '@/lib/family';
 import {
+  collapsedDescendantGroups,
   layoutFamily,
   PERSON_WIDTH,
   PERSON_GAP,
@@ -68,8 +69,12 @@ function HouseholdNode({ data }: NodeProps<FamilyNode>) {
             }}
           />
           <button
-            className={`tree-person nodrag branch-${p.branch} ${data.selected === p.id ? 'chosen' : ''} ${data.dimmed.includes(p.id) ? 'dimmed' : ''}`}
-            onClick={() => data.select(p)}
+            className={`tree-person nodrag nopan branch-${p.branch} ${data.selected === p.id ? 'chosen' : ''} ${data.dimmed.includes(p.id) ? 'dimmed' : ''}`}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              data.select(p);
+            }}
             aria-label={`${p.name}, đời ${p.generation}, ${branchName(p.branch)}`}
           >
             <div className="tree-person-top">
@@ -103,10 +108,14 @@ function HouseholdNode({ data }: NodeProps<FamilyNode>) {
       {data.hasChildren && (
         <Button
           variant="outline"
-          className="collapse-node nodrag"
+          className="collapse-node nodrag nopan"
           title={data.collapsed ? 'Mở hậu duệ' : 'Thu gọn hậu duệ'}
           aria-label={data.collapsed ? 'Mở hậu duệ' : 'Thu gọn hậu duệ'}
-          onClick={() => data.collapse(group.id)}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            data.collapse(group.id);
+          }}
         >
           {data.collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
         </Button>
@@ -136,25 +145,16 @@ function TreeCanvas() {
   const [ready, setReady] = useState(false);
   const flow = useReactFlow();
   const model = useMemo(() => layoutFamily(members), [members]);
+  const collapsibleGroupIds = useMemo(
+    () => new Set(model.links.map((link) => link.source)),
+    [model.links],
+  );
   const maxGeneration = Math.max(
     1,
     ...members.map((member) => member.generation),
   );
   const hidden = useMemo(() => {
-    const ids = new Set<string>();
-    const stack = [...collapsed];
-    while (stack.length) {
-      const parent = stack.pop()!;
-      model.links
-        .filter((l) => l.source === parent)
-        .forEach((l) => {
-          if (!ids.has(l.target)) {
-            ids.add(l.target);
-            stack.push(l.target);
-          }
-        });
-    }
-    return ids;
+    return collapsedDescendantGroups(model.links, collapsed);
   }, [collapsed, model]);
   function select(p: Member) {
     setCollapsed(new Set());
@@ -242,6 +242,9 @@ function TreeCanvas() {
       duration: 400,
     });
   }
+  function collapseAll() {
+    setCollapsed(new Set(collapsibleGroupIds));
+  }
   return (
     <main
       id="main"
@@ -310,6 +313,21 @@ function TreeCanvas() {
           <RotateCcw />
         </Button>
       </div>
+      <div className="tree-legend" aria-label="Chú thích các chi trong gia phả">
+        <span>
+          <i className="branch-dot b1" />
+          Chi trưởng
+        </span>
+        <span>
+          <i className="branch-dot b2" />
+          Chi hai
+        </span>
+        <span>
+          <i className="branch-dot b3" />
+          Chi ba
+        </span>
+        <small>Dữ liệu gia phả</small>
+      </div>
       <div className="tree-canvas">
         <ReactFlow
           nodes={nodes}
@@ -340,21 +358,6 @@ function TreeCanvas() {
             className="family-minimap"
           />
         </ReactFlow>
-        <div className="tree-legend">
-          <span>
-            <i className="branch-dot b1" />
-            Chi trưởng
-          </span>
-          <span>
-            <i className="branch-dot b2" />
-            Chi hai
-          </span>
-          <span>
-            <i className="branch-dot b3" />
-            Chi ba
-          </span>
-          <small>Dữ liệu mẫu</small>
-        </div>
         <div className="tree-controls">
           <Button
             variant="ghost"
@@ -384,6 +387,30 @@ function TreeCanvas() {
             aria-label="Vừa màn hình"
           >
             <Scan />
+          </Button>
+          <span />
+          <Button
+            variant="ghost"
+            className="icon-button"
+            onClick={collapseAll}
+            disabled={
+              !collapsibleGroupIds.size ||
+              collapsed.size === collapsibleGroupIds.size
+            }
+            title="Thu gọn toàn bộ hậu duệ"
+            aria-label="Thu gọn toàn bộ hậu duệ"
+          >
+            <ChevronUp />
+          </Button>
+          <Button
+            variant="ghost"
+            className="icon-button"
+            onClick={() => setCollapsed(new Set())}
+            disabled={!collapsed.size}
+            title="Mở toàn bộ hậu duệ"
+            aria-label="Mở toàn bộ hậu duệ"
+          >
+            <ChevronDown />
           </Button>
           <Button
             variant="ghost"

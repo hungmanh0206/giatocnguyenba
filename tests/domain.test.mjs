@@ -6,7 +6,10 @@ import {
   validateMember,
   relatives,
 } from '../lib/family.ts';
-import { layoutFamily } from '../lib/tree-layout.ts';
+import {
+  collapsedDescendantGroups,
+  layoutFamily,
+} from '../lib/tree-layout.ts';
 import {
   lunarOf,
   anniversariesOn,
@@ -77,6 +80,18 @@ test('multiple marriages retain exact parent pairs and groups never overlap', ()
           a.x + a.width <= b.x || b.x + b.width <= a.x,
           `${a.id} overlaps ${b.id}`,
         );
+});
+test('collapsed tree groups hide every descendant and never the collapsed group', () => {
+  const model = layoutFamily(seedMembers);
+  const rootGroup = model.groupOf.get('p1');
+  const childGroup = model.groupOf.get('p3');
+  const grandchildGroup = model.groupOf.get('p10');
+  const hidden = collapsedDescendantGroups(model.links, [rootGroup]);
+
+  assert.equal(hidden.has(rootGroup), false);
+  assert.equal(hidden.has(childGroup), true);
+  assert.equal(hidden.has(grandchildGroup), true);
+  assert.equal(collapsedDescendantGroups(model.links, []).size, 0);
 });
 test('layout accepts a 511-member genealogy without missing nodes', () => {
   const people = Array.from({ length: 511 }, (_, i) => ({

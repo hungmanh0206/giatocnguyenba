@@ -10,6 +10,34 @@ export type Household = {
   x: number;
   y: number;
 };
+export type FamilyLink = {
+  id: string;
+  source: string;
+  target: string;
+  childId: string;
+  parentIds: string[];
+};
+
+export function collapsedDescendantGroups(
+  links: FamilyLink[],
+  collapsed: Iterable<string>,
+) {
+  const hidden = new Set<string>();
+  const stack = [...collapsed];
+
+  while (stack.length) {
+    const parent = stack.pop()!;
+    for (const link of links) {
+      if (link.source === parent && !hidden.has(link.target)) {
+        hidden.add(link.target);
+        stack.push(link.target);
+      }
+    }
+  }
+
+  return hidden;
+}
+
 export function layoutFamily(members: Member[]) {
   const lookup = new Map(members.map((p) => [p.id, p]));
   const visited = new Set<string>();
@@ -57,13 +85,7 @@ export function layoutFamily(members: Member[]) {
     marginy: 35,
   });
   groups.forEach((g) => graph.setNode(g.id, { width: g.width, height: 150 }));
-  const links: {
-    id: string;
-    source: string;
-    target: string;
-    childId: string;
-    parentIds: string[];
-  }[] = [];
+  const links: FamilyLink[] = [];
   for (const p of members) {
     const sources = [
       ...new Set(p.parents.map((id) => groupOf.get(id)).filter(Boolean)),

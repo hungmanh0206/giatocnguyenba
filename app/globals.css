@@ -50,10 +50,10 @@
   --color-input: var(--border);
   --color-ring: #a87d45;
   --color-destructive: #a82f2f;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 6px;
-  --radius-xl: 8px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
 }
 :root {
   --background: #fcfcfa;
@@ -62,7 +62,7 @@
   --primary: #7e2424;
   --muted-foreground: #73716b;
   --border: #e5e4de;
-  --radius: 6px;
+  --radius: 12px;
   --bronze: #a87d45;
 }
 * {
@@ -107,14 +107,92 @@ a {
 a,
 button {
   transition:
-    background 0.18s,
-    color 0.18s,
-    border-color 0.18s;
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 button:focus-visible,
 a:focus-visible {
   outline: 3px solid #a87d4580;
   outline-offset: 3px;
+}
+.route-transition {
+  animation: route-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+[data-slot='tabs-content'] {
+  animation: tab-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes tab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+button[data-slot='button'] {
+  border-radius: var(--radius-md);
+}
+button[data-slot='button'][class*='bg-primary'] {
+  color: #fff !important;
+}
+input,
+select,
+textarea,
+.search-box,
+.choice {
+  border-radius: var(--radius-md);
+}
+.person-card,
+.tree-preview,
+.calendar-layout,
+.notice,
+.admin-table-wrap,
+.tree-controls,
+.active-filter {
+  border-radius: var(--radius-lg);
+}
+@media (hover: hover) {
+  .action-button:not(:disabled):hover {
+    box-shadow: 0 7px 16px #382e201c;
+    transform: translateY(-2px);
+  }
+  .icon-button:not(:disabled):hover {
+    box-shadow: 0 4px 12px #382e2014;
+    transform: translateY(-1px);
+  }
+  .person-card:hover,
+  .member-tile:hover,
+  .relative-button:hover {
+    transform: translateY(-2px);
+  }
+}
+button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 h1,
 h2,
@@ -1593,7 +1671,7 @@ h1 > span {
 .tree-page {
   height: calc(100dvh - 78px);
   min-height: 550px;
-  background: #f9faf7;
+  background: #edf0ea;
   display: flex;
   flex-direction: column;
 }
@@ -1635,6 +1713,7 @@ h1 > span {
   flex: 1;
   position: relative;
   min-height: 0;
+  background: #f5f7f2;
 }
 .household {
   display: flex;
@@ -1646,34 +1725,40 @@ h1 > span {
   flex-shrink: 0;
 }
 .tree-person {
-  border: 1px solid #d3d7cc;
-  border-top: 3px solid #738365;
-  background: #fff;
-  border-radius: 6px;
+  border: 1px solid #bdc6b5;
+  border-top: 4px solid #5f7d4d;
+  background: #fffefa;
+  border-radius: var(--radius-lg);
   height: 150px;
   width: 188px;
   text-align: left;
   padding: 13px 14px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 14px #3d463112;
   transition:
-    opacity 0.2s,
-    border-color 0.2s,
-    box-shadow 0.2s;
+    opacity 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 .tree-person.branch-0 {
-  border-top-color: #a0804b;
+  border-top-color: #8f6d35;
 }
 .tree-person.branch-2 {
-  border-top-color: #60879e;
+  border-top-color: #3f7799;
 }
 .tree-person.branch-3 {
-  border-top-color: #b0874d;
+  border-top-color: #a87835;
 }
 .tree-person:hover,
 .tree-person.chosen {
-  box-shadow: 0 0 0 3px #b7945844;
-  border-color: #a28050;
+  border-color: #916f3b;
+  box-shadow: 0 10px 24px #4a351b2b, 0 0 0 3px #b7945840;
+  transform: translateY(-3px);
+}
+.tree-person.chosen {
+  background: #fffaf0;
 }
 .tree-person.dimmed {
   opacity: 0.28;
@@ -1697,19 +1782,20 @@ h1 > span {
 }
 .tree-person > strong {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.45;
   max-width: 100%;
   min-height: 21px;
+  color: #2f2b23;
 }
 .tree-person > small {
   font-size: 11px;
-  color: #9a9181;
+  color: #70695d;
   margin-top: 4px;
 }
 .tree-person-gen {
   font-size: 10px;
-  color: #92907f;
+  color: #786f60;
   margin-top: auto;
 }
 .spouse-connector {
@@ -1737,16 +1823,17 @@ h1 > span {
   padding: 0;
   background: #fff;
   border-radius: 50%;
-  z-index: 1;
+  z-index: 4;
+  box-shadow: 0 3px 10px #3d321b20;
 }
 .tree-legend {
-  position: absolute;
-  top: 17px;
-  left: 23px;
   display: flex;
   align-items: center;
-  gap: 18px;
-  pointer-events: none;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 9px 28px;
+  border-bottom: 1px solid var(--border);
+  background: #fcfcfa;
   font-size: 12px;
   color: #7d786a;
 }
@@ -1775,6 +1862,7 @@ h1 > span {
   border-left: 1px solid var(--border);
   padding-left: 18px;
   color: #a29680;
+  margin-left: auto;
 }
 .tree-controls {
   position: absolute;
@@ -1784,7 +1872,7 @@ h1 > span {
   align-items: center;
   padding: 3px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: #fff;
   box-shadow: 0 3px 10px #3d321b08;
 }
@@ -2389,6 +2477,23 @@ h1 > span {
   width: 38px;
   height: 38px;
 }
+.icon-button,
+.action-button,
+.search-box,
+.choice,
+.tree-controls,
+.active-filter,
+.form-error {
+  border-radius: var(--radius-md) !important;
+}
+.person-card,
+.tree-preview,
+.calendar-layout,
+.notice,
+.admin-table-wrap,
+.tree-person {
+  border-radius: var(--radius-lg) !important;
+}
 @media (max-width: 1150px) {
   .member-results {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2410,6 +2515,7 @@ h1 > span {
   }
   .tree-legend {
     font-size: 11px;
+    padding: 8px 20px;
   }
   .profile-layout {
     gap: 28px;
@@ -2542,7 +2648,7 @@ h1 > span {
     flex-shrink: 0;
   }
   .tree-legend small {
-    display: none;
+    margin-left: 0;
   }
 }
 @media (max-width: 560px) {
@@ -2695,9 +2801,8 @@ h1 > span {
     height: 39px;
   }
   .tree-legend {
-    top: 10px;
-    left: 14px;
     gap: 12px;
+    padding: 8px 14px;
     font-size: 10px;
   }
   .tree-controls {
