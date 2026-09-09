@@ -76,7 +76,11 @@ export function Header() {
             ))}
           </nav>
           <div className="header-actions">
-            <div className="header-search">
+            <div
+              className={
+                searchOpen ? 'header-search is-open' : 'header-search'
+              }
+            >
               <Button
                 className="icon-button"
                 variant="ghost"
@@ -91,7 +95,7 @@ export function Header() {
                 {searchOpen ? <X size={20} /> : <Search size={20} />}
               </Button>
               {searchOpen ? (
-                <div className="header-search-panel">
+                <>
                   <label className="header-search-input">
                     <Search size={18} />
                     <input
@@ -122,10 +126,8 @@ export function Header() {
                         <p>Không tìm thấy thành viên phù hợp.</p>
                       )}
                     </div>
-                  ) : (
-                    <p className="header-search-hint">Nhập họ và tên để tìm.</p>
-                  )}
-                </div>
+                  ) : null}
+                </>
               ) : null}
             </div>
             <span className="header-divider" />
