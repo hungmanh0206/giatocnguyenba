@@ -87,12 +87,13 @@ function HouseholdNode({ data }: NodeProps<FamilyNode>) {
               <Avatar person={p} />
               <span className="branch-badge">{branchName(p.branch)}</span>
             </div>
-            <strong>{p.name}</strong>
-            <small>
-              {p.born}
-              {p.died ? ` – ${p.died}` : ' · Còn sống'}
-            </small>
-            <span className="tree-person-gen">Đời thứ {p.generation}</span>
+            <div className="tree-person-content">
+              <strong>{p.name}</strong>
+              <span className="tree-person-years">
+                {p.born} – {p.died || 'nay'}
+              </span>
+              <span className="tree-person-gen">Đời thứ {p.generation}</span>
+            </div>
           </button>
           {index < group.people.length - 1 &&
             p.spouses.includes(group.people[index + 1].id) && (

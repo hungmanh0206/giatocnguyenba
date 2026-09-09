@@ -4280,6 +4280,150 @@ button:disabled,
   }
 }
 
+/* Detailed member nodes retain an archival tone while keeping the family tree easy to scan. */
+.household {
+  height: 176px;
+  gap: 26px;
+}
+
+.tree-person {
+  position: relative;
+  width: 260px;
+  height: 176px;
+  overflow: visible;
+  border: 1px solid #ded6c8;
+  border-top: 1px solid #ded6c8;
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  background: #fffdf9;
+  box-shadow:
+    0 2px 4px #3e2b1808,
+    0 8px 20px #3e2b180a;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.tree-person::before {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  left: -1px;
+  height: 4px;
+  border-radius: 18px 18px 0 0;
+  background: #99712f;
+  content: '';
+}
+
+.tree-person.branch-0,
+.tree-person.branch-2,
+.tree-person.branch-3 {
+  border-top-color: #ded6c8;
+}
+
+.tree-person.branch-0::before,
+.tree-person.branch-2::before,
+.tree-person.branch-3::before {
+  background: #99712f;
+}
+
+.tree-person:hover {
+  border-color: #c8aa75;
+  box-shadow:
+    0 4px 8px #3e2b180d,
+    0 12px 28px #3e2b1812;
+  transform: translateY(-2px);
+}
+
+.tree-person.chosen {
+  border-color: #9a3434;
+  background: #fffdf9;
+  box-shadow:
+    0 0 0 2px #9a343414,
+    0 10px 28px #3e2b1812;
+  transform: translateY(-2px);
+}
+
+.tree-person.chosen::before {
+  background: #9a3434;
+}
+
+.tree-person.dimmed {
+  opacity: 0.32;
+}
+
+.tree-person-top {
+  gap: 12px;
+  margin: 0;
+}
+
+.tree-person .avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 13px;
+}
+
+.tree-person .branch-badge,
+.tree-person.branch-0 .branch-badge,
+.tree-person.branch-2 .branch-badge,
+.tree-person.branch-3 .branch-badge {
+  min-height: 26px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #f6eedc;
+  color: #8d692c;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.tree-person-content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 12px;
+}
+
+.tree-person > .tree-person-content > strong {
+  display: -webkit-box;
+  min-height: 23px;
+  overflow: hidden;
+  color: #241d18;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 23px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.tree-person-years {
+  margin-top: 4px;
+  color: #77695d;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.tree-person .tree-person-gen {
+  margin-top: 6px;
+  color: #8c7e70;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.spouse-connector {
+  top: 86px;
+  width: 26px;
+  margin-left: 260px;
+  border-color: #b49a6c;
+}
+
 /* Destructive actions are deliberately distinct but stay within the family UI palette. */
 .delete-member-button,
 .delete-profile-button {
