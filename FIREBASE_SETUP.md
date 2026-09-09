@@ -12,16 +12,16 @@
 
 ## 2. Đăng nhập Firebase CLI và deploy Rules
 
-Mở PowerShell tại thư mục dự án và chạy:
+Mở PowerShell tại thư mục dự án và chạy lệnh này. Lệnh sử dụng Firebase CLI đã có trong dự án, không cần cài `pnpm` toàn cục:
 
 ```powershell
-pnpm firebase:login
+npx firebase login
 ```
 
 Hoàn tất đăng nhập bằng tài khoản có quyền quản trị project `giatocnguyenba-47522`. Sau đó deploy Firestore Rules và indexes:
 
 ```powershell
-pnpm firebase:deploy:rules
+npx firebase deploy --only firestore
 ```
 
 File `.firebaserc` trên máy đã trỏ đến đúng Firebase project. Nếu bạn làm trên máy khác, sao chép `.firebaserc.example` thành `.firebaserc` và thay `your-firebase-project-id` bằng `giatocnguyenba-47522`.
@@ -40,7 +40,7 @@ Trong PowerShell, đặt ba biến tạm thời bên dưới. Thay đường d�
 $env:FIREBASE_PROJECT_ID = "giatocnguyenba-47522"
 $env:FIREBASE_OWNER_UID = "UID_CUA_BAN"
 $env:FIREBASE_SERVICE_ACCOUNT_JSON = Get-Content -Raw "C:\duong-dan\service-account.json"
-pnpm firebase:bootstrap
+node --experimental-strip-types scripts/bootstrap-family.mjs
 ```
 
 Lệnh này tạo gia phả `nguyen-ba`, cấp vai trò `owner` cho UID của bạn và nạp 38 hồ sơ mẫu. Sau khi xong, đóng PowerShell hoặc xóa các biến tạm thời:
