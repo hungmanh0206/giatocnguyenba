@@ -1,0 +1,108 @@
+'use client';
+import { Search, X } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+export function Choice({
+  value,
+  onChange,
+  options,
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  label: string;
+}) {
+  return (
+    <Select
+      value={value}
+      onValueChange={(v) => v !== null && onChange(v)}
+      items={options}
+    >
+      <SelectTrigger className="choice" aria-label={label}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((o) => (
+          <SelectItem key={o.value} value={o.value}>
+            {o.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+export const branchOptions = [
+  { value: 'all', label: 'Tất cả các chi' },
+  { value: '0', label: 'Thủy tổ' },
+  { value: '1', label: 'Chi trưởng' },
+  { value: '2', label: 'Chi hai' },
+  { value: '3', label: 'Chi ba' },
+];
+export const generationOptions = [
+  { value: 'all', label: 'Tất cả các đời' },
+  ...Array.from({ length: 8 }, (_, i) => ({
+    value: String(i + 1),
+    label: `Đời thứ ${i + 1}`,
+  })),
+];
+export function SearchBox({
+  query,
+  setQuery,
+  placeholder = 'Tìm theo họ và tên…',
+}: {
+  query: string;
+  setQuery: (q: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="search-box">
+      <Search size={19} />
+      <Input
+        aria-label={placeholder}
+        placeholder={placeholder}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      {query && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Xóa tìm kiếm"
+          onClick={() => setQuery('')}
+        >
+          <X size={16} />
+        </Button>
+      )}
+    </div>
+  );
+}
+export function EmptyState({
+  title = 'Không tìm thấy thành viên',
+  description = 'Thử một tên khác hoặc thay đổi bộ lọc.',
+  onReset,
+}: {
+  title?: string;
+  description?: string;
+  onReset?: () => void;
+}) {
+  return (
+    <div className="empty-state">
+      <Search size={30} />
+      <h3>{title}</h3>
+      <p>{description}</p>
+      {onReset && (
+        <Button className="action-button" variant="outline" onClick={onReset}>
+          Xóa bộ lọc
+        </Button>
+      )}
+    </div>
+  );
+}

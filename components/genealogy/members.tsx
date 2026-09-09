@@ -1,0 +1,454 @@
+'use client';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import {
+  ArrowLeft,
+  ArrowRight,
+  GitFork,
+  MapPin,
+  Flower2,
+  LayoutGrid,
+  List,
+  ChevronLeft,
+  ChevronRight,
+  UserRound,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerClose,
+} from '@/components/ui/drawer';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useFamily } from './provider';
+import { Avatar, MemberTile } from './home';
+import { Footer } from './header';
+import {
+  Choice,
+  branchOptions,
+  generationOptions,
+  SearchBox,
+  EmptyState,
+} from './common';
+import {
+  branchName,
+  relatives,
+  searchMembers,
+  type Member,
+} from '@/lib/family';
+export function MembersPage() {
+  const { members } = useFamily();
+  const params = useSearchParams();
+  const [query, setQuery] = useState(params.get('q') || '');
+  const [branch, setBranch] = useState('all');
+  const [generation, setGeneration] = useState('all');
+  const [view, setView] = useState('grid');
+  const [page, setPage] = useState(1);
+  useEffect(() => {
+    setPage(1);
+  }, [query, branch, generation]);
+  const filtered = searchMembers(members, query)
+    .filter(
+      (p) =>
+        (branch === 'all' || p.branch === Number(branch)) &&
+        (generation === 'all' || p.generation === Number(generation)),
+    )
+    .sort((a, b) => a.generation - b.generation || a.born - b.born);
+  const total = Math.ceil(filtered.length / 12);
+  return (
+    <main id="main">
+      <div className="container page-space">
+        <div className="page-heading">
+          <div>
+            <div className="eyebrow">NHỮNG NGƯỜI CHUNG CỘI NGUỒN</div>
+            <h1>Thành viên dòng họ</h1>
+            <p>{members.length} thành viên · 5 thế hệ · 3 chi</p>
+          </div>
+          <Button
+            variant="outline"
+            className="action-button"
+            render={<Link href="/family-tree" />}
+            nativeButton={false}
+          >
+            <GitFork />
+            Xem cây gia phả
+          </Button>
+        </div>
+        <div className="filter-bar">
+          <SearchBox query={query} setQuery={setQuery} />
+          <Choice
+            label="Lọc theo chi"
+            value={branch}
+            onChange={setBranch}
+            options={branchOptions}
+          />
+          <Choice
+            label="Lọc theo đời"
+            value={generation}
+            onChange={setGeneration}
+            options={generationOptions.filter(
+              (o) => o.value === 'all' || Number(o.value) <= 5,
+            )}
+          />
+          <div className="view-toggle">
+            <Button
+              variant={view === 'grid' ? 'secondary' : 'ghost'}
+              className="icon-button"
+              aria-label="Dạng thẻ"
+              aria-pressed={view === 'grid'}
+              title="Dạng thẻ"
+              onClick={() => setView('grid')}
+            >
+              <LayoutGrid />
+            </Button>
+            <Button
+              variant={view === 'list' ? 'secondary' : 'ghost'}
+              className="icon-button"
+              aria-label="Danh sách"
+              aria-pressed={view === 'list'}
+              title="Danh sách"
+              onClick={() => setView('list')}
+            >
+              <List />
+            </Button>
+          </div>
+        </div>
+        <div className="results-summary">
+          <span>
+            {filtered.length} thành viên{query && ` cho “${query}”`}
+          </span>
+          <span>Dữ liệu mẫu</span>
+        </div>
+        {!filtered.length ? (
+          <EmptyState
+            onReset={() => {
+              setQuery('');
+              setBranch('all');
+              setGeneration('all');
+            }}
+          />
+        ) : (
+          <div className={`member-results ${view}`}>
+            {filtered.slice((page - 1) * 12, page * 12).map((p) => (
+              <Link
+                href={`/members/${p.id}`}
+                className={`person-card branch-${p.branch}`}
+                key={p.id}
+              >
+                <div className="person-card-top">
+                  <Avatar person={p} />
+                  <span className="branch-badge">{branchName(p.branch)}</span>
+                </div>
+                <h3>{p.name}</h3>
+                <p>
+                  {p.born}
+                  {p.died ? ` – ${p.died}` : ' · Còn sống'}
+                </p>
+                <div className="person-card-bottom">
+                  <span>
+                    <UserRound size={14} /> Đời thứ {p.generation}
+                  </span>
+                  <ArrowRight size={17} />
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+        {total > 1 && (
+          <div className="pagination">
+            <Button
+              variant="outline"
+              className="icon-button"
+              disabled={page === 1}
+              aria-label="Trang trước"
+              onClick={() => setPage((p) => p - 1)}
+            >
+              <ChevronLeft />
+            </Button>
+            <span>
+              Trang {page} / {total}
+            </span>
+            <Button
+              variant="outline"
+              className="icon-button"
+              disabled={page === total}
+              aria-label="Trang sau"
+              onClick={() => setPage((p) => p + 1)}
+            >
+              <ChevronRight />
+            </Button>
+          </div>
+        )}
+      </div>
+      <Footer />
+    </main>
+  );
+}
+export function FamilyRelations({
+  person,
+  onSelect,
+}: {
+  person: Member;
+  onSelect?: (p: Member) => void;
+}) {
+  const { members } = useFamily();
+  const family = relatives(members, person);
+  return (
+    <div className="family-relations">
+      {(
+        [
+          { key: 'parents', label: 'Cha mẹ' },
+          { key: 'spouses', label: 'Vợ / chồng' },
+          { key: 'children', label: 'Con' },
+          { key: 'siblings', label: 'Anh chị em' },
+        ] as const
+      ).map(({ key, label }) => (
+        <section key={key}>
+          <h3>
+            {label}
+            <small>{family[key].length}</small>
+          </h3>
+          {family[key].length ? (
+            family[key].map((p) =>
+              onSelect ? (
+                <button
+                  className="relative-button"
+                  key={p.id}
+                  onClick={() => onSelect(p)}
+                >
+                  <Avatar person={p} />
+                  <span>
+                    <strong>{p.name}</strong>
+                    <small>
+                      Đời {p.generation} · {p.born}
+                    </small>
+                  </span>
+                  <ChevronRight size={16} />
+                </button>
+              ) : (
+                <MemberTile person={p} key={p.id} />
+              ),
+            )
+          ) : (
+            <p className="muted">Chưa có thông tin</p>
+          )}
+        </section>
+      ))}
+    </div>
+  );
+}
+function Facts({ person }: { person: Member }) {
+  return (
+    <dl className="person-facts">
+      <div>
+        <dt>Giới tính</dt>
+        <dd>{person.gender === 'male' ? 'Nam' : 'Nữ'}</dd>
+      </div>
+      <div>
+        <dt>Ngày sinh</dt>
+        <dd>Năm {person.born}</dd>
+      </div>
+      <div>
+        <dt>Đời / chi</dt>
+        <dd>
+          Đời {person.generation} · {branchName(person.branch)}
+        </dd>
+      </div>
+      <div>
+        <dt>Quê quán</dt>
+        <dd>{person.hometown || 'Chưa cập nhật'}</dd>
+      </div>
+      {person.died && (
+        <div>
+          <dt>Năm mất</dt>
+          <dd>{person.died}</dd>
+        </div>
+      )}
+      {person.anniversary && (
+        <div>
+          <dt>Ngày giỗ âm lịch</dt>
+          <dd>
+            {person.anniversary.day}/{person.anniversary.month}
+          </dd>
+        </div>
+      )}
+    </dl>
+  );
+}
+export function MemberDetail({ id }: { id: string }) {
+  const { members } = useFamily();
+  const p = members.find((p) => p.id === id);
+  if (!p)
+    return (
+      <main id="main" className="container page-space">
+        <EmptyState
+          title="Không tìm thấy hồ sơ"
+          description="Hồ sơ có thể không tồn tại trong bản gia phả hiện tại."
+        />
+        <Link className="text-link" href="/members">
+          <ArrowLeft size={16} /> Về danh sách thành viên
+        </Link>
+      </main>
+    );
+  return (
+    <main id="main">
+      <div className="container page-space">
+        <Link className="back-link" href="/members">
+          <ArrowLeft size={17} /> Thành viên dòng họ
+        </Link>
+        <div className="profile-hero">
+          <Avatar person={p} large />
+          <div>
+            <div className="eyebrow">
+              ĐỜI THỨ {p.generation} ·{' '}
+              {branchName(p.branch).toLocaleUpperCase('vi')}
+            </div>
+            <h1>{p.name}</h1>
+            <p>
+              {p.born}
+              {p.died ? ` – ${p.died}` : ' · Còn sống'}
+              <span>
+                <MapPin size={15} />
+                {p.hometown || 'Chưa cập nhật quê quán'}
+              </span>
+            </p>
+          </div>
+          <Button
+            className="action-button"
+            render={<Link href={`/family-tree?person=${id}`} />}
+            nativeButton={false}
+          >
+            <GitFork />
+            Xem trên cây
+          </Button>
+        </div>
+        <div className="profile-layout">
+          <aside>
+            <h3>Thông tin gia phả</h3>
+            <Facts person={p} />
+            <div className="sample-note">Hồ sơ minh họa · Dữ liệu mẫu</div>
+            {p.anniversary && (
+              <Link
+                className="memorial-link"
+                href={`/lunar-calendar?person=${id}`}
+              >
+                <Flower2 />
+                <span>
+                  Ngày giỗ {p.anniversary.day}/{p.anniversary.month} âm lịch
+                  <small>Xem ngày dương lịch tương ứng</small>
+                </span>
+                <ArrowRight size={17} />
+              </Link>
+            )}
+          </aside>
+          <div>
+            <Tabs defaultValue="family">
+              <TabsList variant="line" className="profile-tabs">
+                <TabsTrigger value="family">Quan hệ gia đình</TabsTrigger>
+                <TabsTrigger value="story">Tiểu sử</TabsTrigger>
+              </TabsList>
+              <TabsContent value="family">
+                <FamilyRelations person={p} />
+              </TabsContent>
+              <TabsContent value="story">
+                <article className="biography">
+                  <h2>Cuộc đời và dấu ấn</h2>
+                  <p>
+                    {p.biography ||
+                      'Chưa có tiểu sử được ghi nhận cho thành viên này.'}
+                  </p>
+                </article>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </main>
+  );
+}
+export function QuickView({
+  person,
+  onClose,
+  onSelect,
+}: {
+  person: Member | null;
+  onClose: () => void;
+  onSelect: (p: Member) => void;
+}) {
+  const mobile = useIsMobile();
+  const body = person && (
+    <>
+      <div className="quick-top">
+        <Avatar person={person} large />
+        <p>
+          {person.born}
+          {person.died ? ` – ${person.died}` : ' · Còn sống'}
+        </p>
+      </div>
+      <Facts person={person} />
+      <FamilyRelations person={person} onSelect={onSelect} />
+      <Button
+        className="action-button w-full"
+        render={<Link href={`/members/${person.id}`} />}
+        nativeButton={false}
+      >
+        <UserRound />
+        Xem hồ sơ đầy đủ
+        <ArrowRight />
+      </Button>
+    </>
+  );
+  return mobile ? (
+    <Drawer
+      open={!!person}
+      onOpenChange={(o) => !o && onClose()}
+      snapPoints={[0.5, 0.9]}
+      defaultSnapPoint={0.5}
+      showSwipeHandle
+    >
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>{person?.name}</DrawerTitle>
+          <DrawerDescription>
+            Đời {person?.generation} · {branchName(person?.branch || 0)}
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="quick-scroll">
+          {body}
+          <DrawerClose
+            render={
+              <Button variant="outline" className="action-button w-full" />
+            }
+          >
+            Đóng
+          </DrawerClose>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  ) : (
+    <Sheet open={!!person} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent className="quick-sheet">
+        <SheetHeader>
+          <SheetTitle>{person?.name}</SheetTitle>
+          <SheetDescription>
+            Đời {person?.generation} · {branchName(person?.branch || 0)}
+          </SheetDescription>
+        </SheetHeader>
+        <div className="quick-scroll">{body}</div>
+      </SheetContent>
+    </Sheet>
+  );
+}

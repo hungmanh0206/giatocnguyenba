@@ -1,0 +1,30 @@
+import type { Metadata } from 'next';
+import { FamilyProvider } from '@/components/genealogy/provider';
+import { Header } from '@/components/genealogy/header';
+import { GenealogyTools } from '@/components/genealogy/webmcp';
+import './globals.css';
+
+export const metadata: Metadata = {
+  title: 'Gia phả họ Nguyễn Bá',
+  icons: { icon: '/favicon.svg' },
+  description:
+    'Gia phả họ Nguyễn Bá: tìm về cội nguồn, kết nối các thế hệ và ghi nhớ ngày giỗ tổ tiên.',
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="vi">
+      <body>
+        <FamilyProvider>
+          <GenealogyTools />
+          <Header />
+          {children}
+        </FamilyProvider>
+      </body>
+    </html>
+  );
+}
