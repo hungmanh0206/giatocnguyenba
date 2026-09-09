@@ -4287,6 +4287,11 @@ button:disabled,
   box-shadow: 0 8px 20px #3d2e1712;
 }
 
+/* Keep the heritage pattern around the application, never beneath reading surfaces. */
+main#main:not(.tree-page) {
+  background: #fffefa;
+}
+
 @media (max-width: 960px) {
   .main-nav.is-open {
     background: #fffefa;
