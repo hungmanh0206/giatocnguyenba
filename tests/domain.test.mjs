@@ -12,6 +12,19 @@ import {
   anniversariesOn,
   upcomingAnniversaries,
 } from '../lib/lunar.ts';
+import {
+  canEditFamily,
+  canManageFamily,
+  isFamilyRole,
+} from '../lib/access.ts';
+test('only super admin is a valid management role', () => {
+  assert.equal(isFamilyRole('super_admin'), true);
+  assert.equal(isFamilyRole('viewer'), false);
+  assert.equal(canEditFamily('super_admin'), true);
+  assert.equal(canEditFamily(null), false);
+  assert.equal(canManageFamily('super_admin'), true);
+  assert.equal(canManageFamily(null), false);
+});
 test('Vietnamese search supports accents, case and nonadjacent tokens', () => {
   assert.deepEqual(
     searchMembers(seedMembers, 'NGUYEN hung').map((p) => p.id),

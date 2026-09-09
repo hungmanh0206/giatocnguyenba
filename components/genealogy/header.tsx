@@ -9,7 +9,6 @@ import {
   Search,
   Settings2,
   ChevronRight,
-  LogIn,
   LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,14 +23,7 @@ const navigation = [
 export function Header() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
-  const [authPending, setAuthPending] = useState(false);
-  const { connection, signIn, signOut } = useFamily();
-
-  async function login() {
-    setAuthPending(true);
-    await signIn();
-    setAuthPending(false);
-  }
+  const { connection, signOut } = useFamily();
   return (
     <>
       <a className="skip-link" href="#main">
@@ -74,18 +66,6 @@ export function Header() {
               <Search size={20} />
             </Link>
             <span className="header-divider" />
-            {connection.mode === 'auth-required' && (
-              <Button
-                variant="outline"
-                className="auth-button"
-                onClick={login}
-                disabled={authPending}
-                title="Đăng nhập bằng Google"
-              >
-                <LogIn size={16} />
-                <span>{authPending ? 'Đang mở...' : 'Đăng nhập'}</span>
-              </Button>
-            )}
             {connection.user && (
               <Button
                 variant="ghost"
@@ -100,11 +80,11 @@ export function Header() {
             <Link
               className="admin-link"
               href="/admin"
-              aria-label="Quản lý gia phả"
-              title="Quản lý gia phả"
+              aria-label="Khu vực quản trị"
+              title="Khu vực quản trị"
             >
               <Settings2 size={17} />
-              <span>Quản lý</span>
+              <span>Quản trị</span>
             </Link>
             <Button
               className="icon-button mobile-menu"

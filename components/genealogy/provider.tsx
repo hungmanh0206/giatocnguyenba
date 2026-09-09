@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { canEditFamily, type FamilyRole } from '@/lib/access';
 import { seedMembers, validateMember, type Member } from '@/lib/family';
 import {
   firebaseConfigurationError,
@@ -21,12 +22,16 @@ import {
 import {
   saveFirestoreMember,
   subscribeToFamilyMembers,
+  subscribeToFamilyRole,
 } from '@/lib/firebase/firestore';
 
 export type FamilyConnection = {
-  mode: 'demo' | 'auth-required' | 'loading' | 'connected' | 'error';
+  mode: 'demo' | 'loading' | 'connected' | 'error';
   message?: string;
   user: Pick<User, 'uid' | 'displayName' | 'email'> | null;
+  role: FamilyRole | null;
+  roleLoading: boolean;
+  roleMessage?: string;
 };
 
 type FamilyContextValue = {
@@ -38,7 +43,12 @@ type FamilyContextValue = {
   signOut: () => Promise<void>;
 };
 
-const demoConnection: FamilyConnection = { mode: 'demo', user: null };
+const demoConnection: FamilyConnection = {
+  mode: 'demo',
+  user: null,
+  role: null,
+  roleLoading: false,
+};
 
 const FamilyContext = createContext<FamilyContextValue>({
   members: seedMembers,
@@ -55,7 +65,7 @@ function messageFor(error: unknown) {
       ? String(error.code)
       : '';
   if (code.includes('permission-denied')) {
-    return 'Tài khoản này chưa được cấp quyền xem hoặc sửa gia phả.';
+    return 'Tài khoản này chưa được cấp quyền quản trị gia phả.';
   }
   if (code.includes('popup-closed-by-user')) {
     return 'Đăng nhập đã được đóng trước khi hoàn tất.';
@@ -71,13 +81,16 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     isFirebaseConfigured ? [] : seedMembers,
   );
   const [user, setUser] = useState<FamilyConnection['user']>(null);
-  const [connection, setConnection] = useState<FamilyConnection>(() => {
+  const [role, setRole] = useState<FamilyRole | null>(null);
+  const [roleLoading, setRoleLoading] = useState(false);
+  const [roleMessage, setRoleMessage] = useState<string | undefined>();
+  const [dataStatus, setDataStatus] = useState<
+    Pick<FamilyConnection, 'mode' | 'message'>
+  >(() => {
     if (firebaseConfigurationError) {
-      return { mode: 'error', message: firebaseConfigurationError, user: null };
+      return { mode: 'error', message: firebaseConfigurationError };
     }
-    return isFirebaseConfigured
-      ? { mode: 'loading', user: null }
-      : demoConnection;
+    return isFirebaseConfigured ? { mode: 'loading' } : { mode: 'demo' };
   });
 
   useEffect(() => {
@@ -94,13 +107,33 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
             }
           : null;
         setUser(safeUser);
-        if (!safeUser) {
-          setMembers([]);
-          setConnection({ mode: 'auth-required', user: null });
-        }
+        setRole(null);
+        setRoleMessage(undefined);
+        setRoleLoading(Boolean(safeUser));
       });
     } catch (error) {
-      setConnection({ mode: 'error', message: messageFor(error), user: null });
+      setDataStatus({ mode: 'error', message: messageFor(error) });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+
+    try {
+      const { db } = getFirebaseServices();
+      return subscribeToFamilyMembers(
+        db,
+        (nextMembers) => {
+          setMembers(nextMembers);
+          setDataStatus({ mode: 'connected' });
+        },
+        (error) => {
+          setMembers([]);
+          setDataStatus({ mode: 'error', message: messageFor(error) });
+        },
+      );
+    } catch (error) {
+      setDataStatus({ mode: 'error', message: messageFor(error) });
     }
   }, []);
 
@@ -109,22 +142,39 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
     try {
       const { db } = getFirebaseServices();
-      setConnection({ mode: 'loading', user });
-      return subscribeToFamilyMembers(
+      setRoleLoading(true);
+      return subscribeToFamilyRole(
         db,
-        (nextMembers) => {
-          setMembers(nextMembers);
-          setConnection({ mode: 'connected', user });
+        user.uid,
+        (nextRole) => {
+          setRole(nextRole);
+          setRoleLoading(false);
+          setRoleMessage(
+            nextRole
+              ? undefined
+              : 'Tài khoản này chưa được cấp quyền quản trị gia phả.',
+          );
         },
         (error) => {
-          setMembers([]);
-          setConnection({ mode: 'error', message: messageFor(error), user });
+          setRole(null);
+          setRoleLoading(false);
+          setRoleMessage(messageFor(error));
         },
       );
     } catch (error) {
-      setConnection({ mode: 'error', message: messageFor(error), user });
+      setRole(null);
+      setRoleLoading(false);
+      setRoleMessage(messageFor(error));
     }
   }, [user]);
+
+  const connection: FamilyConnection = {
+    ...dataStatus,
+    user,
+    role,
+    roleLoading,
+    roleMessage,
+  };
 
   async function save(person: Member) {
     const error = validateMember(person, members);
@@ -146,12 +196,12 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
-    if (!user) return 'Hãy đăng nhập trước khi cập nhật gia phả.';
+    if (!user) return 'Hãy đăng nhập tài khoản quản trị trước khi cập nhật.';
+    if (!canEditFamily(role)) {
+      return 'Tài khoản này không có quyền chỉnh sửa gia phả.';
+    }
     if (connection.mode !== 'connected') {
-      return (
-        connection.message ||
-        'Firestore đang đồng bộ. Vui lòng thử lại sau ít phút.'
-      );
+      return connection.message || 'Dữ liệu đang tải. Vui lòng thử lại sau ít phút.';
     }
 
     try {
@@ -171,9 +221,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       await signInWithGoogle();
       return null;
     } catch (error) {
-      const message = messageFor(error);
-      setConnection({ mode: 'auth-required', message, user: null });
-      return message;
+      return messageFor(error);
     }
   }
 

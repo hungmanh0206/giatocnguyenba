@@ -19,7 +19,7 @@ export default function Page() {
           </h1>
           <p>Những thế hệ nối tiếp. Những giá trị còn mãi.</p>
           <span className="history-location">
-            <MapPin size={17} /> Nam Định <span>·</span> Tư liệu minh họa
+            <MapPin size={17} /> Thôn Quảng Trường, xã Quảng Chính, tỉnh Thanh Hóa
           </span>
         </div>
       </section>

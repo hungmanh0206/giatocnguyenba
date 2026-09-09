@@ -6,23 +6,29 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function familyDocument(familyId) {
+      return get(/databases/$(database)/documents/families/$(familyId));
+    }
+
     function membership(familyId) {
       return get(/databases/$(database)/documents/families/$(familyId)/memberships/$(request.auth.uid));
     }
 
-    function canRead(familyId) {
-      return signedIn() && exists(/databases/$(database)/documents/families/$(familyId)/memberships/$(request.auth.uid))
-        && membership(familyId).data.role in ['owner', 'editor', 'viewer'];
+    function hasMembership(familyId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/families/$(familyId)/memberships/$(request.auth.uid));
     }
 
     function canEdit(familyId) {
-      return signedIn() && exists(/databases/$(database)/documents/families/$(familyId)/memberships/$(request.auth.uid))
-        && membership(familyId).data.role in ['owner', 'editor'];
+      return hasMembership(familyId)
+        && membership(familyId).data.role == 'super_admin';
     }
 
-    function isOwner(familyId) {
-      return signedIn() && exists(/databases/$(database)/documents/families/$(familyId)/memberships/$(request.auth.uid))
-        && membership(familyId).data.role == 'owner';
+    function isSuperAdmin(familyId) {
+      return hasMembership(familyId)
+        && exists(/databases/$(database)/documents/families/$(familyId))
+        && familyDocument(familyId).data.superAdminUid == request.auth.uid
+        && membership(familyId).data.role == 'super_admin';
     }
 
     function validAnniversary(value) {
@@ -50,12 +56,20 @@ service cloud.firestore {
         && (data.hometown == null || (data.hometown is string && data.hometown.size() <= 100));
     }
 
+    function validMembership(familyId, userId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['role', 'createdAt', 'updatedAt'])
+        && data.keys().hasAll(['role', 'createdAt', 'updatedAt'])
+        && data.role == 'super_admin'
+        && userId == familyDocument(familyId).data.superAdminUid;
+    }
+
     match /families/{familyId} {
-      allow get: if canRead(familyId);
+      allow get: if hasMembership(familyId);
       allow list, create, update, delete: if false;
 
       match /members/{memberId} {
-        allow read: if canRead(familyId);
+        allow read: if true;
         allow create: if canEdit(familyId) && validMember(memberId)
           && request.resource.data.createdAt == request.time
           && request.resource.data.updatedAt == request.time;
@@ -63,13 +77,19 @@ service cloud.firestore {
           && request.resource.data.id == resource.data.id
           && request.resource.data.createdAt == resource.data.createdAt
           && request.resource.data.updatedAt == request.time;
-        allow delete: if isOwner(familyId);
+        allow delete: if isSuperAdmin(familyId);
       }
 
       match /memberships/{userId} {
-        allow get: if signedIn() && (request.auth.uid == userId || isOwner(familyId));
-        allow list: if isOwner(familyId);
-        allow create, update, delete: if isOwner(familyId);
+        allow get: if signedIn()
+          && (request.auth.uid == userId || isSuperAdmin(familyId));
+        allow list: if isSuperAdmin(familyId);
+        allow create, update: if isSuperAdmin(familyId)
+          && validMembership(familyId, userId)
+          && (userId != familyDocument(familyId).data.superAdminUid
+            || request.resource.data.role == 'super_admin');
+        allow delete: if isSuperAdmin(familyId)
+          && userId != familyDocument(familyId).data.superAdminUid;
       }
     }
   }

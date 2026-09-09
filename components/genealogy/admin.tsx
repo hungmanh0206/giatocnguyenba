@@ -8,6 +8,9 @@ import {
   Check,
   ArrowUpRight,
   LogIn,
+  Copy,
+  LockKeyhole,
+  ShieldCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -30,6 +33,7 @@ import {
   generationOptions,
 } from './common';
 import { searchMembers, branchName, type Member } from '@/lib/family';
+import { canManageFamily } from '@/lib/access';
 const blank = (): Member => ({
   id: crypto.randomUUID(),
   name: '',
@@ -47,6 +51,7 @@ export function AdminPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
+  const [authPending, setAuthPending] = useState(false);
   const filtered = searchMembers(members, query);
   function update<K extends keyof Member>(key: K, value: Member[K]) {
     setEditing((p) => (p ? { ...p, [key]: value } : null));
@@ -69,19 +74,100 @@ export function AdminPage() {
     setEditing(null);
     setError('');
   }
+
+  async function login() {
+    setAuthPending(true);
+    const result = await signIn();
+    setAuthPending(false);
+    if (result) setError(result);
+  }
+
+  async function copyUid() {
+    if (!connection.user) return;
+    try {
+      await navigator.clipboard.writeText(connection.user.uid);
+      setSuccess('Đã sao chép User UID.');
+    } catch {
+      setError('Không thể sao chép UID. Hãy chọn và sao chép thủ công.');
+    }
+  }
+
+  if (!canManageFamily(connection.role)) {
+    const needsLogin = !connection.user;
+    const checkingRole = connection.roleLoading;
+
+    return (
+      <main id="main" className="container page-space">
+        <div className="page-heading">
+          <div>
+            <div className="eyebrow">KHU VỰC RIÊNG</div>
+            <h1>Quản trị gia phả</h1>
+            <p>Chỉ tài khoản super admin mới có thể thay đổi dữ liệu.</p>
+          </div>
+        </div>
+        <div className="notice">
+          {needsLogin ? <LockKeyhole size={20} /> : <ShieldCheck size={20} />}
+          <div>
+            <p>
+              {connection.mode === 'demo'
+                ? 'Firebase chưa được cấu hình nên khu vực quản trị chưa thể sử dụng.'
+                : needsLogin
+                  ? 'Đăng nhập Google để xác thực quyền quản trị.'
+                  : checkingRole
+                    ? 'Đang kiểm tra quyền của tài khoản.'
+                    : connection.roleMessage ||
+                      'Tài khoản này chưa có quyền super admin.'}
+            </p>
+            {connection.user && !checkingRole && (
+              <p className="muted">
+                User UID: <code>{connection.user.uid}</code>
+              </p>
+            )}
+          </div>
+          {needsLogin && connection.mode !== 'demo' && (
+            <Button
+              className="action-button"
+              variant="outline"
+              onClick={() => void login()}
+              disabled={authPending}
+            >
+              <LogIn size={16} />
+              {authPending ? 'Đang mở...' : 'Đăng nhập Google'}
+            </Button>
+          )}
+          {connection.user && !checkingRole && (
+            <Button
+              className="action-button"
+              variant="outline"
+              onClick={() => void copyUid()}
+            >
+              <Copy size={16} />
+              Sao chép UID
+            </Button>
+          )}
+        </div>
+        {error && <p className="form-error" role="alert">{error}</p>}
+        {success && (
+          <div className="success-message" role="status">
+            <Check size={18} />
+            {success}
+          </div>
+        )}
+      </main>
+    );
+  }
+
   return (
     <main id="main" className="container page-space">
       <div className="page-heading">
         <div>
-          <div className="eyebrow">SỔ GIA PHẢ</div>
-          <h1>Quản lý thành viên</h1>
+          <div className="eyebrow">SUPER ADMIN</div>
+          <h1>Quản trị gia phả</h1>
           <p>{members.length} hồ sơ trong dòng họ</p>
         </div>
         <Button
           className="action-button"
-          disabled={
-            connection.mode !== 'demo' && connection.mode !== 'connected'
-          }
+          disabled={connection.mode !== 'connected'}
           onClick={() => {
             setEditing(blank());
             setError('');
@@ -97,23 +183,10 @@ export function AdminPage() {
         <p>
           {connection.mode === 'demo'
             ? 'Chế độ dùng thử. Thay đổi chỉ có hiệu lực trong phiên này và sẽ mất khi tải lại trang.'
-            : connection.mode === 'auth-required'
-              ? connection.message ||
-                'Đăng nhập bằng tài khoản Firebase đã được cấp quyền để xem và quản lý gia phả.'
-              : connection.mode === 'connected'
-                ? 'Dữ liệu đang đồng bộ với Firestore. Quyền sửa hồ sơ được Firebase kiểm soát theo vai trò tài khoản.'
-                : connection.message || 'Firestore đang kết nối.'}
+            : connection.mode === 'connected'
+              ? 'Bạn đang sử dụng quyền super admin. Mọi thay đổi được đồng bộ với Firestore.'
+              : connection.message || 'Firestore đang kết nối.'}
         </p>
-        {connection.mode === 'auth-required' && (
-          <Button
-            className="action-button"
-            variant="outline"
-            onClick={() => void signIn()}
-          >
-            <LogIn size={16} />
-            Đăng nhập
-          </Button>
-        )}
       </div>
       {success && (
         <div className="success-message" role="status">

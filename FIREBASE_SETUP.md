@@ -1,6 +1,6 @@
 # Hướng dẫn kết nối Firebase
 
-Ứng dụng dùng Cloud Firestore để lưu gia phả và Firebase Authentication để kiểm soát quyền truy cập. Dữ liệu không cho phép ghi công khai.
+Ứng dụng dùng Cloud Firestore để lưu gia phả. Mọi người có thể xem dữ liệu công khai mà không cần tài khoản; chỉ một tài khoản `super_admin` được đăng nhập và có quyền thay đổi dữ liệu.
 
 ## 1. Tạo và cấu hình Firebase project
 
@@ -26,9 +26,9 @@ npx firebase deploy --only firestore
 
 File `.firebaserc` trên máy đã trỏ đến đúng Firebase project. Nếu bạn làm trên máy khác, sao chép `.firebaserc.example` thành `.firebaserc` và thay `your-firebase-project-id` bằng `giatocnguyenba-47522`.
 
-## 3. Tạo tài khoản chủ sở hữu gia phả
+## 3. Tạo tài khoản super admin duy nhất
 
-1. Mở [website production](https://giatocnguyenba.vercel.app) và đăng nhập bằng tài khoản Google sẽ quản lý gia phả.
+1. Mở [khu vực quản trị](https://giatocnguyenba.vercel.app/admin) và đăng nhập bằng tài khoản Google sẽ quản lý gia phả.
 2. Vào Firebase Console > **Authentication > Users**, tìm tài khoản vừa đăng nhập và sao chép cột **User UID**.
 3. Vào **Project settings > Service accounts**, tạo khóa mới và tải file JSON service account về máy. Không gửi file này qua chat, GitHub hoặc Vercel.
 
@@ -38,30 +38,24 @@ Trong PowerShell, đặt ba biến tạm thời bên dưới. Thay đường d�
 
 ```powershell
 $env:FIREBASE_PROJECT_ID = "giatocnguyenba-47522"
-$env:FIREBASE_OWNER_UID = "UID_CUA_BAN"
+$env:FIREBASE_SUPER_ADMIN_UID = "UID_CUA_BAN"
 $env:FIREBASE_SERVICE_ACCOUNT_JSON = Get-Content -Raw "C:\duong-dan\service-account.json"
 node --experimental-strip-types scripts/bootstrap-family.mjs
 ```
 
-Lệnh này tạo gia phả `nguyen-ba`, cấp vai trò `owner` cho UID của bạn và nạp 38 hồ sơ mẫu. Sau khi xong, đóng PowerShell hoặc xóa các biến tạm thời:
+Lệnh này tạo gia phả `nguyen-ba`, ghi nhận UID của bạn là `superAdminUid`, cấp vai trò `super_admin` và nạp 38 hồ sơ mẫu. Không có tài khoản quản trị thứ hai. Sau khi xong, đóng PowerShell hoặc xóa các biến tạm thời:
 
 ```powershell
 Remove-Item Env:FIREBASE_PROJECT_ID
-Remove-Item Env:FIREBASE_OWNER_UID
+Remove-Item Env:FIREBASE_SUPER_ADMIN_UID
 Remove-Item Env:FIREBASE_SERVICE_ACCOUNT_JSON
 ```
 
-## 5. Cấp quyền cho người thân
+## 5. Quyền truy cập công khai
 
-Thêm document ở đường dẫn `families/nguyen-ba/memberships/{uid}` trong Firestore. Trường `role` có một trong các giá trị:
+Khách truy cập không cần tạo tài khoản và chỉ có thể xem danh sách thành viên, hồ sơ, cây gia phả, lịch âm và lịch sử dòng họ. Firestore Rules không cho phép khách thêm, sửa hoặc xóa dữ liệu.
 
-| Vai trò | Quyền |
-| --- | --- |
-| `viewer` | Xem gia phả |
-| `editor` | Xem và chỉnh sửa thành viên |
-| `owner` | Toàn quyền, bao gồm cấp quyền cho người khác |
-
-Chỉ `owner` và `editor` có thể thêm, sửa hoặc xóa thành viên.
+Chỉ document `families/nguyen-ba/memberships/{superAdminUid}` tồn tại với `role: "super_admin"`. UID này cũng được khóa trong trường `families/nguyen-ba.superAdminUid`, vì vậy không thể tạo thêm super admin thứ hai từ website.
 
 ## Cấu trúc dữ liệu Firestore
 

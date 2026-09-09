@@ -2,13 +2,13 @@ import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 const projectId = process.env.FIREBASE_PROJECT_ID;
-const ownerUid = process.env.FIREBASE_OWNER_UID;
+const superAdminUid = process.env.FIREBASE_SUPER_ADMIN_UID;
 const familyId = process.env.FIREBASE_FAMILY_ID || 'nguyen-ba';
 const credentials = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
-if (!projectId || !ownerUid || !credentials) {
+if (!projectId || !superAdminUid || !credentials) {
   throw new Error(
-    'Set FIREBASE_PROJECT_ID, FIREBASE_OWNER_UID and FIREBASE_SERVICE_ACCOUNT_JSON before bootstrapping.',
+    'Set FIREBASE_PROJECT_ID, FIREBASE_SUPER_ADMIN_UID and FIREBASE_SERVICE_ACCOUNT_JSON before bootstrapping.',
   );
 }
 
@@ -27,6 +27,7 @@ batch.set(
   {
     name: 'Họ Nguyễn Bá',
     slug: familyId,
+    superAdminUid,
     createdAt: now,
     updatedAt: now,
   },
@@ -34,9 +35,9 @@ batch.set(
 );
 
 batch.set(
-  family.collection('memberships').doc(ownerUid),
+  family.collection('memberships').doc(superAdminUid),
   {
-    role: 'owner',
+    role: 'super_admin',
     createdAt: now,
     updatedAt: now,
   },
@@ -60,4 +61,6 @@ for (const person of seedMembers) {
 }
 
 await batch.commit();
-console.log(`Seeded ${seedMembers.length} members in families/${familyId}.`);
+console.log(
+  `Seeded ${seedMembers.length} members in families/${familyId} for super admin ${superAdminUid}.`,
+);

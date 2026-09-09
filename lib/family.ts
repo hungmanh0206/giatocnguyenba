@@ -278,7 +278,7 @@ export const seedMembers: Member[] = rows.map(
     parents,
     spouses,
     anniversary: day && month ? { day, month } : undefined,
-    hometown: 'Nam Định',
+    hometown: 'Thôn Quảng Trường, xã Quảng Chính, tỉnh Thanh Hóa',
     biography:
       id === 'p1'
         ? 'Cụ Nguyễn Bá Khởi là vị khởi tổ được ghi nhận trong bản gia phả minh họa. Cụ cùng phu nhân Trần Thị Tâm có ba người con, hình thành ba chi của dòng họ. Các thông tin này là dữ liệu mẫu, cần được đối chiếu với gia phả gốc trước khi sử dụng.'

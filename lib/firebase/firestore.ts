@@ -10,6 +10,7 @@ import {
   type Firestore,
 } from 'firebase/firestore';
 import { firebaseFamilyId } from './config';
+import { isFamilyRole, type FamilyRole } from '@/lib/access';
 import { type Member } from '@/lib/family';
 
 const memberFields = [
@@ -100,6 +101,26 @@ function memberData(person: Member) {
 
 function memberRef(db: Firestore, memberId: string) {
   return doc(db, 'families', firebaseFamilyId, 'members', memberId);
+}
+
+function membershipRef(db: Firestore, userId: string) {
+  return doc(db, 'families', firebaseFamilyId, 'memberships', userId);
+}
+
+export function subscribeToFamilyRole(
+  db: Firestore,
+  userId: string,
+  onRole: (role: FamilyRole | null) => void,
+  onError: (error: unknown) => void,
+) {
+  return onSnapshot(
+    membershipRef(db, userId),
+    (snapshot) => {
+      const role = snapshot.exists() ? snapshot.data().role : null;
+      onRole(isFamilyRole(role) ? role : null);
+    },
+    onError,
+  );
 }
 
 export function subscribeToFamilyMembers(

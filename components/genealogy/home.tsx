@@ -116,9 +116,7 @@ export function HomePage() {
               ? 'Gia phả minh họa · Dữ liệu mẫu'
               : connection.mode === 'connected'
                 ? 'Đang đồng bộ từ Firestore'
-                : connection.mode === 'auth-required'
-                  ? 'Đăng nhập để xem gia phả riêng'
-                  : connection.message || 'Đang kết nối gia phả'}
+                : connection.message || 'Đang kết nối gia phả'}
           </div>
         </div>
       </section>
@@ -264,7 +262,7 @@ export function HomePage() {
             <span>GIA PHẢ</span>
             <strong>Nguyễn Bá</strong>
             <small>
-              <MapPin size={13} /> Nam Định · Dữ liệu mẫu
+              <MapPin size={13} /> Thôn Quảng Trường, Quảng Chính, Thanh Hóa
             </small>
           </div>
         </div>
