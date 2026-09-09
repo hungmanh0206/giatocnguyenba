@@ -11,7 +11,6 @@ import {
   Flower2,
   BookOpen,
   ChevronRight,
-  CornerDownRight,
   MapPin,
   CalendarDays,
   MoonStar,
@@ -323,13 +322,6 @@ export function HomePage() {
                   </Link>
                 ))}
             </div>
-            <Link className="preview-bottom" href="/family-tree">
-              <CornerDownRight size={16} />
-              <span>Tiếp nối qua {stats[1].value} thế hệ</span>
-              <span>
-                Khám phá <ArrowRight size={15} />
-              </span>
-            </Link>
           </div>
           </section>
         </div>
