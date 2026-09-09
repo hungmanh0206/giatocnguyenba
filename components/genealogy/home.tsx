@@ -50,7 +50,7 @@ export function MemberTile({ person }: { person: Member }) {
   );
 }
 export function HomePage() {
-  const { members } = useFamily();
+  const { members, connection } = useFamily();
   const [query, setQuery] = useState('');
   const found = searchMembers(members, query).slice(0, 4);
   const [today] = useState(vietnamToday);
@@ -111,7 +111,14 @@ export function HomePage() {
             )}
           </div>
           <div className="sample-note">
-            <span /> Gia phả minh họa · Dữ liệu mẫu
+            <span />
+            {connection.mode === 'demo'
+              ? 'Gia phả minh họa · Dữ liệu mẫu'
+              : connection.mode === 'connected'
+                ? 'Đang đồng bộ từ Firestore'
+                : connection.mode === 'auth-required'
+                  ? 'Đăng nhập để xem gia phả riêng'
+                  : connection.message || 'Đang kết nối gia phả'}
           </div>
         </div>
       </section>

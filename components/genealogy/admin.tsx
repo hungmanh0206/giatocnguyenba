@@ -1,6 +1,14 @@
 'use client';
 import { useState, type FormEvent } from 'react';
-import { Plus, Pencil, Save, Info, Check, ArrowUpRight } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Save,
+  Info,
+  Check,
+  ArrowUpRight,
+  LogIn,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,24 +41,31 @@ const blank = (): Member => ({
   spouses: [],
 });
 export function AdminPage() {
-  const { members, save } = useFamily();
+  const { members, save, connection, signIn } = useFamily();
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<Member | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [saving, setSaving] = useState(false);
   const filtered = searchMembers(members, query);
   function update<K extends keyof Member>(key: K, value: Member[K]) {
     setEditing((p) => (p ? { ...p, [key]: value } : null));
   }
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     if (!editing) return;
-    const result = save({ ...editing, name: editing.name.trim() });
+    setSaving(true);
+    const result = await save({ ...editing, name: editing.name.trim() });
+    setSaving(false);
     if (result) {
       setError(result);
       return;
     }
-    setSuccess(`Đã lưu hồ sơ ${editing.name} trong phiên dùng thử.`);
+    setSuccess(
+      connection.mode === 'demo'
+        ? `Đã lưu hồ sơ ${editing.name} trong phiên dùng thử.`
+        : `Đã đồng bộ hồ sơ ${editing.name} với Firestore.`,
+    );
     setEditing(null);
     setError('');
   }
@@ -64,6 +79,9 @@ export function AdminPage() {
         </div>
         <Button
           className="action-button"
+          disabled={
+            connection.mode !== 'demo' && connection.mode !== 'connected'
+          }
           onClick={() => {
             setEditing(blank());
             setError('');
@@ -77,9 +95,25 @@ export function AdminPage() {
       <div className="notice">
         <Info size={20} />
         <p>
-          Chế độ dùng thử. Thay đổi chỉ có hiệu lực trong phiên này và sẽ mất
-          khi tải lại trang. Chưa có đăng nhập quản trị hoặc lưu trữ trực tuyến.
+          {connection.mode === 'demo'
+            ? 'Chế độ dùng thử. Thay đổi chỉ có hiệu lực trong phiên này và sẽ mất khi tải lại trang.'
+            : connection.mode === 'auth-required'
+              ? connection.message ||
+                'Đăng nhập bằng tài khoản Firebase đã được cấp quyền để xem và quản lý gia phả.'
+              : connection.mode === 'connected'
+                ? 'Dữ liệu đang đồng bộ với Firestore. Quyền sửa hồ sơ được Firebase kiểm soát theo vai trò tài khoản.'
+                : connection.message || 'Firestore đang kết nối.'}
         </p>
+        {connection.mode === 'auth-required' && (
+          <Button
+            className="action-button"
+            variant="outline"
+            onClick={() => void signIn()}
+          >
+            <LogIn size={16} />
+            Đăng nhập
+          </Button>
+        )}
       </div>
       {success && (
         <div className="success-message" role="status">
@@ -167,7 +201,9 @@ export function AdminPage() {
                 : 'Thêm thành viên'}
             </SheetTitle>
             <SheetDescription>
-              Dữ liệu dùng thử trong phiên hiện tại
+              {connection.mode === 'demo'
+                ? 'Dữ liệu dùng thử trong phiên hiện tại'
+                : 'Thay đổi sẽ được đồng bộ qua Firestore'}
             </SheetDescription>
           </SheetHeader>
           {editing && (
@@ -399,9 +435,13 @@ export function AdminPage() {
                 >
                   Hủy
                 </Button>
-                <Button type="submit" className="action-button">
+                <Button
+                  type="submit"
+                  className="action-button"
+                  disabled={saving}
+                >
                   <Save />
-                  Lưu hồ sơ
+                  {saving ? 'Đang lưu...' : 'Lưu hồ sơ'}
                 </Button>
               </div>
             </form>

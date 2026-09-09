@@ -1,0 +1,76 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function membership(familyId) {
+      return get(/databases/$(database)/documents/families/$(familyId)/memberships/$(request.auth.uid));
+    }
+
+    function canRead(familyId) {
+      return signedIn() && exists(/databases/$(database)/documents/families/$(familyId)/memberships/$(request.auth.uid))
+        && membership(familyId).data.role in ['owner', 'editor', 'viewer'];
+    }
+
+    function canEdit(familyId) {
+      return signedIn() && exists(/databases/$(database)/documents/families/$(familyId)/memberships/$(request.auth.uid))
+        && membership(familyId).data.role in ['owner', 'editor'];
+    }
+
+    function isOwner(familyId) {
+      return signedIn() && exists(/databases/$(database)/documents/families/$(familyId)/memberships/$(request.auth.uid))
+        && membership(familyId).data.role == 'owner';
+    }
+
+    function validAnniversary(value) {
+      return value == null || (value is map
+        && value.keys().hasOnly(['day', 'month'])
+        && value.day is int && value.day >= 1 && value.day <= 30
+        && value.month is int && value.month >= 1 && value.month <= 12);
+    }
+
+    function validMember(memberId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['id', 'name', 'gender', 'generation', 'branch', 'born', 'died', 'parents', 'spouses', 'anniversary', 'biography', 'hometown', 'createdAt', 'updatedAt'])
+        && data.keys().hasAll(['id', 'name', 'gender', 'generation', 'branch', 'born', 'died', 'parents', 'spouses', 'anniversary', 'biography', 'hometown', 'createdAt', 'updatedAt'])
+        && data.id == memberId
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.gender in ['male', 'female']
+        && data.generation is int && data.generation >= 1 && data.generation <= 50
+        && data.branch is int && data.branch >= 0 && data.branch <= 20
+        && data.born is int && data.born >= 1600 && data.born <= 3000
+        && (data.died == null || (data.died is int && data.died >= data.born && data.died <= 3000))
+        && data.parents is list && data.parents.size() <= 2
+        && data.spouses is list && data.spouses.size() <= 10
+        && validAnniversary(data.anniversary)
+        && (data.biography == null || (data.biography is string && data.biography.size() <= 5000))
+        && (data.hometown == null || (data.hometown is string && data.hometown.size() <= 100));
+    }
+
+    match /families/{familyId} {
+      allow get: if canRead(familyId);
+      allow list, create, update, delete: if false;
+
+      match /members/{memberId} {
+        allow read: if canRead(familyId);
+        allow create: if canEdit(familyId) && validMember(memberId)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow update: if canEdit(familyId) && validMember(memberId)
+          && request.resource.data.id == resource.data.id
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(familyId);
+      }
+
+      match /memberships/{userId} {
+        allow get: if signedIn() && (request.auth.uid == userId || isOwner(familyId));
+        allow list: if isOwner(familyId);
+        allow create, update, delete: if isOwner(familyId);
+      }
+    }
+  }
+}

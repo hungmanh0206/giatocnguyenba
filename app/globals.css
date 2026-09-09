@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @font-face {
   font-family: 'Be Vietnam Pro';
@@ -246,6 +245,12 @@ svg {
   height: 22px;
   width: 1px;
   background: var(--border);
+}
+.auth-button {
+  height: 38px !important;
+  gap: 7px !important;
+  padding: 0 11px !important;
+  font-size: 13px !important;
 }
 .mobile-menu {
   display: none !important;
@@ -2913,6 +2918,14 @@ h1 > span {
   z-index: 45;
 }
 @media (max-width: 560px) {
+  .auth-button {
+    width: 36px;
+    padding: 0 !important;
+    justify-content: center;
+  }
+  .auth-button span {
+    display: none;
+  }
   .header-actions .admin-link {
     display: flex;
     width: 36px;

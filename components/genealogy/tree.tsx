@@ -136,6 +136,10 @@ function TreeCanvas() {
   const [ready, setReady] = useState(false);
   const flow = useReactFlow();
   const model = useMemo(() => layoutFamily(members), [members]);
+  const maxGeneration = Math.max(
+    1,
+    ...members.map((member) => member.generation),
+  );
   const hidden = useMemo(() => {
     const ids = new Set<string>();
     const stack = [...collapsed];
@@ -293,9 +297,7 @@ function TreeCanvas() {
           value={generation}
           onChange={setGeneration}
           options={generationOptions.filter(
-            (o) =>
-              o.value === 'all' ||
-              Number(o.value) <= Math.max(...members.map((m) => m.generation)),
+            (o) => o.value === 'all' || Number(o.value) <= maxGeneration,
           )}
         />
         <Button

@@ -1,12 +1,12 @@
 # Gia pha ho Nguyen Ba
 
-Vietnamese genealogy website built with React 19, Vinext, Tailwind, Base UI / shadcn, React Flow and Dagre. Local Be Vietnam Pro and Open Sans fonts come from the supplied archive.
+Vietnamese genealogy website built with Next.js, React 19, Tailwind, Base UI / shadcn, React Flow and Dagre. Local Be Vietnam Pro and Open Sans fonts come from the supplied archive.
 
 ## Current scope
 
 - Home, interactive genealogy tree, member directory and profiles, Vietnamese lunar calendar, family history, and a demo member editor.
 - 38 fictional sample people, five generations, three branches. No real family history is asserted.
-- Editor changes live in React state for the current session. Reload resets the sample. There is no production database, admin authentication, or file upload.
+- Without Firebase configuration, the app presents the sample data and edits stay in the current browser session. With Firebase configured, Firestore synchronizes member records in real time and Firebase Authentication controls access.
 - Vietnamese lunar conversion uses `@dqcai/vn-lunar`. Anniversaries use the ordinary lunar month, with day 30 observed on day 29 in short months.
 - Tree layout groups spouses, retains individual parent edges, and supports pan, pinch zoom, search, generation/branch highlighting and descendant collapse.
 - Read-only WebMCP tools: `search_family_members`, `get_family_member`. Registration is feature-detected. No supported WebMCP validation context was available during implementation; runtime contract validation is not claimed.
@@ -15,7 +15,9 @@ Vietnamese genealogy website built with React 19, Vinext, Tailwind, Base UI / sh
 
 `pnpm install`, then `pnpm dev --port 3000`.
 
-`pnpm exec tsc --noEmit` checks types. `node --experimental-strip-types --test tests/domain.test.mjs` checks search, genealogy integrity, layout scale, lunar conversion and anniversaries. `pnpm build` produces the Sites Worker artifact.
+`pnpm exec tsc --noEmit` checks types. `node --experimental-strip-types --test tests/domain.test.mjs` checks search, genealogy integrity, layout scale, lunar conversion and anniversaries. `pnpm build` produces the Vercel-ready Next.js build.
+
+Follow [FIREBASE_SETUP.md](FIREBASE_SETUP.md) to connect a Firebase project, secure Firestore, seed the family, and add the Vercel environment variables.
 
 ## Design inputs
 
