@@ -268,6 +268,7 @@ export function AdminPage() {
       <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <SheetContent className="editor-sheet">
           <SheetHeader>
+            <p className="sheet-kicker">Hồ sơ gia phả</p>
             <SheetTitle>
               {members.some((p) => p.id === editing?.id)
                 ? 'Cập nhật hồ sơ'

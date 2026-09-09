@@ -389,8 +389,8 @@ export function QuickView({
   onSelect: (p: Member) => void;
 }) {
   const mobile = useIsMobile();
-  const body = person && (
-    <>
+  const profile = person && (
+    <div className="quick-profile">
       <div className="quick-top">
         <Avatar person={person} large />
         <p>
@@ -398,8 +398,18 @@ export function QuickView({
           {person.died ? ` – ${person.died}` : ' · Còn sống'}
         </p>
       </div>
-      <Facts person={person} />
-      <FamilyRelations person={person} onSelect={onSelect} />
+      <section className="quick-info-section" aria-label="Thông tin gia phả">
+        <p className="quick-section-label">Thông tin gia phả</p>
+        <Facts person={person} />
+      </section>
+      <section className="quick-relations-section" aria-label="Quan hệ gia đình">
+        <p className="quick-section-label">Quan hệ gia đình</p>
+        <FamilyRelations person={person} onSelect={onSelect} />
+      </section>
+    </div>
+  );
+  const actions = person && (
+    <div className="quick-actions">
       <Button
         className="action-button w-full"
         render={<Link href={`/members/${person.id}`} />}
@@ -409,7 +419,7 @@ export function QuickView({
         Xem hồ sơ đầy đủ
         <ArrowRight />
       </Button>
-    </>
+    </div>
   );
   return mobile ? (
     <Drawer
@@ -419,18 +429,23 @@ export function QuickView({
       defaultSnapPoint={0.5}
       showSwipeHandle
     >
-      <DrawerContent>
+      <DrawerContent className="quick-drawer">
         <DrawerHeader>
+          <p className="sheet-kicker">Hồ sơ thành viên</p>
           <DrawerTitle>{person?.name}</DrawerTitle>
           <DrawerDescription>
             Đời {person?.generation} · {branchName(person?.branch || 0)}
           </DrawerDescription>
         </DrawerHeader>
         <div className="quick-scroll">
-          {body}
+          {profile}
+          {actions}
           <DrawerClose
             render={
-              <Button variant="outline" className="action-button w-full" />
+              <Button
+                variant="outline"
+                className="action-button quick-close w-full"
+              />
             }
           >
             Đóng
@@ -442,12 +457,16 @@ export function QuickView({
     <Sheet open={!!person} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="quick-sheet">
         <SheetHeader>
+          <p className="sheet-kicker">Hồ sơ thành viên</p>
           <SheetTitle>{person?.name}</SheetTitle>
           <SheetDescription>
             Đời {person?.generation} · {branchName(person?.branch || 0)}
           </SheetDescription>
         </SheetHeader>
-        <div className="quick-scroll">{body}</div>
+        <div className="quick-scroll">
+          {profile}
+          {actions}
+        </div>
       </SheetContent>
     </Sheet>
   );

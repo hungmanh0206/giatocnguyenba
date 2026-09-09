@@ -3645,3 +3645,449 @@ button:disabled,
     align-items: flex-start;
   }
 }
+
+/* Genealogy sheets share the quieter, archival surface used throughout the app. */
+.sheet-kicker {
+  margin: 0 0 7px;
+  color: #8b7049;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.editor-sheet,
+.quick-sheet {
+  background: #fffefa;
+  border-left: 1px solid #d8d1c4;
+  box-shadow: -18px 0 42px #382f2014;
+}
+
+.editor-sheet {
+  width: 550px !important;
+  max-width: 550px !important;
+}
+
+.editor-sheet [data-slot='sheet-header'],
+.quick-sheet [data-slot='sheet-header'] {
+  position: relative;
+  padding: 28px 28px 20px;
+  background: #fffdf8;
+  border-bottom: 1px solid #e2dbcf;
+}
+
+.editor-sheet [data-slot='sheet-header']::before,
+.quick-sheet [data-slot='sheet-header']::before {
+  position: absolute;
+  top: 0;
+  right: 28px;
+  left: 28px;
+  height: 3px;
+  content: '';
+  background: #8f2828;
+}
+
+.editor-sheet [data-slot='sheet-title'],
+.quick-sheet [data-slot='sheet-title'] {
+  color: #302d28;
+  font-size: 23px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.editor-sheet [data-slot='sheet-description'],
+.quick-sheet [data-slot='sheet-description'] {
+  margin-top: 5px;
+  color: #817a70;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.editor-sheet [data-slot='sheet-close'],
+.quick-sheet [data-slot='sheet-close'] {
+  top: 23px;
+  right: 20px;
+  border-radius: var(--radius-md);
+  color: #62594d;
+}
+
+.editor-sheet [data-slot='sheet-close']:hover,
+.quick-sheet [data-slot='sheet-close']:hover {
+  background: #f1ede5;
+  color: #7e2424;
+}
+
+.member-form {
+  background: #fffefa;
+}
+
+.form-scroll {
+  padding: 25px 28px 28px;
+  scrollbar-color: #a69c8d transparent;
+}
+
+.member-form h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 30px 0 18px;
+  padding-top: 25px;
+  border-color: #e4ddd2;
+  color: #3d3933;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.member-form h3::before {
+  width: 3px;
+  height: 18px;
+  border-radius: 99px;
+  content: '';
+  background: #b58a4b;
+}
+
+.member-form h3:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.member-form label {
+  margin-bottom: 18px;
+  color: #585248;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.member-form input,
+.member-form textarea,
+.member-form .choice {
+  border-color: #ded7ca;
+  border-radius: var(--radius-md);
+  background: #fffefa;
+  box-shadow: 0 1px 0 #382f2005;
+  color: #35312b;
+}
+
+.member-form input,
+.member-form .choice {
+  min-height: 46px;
+}
+
+.member-form textarea {
+  min-height: 116px;
+  padding-block: 11px;
+  resize: vertical;
+}
+
+.member-form input:hover,
+.member-form textarea:hover,
+.member-form .choice:hover {
+  border-color: #c8b899;
+}
+
+.member-form input:focus,
+.member-form textarea:focus,
+.member-form .choice:focus-within {
+  border-color: #a67d45;
+  box-shadow: 0 0 0 3px #b58a4b20;
+}
+
+.form-columns {
+  gap: 18px;
+}
+
+.form-actions {
+  gap: 10px;
+  padding: 17px 28px;
+  border-color: #e2dbcf;
+  background: #fffdf8;
+  box-shadow: 0 -8px 18px #382f2008;
+}
+
+.form-actions .action-button {
+  min-height: 44px;
+}
+
+.form-actions .action-button:last-child {
+  min-width: 142px;
+}
+
+.quick-sheet {
+  display: flex;
+  width: 418px !important;
+  max-width: 418px !important;
+  flex-direction: column;
+}
+
+.quick-sheet [data-slot='sheet-header'] {
+  padding-bottom: 19px;
+}
+
+.quick-scroll {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 0 28px;
+  background: #fffefa;
+  scrollbar-color: #a69c8d transparent;
+}
+
+.quick-profile {
+  padding: 24px 0 18px;
+}
+
+.quick-top {
+  position: relative;
+  margin: 0 0 24px;
+  padding: 0 0 20px;
+  gap: 9px;
+  border-bottom: 1px solid #e4ddd2;
+}
+
+.quick-top::after {
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  width: 42px;
+  height: 2px;
+  border-radius: 99px;
+  content: '';
+  background: #b58a4b;
+  transform: translateX(-50%);
+}
+
+.quick-top .avatar {
+  box-shadow: 0 0 0 7px #f3eadf;
+}
+
+.quick-top p {
+  color: #766e62;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.quick-section-label {
+  margin: 0 0 11px;
+  color: #8b7049;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.quick-info-section {
+  padding: 16px;
+  border: 1px solid #e4ddd2;
+  border-radius: var(--radius-lg);
+  background: #faf8f2;
+}
+
+.quick-info-section .person-facts {
+  gap: 11px;
+}
+
+.quick-info-section .person-facts > div {
+  display: grid;
+  grid-template-columns: minmax(88px, 0.75fr) minmax(0, 1.25fr);
+  gap: 14px;
+  font-size: 13px;
+  line-height: 1.38;
+}
+
+.quick-info-section .person-facts dt {
+  color: #857c70;
+}
+
+.quick-info-section .person-facts dd {
+  overflow-wrap: anywhere;
+  color: #3d3933;
+  font-weight: 600;
+}
+
+.quick-relations-section {
+  padding-top: 25px;
+}
+
+.quick-relations-section .family-relations {
+  display: block;
+  padding: 0;
+}
+
+.quick-relations-section .family-relations > section {
+  padding: 15px 0;
+  border-top: 1px solid #e4ddd2;
+}
+
+.quick-relations-section .family-relations > section:last-child {
+  padding-bottom: 4px;
+}
+
+.quick-relations-section .family-relations h3 {
+  margin: 0 0 8px;
+  color: #48423b;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.quick-relations-section .family-relations h3 small {
+  border-radius: 999px !important;
+  background: #eee8dc;
+  color: #8b7049;
+  font-size: 10px;
+}
+
+.quick-relations-section .family-relations .muted {
+  padding: 2px 0;
+  color: #898176;
+  font-size: 12px;
+}
+
+.quick-relations-section .relative-button {
+  margin: 0 -5px;
+  width: calc(100% + 10px);
+  padding: 10px 8px;
+  border-radius: var(--radius-md);
+  border-bottom: 0;
+}
+
+.quick-relations-section .relative-button:hover {
+  background: #f3eee5;
+}
+
+.quick-relations-section .relative-button strong {
+  color: #413c35;
+  font-weight: 600;
+}
+
+.quick-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin: auto -28px 0;
+  padding: 15px 28px 20px;
+  border-top: 1px solid #e2dbcf;
+  background: #fffdf8;
+  box-shadow: 0 -10px 18px #382f2008;
+}
+
+.quick-actions .action-button {
+  min-height: 46px;
+}
+
+.quick-drawer {
+  border: 1px solid #d8d1c4;
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
+  background: #fffefa;
+}
+
+.quick-drawer [data-slot='drawer-header'] {
+  position: relative;
+  padding: 14px 20px 17px;
+  border-bottom: 1px solid #e2dbcf;
+  text-align: left;
+}
+
+.quick-drawer [data-slot='drawer-title'] {
+  color: #302d28;
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.quick-drawer [data-slot='drawer-description'] {
+  margin-top: 4px;
+  color: #817a70;
+  font-size: 12px;
+}
+
+.quick-drawer .quick-scroll {
+  max-height: min(71dvh, 670px);
+  padding-inline: 20px;
+}
+
+.quick-drawer .quick-profile {
+  padding-top: 20px;
+}
+
+.quick-drawer .quick-actions {
+  position: static;
+  margin-inline: -20px;
+  padding: 15px 20px 10px;
+  box-shadow: none;
+}
+
+.quick-drawer .quick-close {
+  margin: 0 0 20px;
+}
+
+@media (max-width: 560px) {
+  .editor-sheet,
+  .quick-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .editor-sheet [data-slot='sheet-header'],
+  .quick-sheet [data-slot='sheet-header'] {
+    padding: 25px 20px 18px;
+  }
+
+  .editor-sheet [data-slot='sheet-header']::before,
+  .quick-sheet [data-slot='sheet-header']::before {
+    right: 20px;
+    left: 20px;
+  }
+
+  .editor-sheet [data-slot='sheet-title'],
+  .quick-sheet [data-slot='sheet-title'] {
+    font-size: 21px;
+  }
+
+  .form-scroll {
+    padding: 22px 20px 25px;
+  }
+
+  .form-actions {
+    padding: 15px 20px;
+  }
+
+  .quick-sheet .quick-scroll {
+    padding-inline: 20px;
+  }
+
+  .quick-sheet .quick-actions {
+    margin-inline: -20px;
+    padding-inline: 20px;
+  }
+
+  .quick-top {
+    display: flex !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .form-columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .form-actions .action-button:last-child {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .quick-info-section {
+    padding: 14px;
+  }
+
+  .quick-info-section .person-facts > div {
+    grid-template-columns: minmax(78px, 0.65fr) minmax(0, 1.35fr);
+    gap: 10px;
+    font-size: 12px;
+  }
+}
