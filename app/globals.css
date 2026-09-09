@@ -82,7 +82,7 @@ body {
   line-height: 1.6;
   background-color: #f4f1e9;
   background-image:
-    linear-gradient(#f7f5eedf, #f7f5eedf),
+    linear-gradient(#f8f7f2ec, #f8f7f2ec),
     url('/vietnamese-heritage-pattern.png');
   background-repeat: repeat;
   background-size: auto, 720px 720px;
@@ -553,6 +553,10 @@ h1 > span {
   max-width: 100px;
 }
 .home-main {
+  background: #fffefaf2;
+  border-bottom: 1px solid #e3dccf;
+}
+.home-main-inner {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 330px;
   gap: 42px;
@@ -959,7 +963,7 @@ h1 > span {
     padding-left: 32px;
     padding-right: 32px;
   }
-  .home-main {
+  .home-main-inner {
     gap: 28px;
     grid-template-columns: minmax(0, 1fr) 300px;
   }
@@ -1021,7 +1025,7 @@ h1 > span {
   .header-actions .admin-link span {
     display: inline;
   }
-  .home-main {
+  .home-main-inner {
     grid-template-columns: 1fr;
   }
   .section-heading > .text-link {
@@ -1167,7 +1171,7 @@ h1 > span {
   .stat svg {
     margin-right: 3px;
   }
-  .home-main {
+  .home-main-inner {
     padding-top: 28px;
     padding-bottom: 30px;
   }
@@ -3654,7 +3658,7 @@ button:disabled,
     padding-left: 16px;
   }
 
-  .home-main {
+  .home-main-inner {
     gap: 34px;
   }
 

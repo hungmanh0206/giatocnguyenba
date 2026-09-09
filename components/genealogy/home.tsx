@@ -214,8 +214,9 @@ export function HomePage() {
           ))}
         </div>
       </section>
-      <div className="container home-main">
-        <section className="tree-overview">
+      <section className="home-main">
+        <div className="container home-main-inner">
+          <section className="tree-overview">
           <div className="section-heading">
             <div>
               <div className="eyebrow">TỪ MỘT CỘI NGUỒN</div>
@@ -275,8 +276,8 @@ export function HomePage() {
               </span>
             </Link>
           </div>
-        </section>
-        <section className="anniversary-overview">
+          </section>
+          <section className="anniversary-overview">
           <div className="section-heading">
             <div>
               <div className="eyebrow">TƯỞNG NHỚ TIỀN NHÂN</div>
@@ -317,8 +318,9 @@ export function HomePage() {
             <br />
             đời đời ghi nhớ công ơn tổ tiên.
           </p>
-        </section>
-      </div>
+          </section>
+        </div>
+      </section>
       <section className="history-band">
         <div className="container history-teaser">
           <div className="history-number">
