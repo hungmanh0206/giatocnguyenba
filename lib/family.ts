@@ -318,6 +318,17 @@ export function relatives(members: Member[], person: Member) {
     ),
   };
 }
+
+export function removeMemberAndLinks(members: Member[], memberId: string) {
+  return members
+    .filter((member) => member.id !== memberId)
+    .map((member) => ({
+      ...member,
+      parents: member.parents.filter((id) => id !== memberId),
+      spouses: member.spouses.filter((id) => id !== memberId),
+    }));
+}
+
 export function validateMember(
   person: Member,
   members: Member[],

@@ -5,6 +5,7 @@ import {
   searchMembers,
   validateMember,
   relatives,
+  removeMemberAndLinks,
 } from '../lib/family.ts';
 import {
   collapsedDescendantGroups,
@@ -48,6 +49,23 @@ test('seed genealogy is valid and spouse links are symmetric', () => {
       seedMembers.find((p) => p.id === 'p7'),
     ).children.map((p) => p.id),
     ['p16', 'p18'],
+  );
+});
+test('removing a member also clears parent and spouse links', () => {
+  const nextMembers = removeMemberAndLinks(seedMembers, 'p3');
+
+  assert.equal(nextMembers.some((member) => member.id === 'p3'), false);
+  assert.deepEqual(
+    nextMembers.find((member) => member.id === 'p4')?.spouses,
+    [],
+  );
+  assert.deepEqual(
+    nextMembers.find((member) => member.id === 'p10')?.parents,
+    ['p4'],
+  );
+  assert.deepEqual(
+    nextMembers.find((member) => member.id === 'p12')?.parents,
+    ['p4'],
   );
 });
 test('validation rejects cycles, self-parenting and inconsistent edits to a parent', () => {

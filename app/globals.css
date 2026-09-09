@@ -4280,6 +4280,33 @@ button:disabled,
   }
 }
 
+/* Destructive actions are deliberately distinct but stay within the family UI palette. */
+.delete-member-button,
+.delete-profile-button {
+  color: #9b3131;
+}
+
+.delete-member-button:hover,
+.delete-profile-button:hover {
+  color: #812525;
+  background: #f8e9e6;
+}
+
+.delete-dialog [data-slot='alert-dialog-description'] {
+  max-width: 32rem;
+  line-height: 1.65;
+}
+
+.delete-confirm-button {
+  min-width: 132px;
+  background: #8e2f2f !important;
+  color: #fff !important;
+}
+
+.delete-confirm-button:hover {
+  background: #742424 !important;
+}
+
 /* Home page: give the record-rich areas enough scale to carry the desktop canvas. */
 .stat-copy {
   display: flex;
@@ -4924,5 +4951,120 @@ main#main:not(.tree-page) {
     padding: 10px 0 0;
     border-top: 1px solid #e5ddd1;
     border-left: 0;
+  }
+}
+
+/* Keep the mobile tree as a compact diagram and give the story room to breathe. */
+.story-copy h2 > span {
+  color: #8e2f2f;
+}
+
+@media (max-width: 767px) {
+  .tree-preview {
+    padding: 28px 10px 0;
+  }
+
+  .couple-line {
+    top: 88px;
+  }
+
+  .preview-branches {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    padding-top: 43px;
+  }
+
+  .preview-branches:before {
+    top: 22px;
+    right: 16%;
+    left: 16%;
+    height: auto;
+    border-top: 1px solid #b8afa0;
+    border-left: 0;
+  }
+
+  .preview-branches:after {
+    display: block;
+    top: 0;
+    left: 50%;
+    height: 22px;
+  }
+
+  .branch-preview {
+    min-height: 0;
+    padding: 8px 6px;
+  }
+
+  .branch-preview:before {
+    display: block;
+    top: -22px;
+    left: 50%;
+    height: 21px;
+  }
+
+  .branch-preview small {
+    font-size: 10px;
+  }
+
+  .branch-preview strong {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .branch-preview > .branch-preview-era {
+    display: block;
+    font-size: 10px;
+  }
+
+  .branch-preview > .branch-preview-meta {
+    display: none;
+  }
+
+  .history-band {
+    padding: 0;
+    background: #f1ecdf;
+  }
+
+  .history-teaser {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding-top: 46px;
+    padding-bottom: 48px;
+  }
+
+  .story-copy {
+    max-width: 34rem;
+  }
+
+  .story-copy .eyebrow {
+    margin-bottom: 12px;
+    color: #8e7652;
+    font-size: 11px;
+  }
+
+  .story-copy h2 {
+    max-width: none;
+    margin: 0 0 16px;
+    font-size: 29px;
+    line-height: 1.22;
+  }
+
+  .story-copy h2 > span {
+    display: block;
+  }
+
+  .story-copy p {
+    max-width: none;
+    margin-bottom: 20px;
+    color: #665e54;
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  .story-copy .text-link {
+    min-height: 44px;
+    padding: 0 2px;
+    font-size: 14px;
   }
 }

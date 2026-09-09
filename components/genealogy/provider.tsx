@@ -9,7 +9,12 @@ import {
   type ReactNode,
 } from 'react';
 import { canEditFamily, type FamilyRole } from '@/lib/access';
-import { seedMembers, validateMember, type Member } from '@/lib/family';
+import {
+  removeMemberAndLinks,
+  seedMembers,
+  validateMember,
+  type Member,
+} from '@/lib/family';
 import {
   firebaseConfigurationError,
   isFirebaseConfigured,
@@ -20,6 +25,7 @@ import {
   signOutFromFirebase,
 } from '@/lib/firebase/client';
 import {
+  deleteFirestoreMember,
   saveFirestoreMember,
   subscribeToFamilyMembers,
   subscribeToFamilyRole,
@@ -38,6 +44,7 @@ type FamilyContextValue = {
   members: Member[];
   connection: FamilyConnection;
   save: (person: Member) => Promise<string | null>;
+  remove: (memberId: string) => Promise<string | null>;
   reset: () => void;
   signIn: () => Promise<string | null>;
   signOut: () => Promise<void>;
@@ -54,6 +61,7 @@ const FamilyContext = createContext<FamilyContextValue>({
   members: seedMembers,
   connection: demoConnection,
   save: async () => null,
+  remove: async () => null,
   reset: () => {},
   signIn: async () => null,
   signOut: async () => {},
@@ -213,6 +221,32 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function remove(memberId: string) {
+    if (!members.some((member) => member.id === memberId)) {
+      return 'Hồ sơ này không còn tồn tại.';
+    }
+    if (firebaseConfigurationError) return firebaseConfigurationError;
+    if (!isFirebaseConfigured) {
+      setMembers((current) => removeMemberAndLinks(current, memberId));
+      return null;
+    }
+    if (!user) return 'Hãy đăng nhập tài khoản quản trị trước khi xóa.';
+    if (!canEditFamily(role)) {
+      return 'Tài khoản này không có quyền chỉnh sửa gia phả.';
+    }
+    if (connection.mode !== 'connected') {
+      return connection.message || 'Dữ liệu đang tải. Vui lòng thử lại sau ít phút.';
+    }
+
+    try {
+      const { db } = getFirebaseServices();
+      await deleteFirestoreMember(db, memberId);
+      return null;
+    } catch (error) {
+      return messageFor(error);
+    }
+  }
+
   async function signIn() {
     if (!isFirebaseConfigured) {
       return 'Firebase chưa được cấu hình trên môi trường này.';
@@ -236,6 +270,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         members,
         connection,
         save,
+        remove,
         reset: () => setMembers(seedMembers),
         signIn,
         signOut,

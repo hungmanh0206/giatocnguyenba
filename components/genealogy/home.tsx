@@ -402,9 +402,11 @@ export function HomePage() {
           <div className="history-number">
             01<span>CỘI NGUỒN</span>
           </div>
-          <div>
+          <div className="story-copy">
             <div className="eyebrow">NHỮNG CÂU CHUYỆN ĐƯỢC LƯU GIỮ</div>
-            <h2>Từ nếp nhà, thành dòng họ.</h2>
+            <h2>
+              Từ nếp nhà, <span>thành dòng họ.</span>
+            </h2>
             <p>
               Gia phả là nơi lưu lại tên tuổi, những mối dây thân thuộc và ký ức
               được trao truyền qua từng thế hệ.

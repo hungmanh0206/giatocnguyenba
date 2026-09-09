@@ -3,11 +3,15 @@ import {
   arrayUnion,
   collection,
   doc,
+  getDocs,
   onSnapshot,
+  query,
   runTransaction,
   serverTimestamp,
   type DocumentData,
   type Firestore,
+  where,
+  writeBatch,
 } from 'firebase/firestore';
 import { firebaseFamilyId } from './config';
 import { isFamilyRole, type FamilyRole } from '@/lib/access';
@@ -183,6 +187,38 @@ export async function saveFirestoreMember(db: Firestore, person: Member) {
       { merge: true },
     );
   });
+}
+
+export async function deleteFirestoreMember(db: Firestore, memberId: string) {
+  const members = collection(db, 'families', firebaseFamilyId, 'members');
+  const [parentSnapshots, spouseSnapshots] = await Promise.all([
+    getDocs(query(members, where('parents', 'array-contains', memberId))),
+    getDocs(query(members, where('spouses', 'array-contains', memberId))),
+  ]);
+  const related = new Map(
+    [...parentSnapshots.docs, ...spouseSnapshots.docs].map((snapshot) => [
+      snapshot.id,
+      snapshot,
+    ]),
+  );
+  const batch = writeBatch(db);
+
+  for (const snapshot of related.values()) {
+    const data = snapshot.data();
+    const update: Record<string, unknown> = {
+      updatedAt: serverTimestamp(),
+    };
+    if (ids(data.parents).includes(memberId)) {
+      update.parents = arrayRemove(memberId);
+    }
+    if (ids(data.spouses).includes(memberId)) {
+      update.spouses = arrayRemove(memberId);
+    }
+    batch.update(snapshot.ref, update);
+  }
+
+  batch.delete(memberRef(db, memberId));
+  await batch.commit();
 }
 
 export const firestoreMemberFieldNames = memberFields;

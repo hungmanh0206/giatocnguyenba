@@ -11,6 +11,7 @@ import {
   Copy,
   LockKeyhole,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,16 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useFamily } from './provider';
 import { Avatar } from './home';
 import {
@@ -45,12 +56,14 @@ const blank = (): Member => ({
   spouses: [],
 });
 export function AdminPage() {
-  const { members, save, connection, signIn } = useFamily();
+  const { members, save, remove, connection, signIn } = useFamily();
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<Member | null>(null);
+  const [deleting, setDeleting] = useState<Member | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deletingPending, setDeletingPending] = useState(false);
   const [authPending, setAuthPending] = useState(false);
   const filtered = searchMembers(members, query);
   function update<K extends keyof Member>(key: K, value: Member[K]) {
@@ -80,6 +93,33 @@ export function AdminPage() {
     const result = await signIn();
     setAuthPending(false);
     if (result) setError(result);
+  }
+
+  async function confirmDelete() {
+    if (!deleting) return;
+
+    setDeletingPending(true);
+    const result = await remove(deleting.id);
+    setDeletingPending(false);
+    if (result) {
+      setError(result);
+      return;
+    }
+
+    const relatedCount = members.filter(
+      (member) =>
+        member.id !== deleting.id &&
+        (member.parents.includes(deleting.id) ||
+          member.spouses.includes(deleting.id)),
+    ).length;
+    setSuccess(
+      relatedCount
+        ? `Đã xóa hồ sơ ${deleting.name} và gỡ ${relatedCount} liên kết gia đình.`
+        : `Đã xóa hồ sơ ${deleting.name}.`,
+    );
+    setEditing((current) => (current?.id === deleting.id ? null : current));
+    setDeleting(null);
+    setError('');
   }
 
   async function copyUid() {
@@ -194,6 +234,7 @@ export function AdminPage() {
           {success}
         </div>
       )}
+      {error && <p className="form-error" role="alert">{error}</p>}
       <div className="filter-bar">
         <SearchBox query={query} setQuery={setQuery} />
         <span className="muted">{filtered.length} hồ sơ</span>
@@ -249,6 +290,19 @@ export function AdminPage() {
                       }}
                     >
                       <Pencil size={17} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="icon-button delete-member-button"
+                      title={`Xóa ${p.name}`}
+                      aria-label={`Xóa ${p.name}`}
+                      onClick={() => {
+                        setDeleting(p);
+                        setError('');
+                        setSuccess('');
+                      }}
+                    >
+                      <Trash2 size={17} />
                     </Button>
                     <Link
                       className="icon-button"
@@ -501,6 +555,20 @@ export function AdminPage() {
                 )}
               </div>
               <div className="form-actions">
+                {members.some((person) => person.id === editing.id) && (
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    className="action-button delete-profile-button"
+                    onClick={() => {
+                      setDeleting(editing);
+                      setError('');
+                    }}
+                  >
+                    <Trash2 />
+                    Xóa hồ sơ
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   type="button"
@@ -522,6 +590,35 @@ export function AdminPage() {
           )}
         </SheetContent>
       </Sheet>
+      <AlertDialog
+        open={!!deleting}
+        onOpenChange={(open) => {
+          if (!open && !deletingPending) setDeleting(null);
+        }}
+      >
+        <AlertDialogContent className="delete-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Xóa hồ sơ {deleting?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Hồ sơ sẽ bị xóa vĩnh viễn. Các liên kết cha mẹ và vợ/chồng liên
+              quan cũng sẽ được gỡ khỏi gia phả.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="delete-confirm-button"
+              disabled={deletingPending}
+              onClick={() => void confirmDelete()}
+            >
+              <Trash2 />
+              {deletingPending ? 'Đang xóa...' : 'Xóa hồ sơ'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
