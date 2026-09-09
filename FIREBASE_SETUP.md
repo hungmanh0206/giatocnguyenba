@@ -2,7 +2,7 @@
 
 The app uses Cloud Firestore for genealogy data and Firebase Authentication for access control. It does not allow public writes.
 
-1. In the [Firebase console](https://console.firebase.google.com/), create a project, register a Web app, enable Cloud Firestore in production mode, and enable Google sign-in in Authentication.
+1. In the [Firebase console](https://console.firebase.google.com/), create a project, register a Web app, enable Cloud Firestore in production mode, and enable Google sign-in in Authentication. In Authentication > Settings > Authorized domains, add `giatocnguyenba.vercel.app` before using Google login on the production site.
 2. Copy the web app configuration into `.env.local` from `.env.example`. In Vercel, create the same `NEXT_PUBLIC_FIREBASE_*` variables for Production, Preview, and Development.
 3. Run `pnpm firebase:login`, copy `.firebaserc.example` to `.firebaserc`, replace its project ID, then run `pnpm firebase:deploy:rules` to deploy the Firestore rules and indexes.
 4. Sign in once through the website with the Google account that will own the family. Find that account's UID in Firebase Authentication, then create a Firebase service-account JSON in Project settings > Service accounts.
