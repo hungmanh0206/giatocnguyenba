@@ -337,7 +337,7 @@ export function MemberDetail({ id }: { id: string }) {
           </Button>
         </div>
         <div className="profile-layout">
-          <aside>
+          <aside className="profile-info-panel">
             <h3>Thông tin gia phả</h3>
             <Facts person={p} />
             <div className="sample-note">Hồ sơ minh họa · Dữ liệu mẫu</div>
@@ -355,7 +355,7 @@ export function MemberDetail({ id }: { id: string }) {
               </Link>
             )}
           </aside>
-          <div>
+          <div className="profile-content-panel">
             <Tabs defaultValue="family">
               <TabsList variant="line" className="profile-tabs">
                 <TabsTrigger value="family">Quan hệ gia đình</TabsTrigger>

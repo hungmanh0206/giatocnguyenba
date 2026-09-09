@@ -5518,6 +5518,127 @@ main#main:not(.tree-page) {
   }
 }
 
+/* The heritage pattern remains visible around a member profile, while facts stay on calm reading surfaces. */
+.profile-layout {
+  align-items: start;
+}
+
+.profile-layout > .profile-info-panel {
+  border: 1px solid #e0d7c8;
+  border-radius: var(--radius-lg);
+  padding: 26px;
+  background: #fffefaf2;
+  box-shadow: 0 8px 22px #3d2e1708;
+}
+
+.profile-layout > .profile-info-panel > h3 {
+  margin-bottom: 20px;
+  color: #35312b;
+}
+
+.profile-layout > .profile-info-panel .person-facts {
+  gap: 0;
+  border-top: 1px solid #e8e0d4;
+}
+
+.profile-layout > .profile-info-panel .person-facts > div {
+  padding: 12px 0;
+  border-bottom: 1px solid #eee7dc;
+}
+
+.profile-layout > .profile-info-panel .person-facts dd {
+  color: #35312b;
+  font-weight: 600;
+}
+
+.profile-layout > .profile-info-panel .sample-note {
+  margin-top: 15px;
+}
+
+.profile-layout > .profile-info-panel .memorial-link {
+  margin-top: 20px;
+  border: 1px solid #eadfce;
+  background: #faf5ec;
+}
+
+.profile-content-panel {
+  min-width: 0;
+  border: 1px solid #e0d7c8;
+  border-radius: var(--radius-lg);
+  padding: 0 28px;
+  background: #fffefaf2;
+  box-shadow: 0 8px 22px #3d2e1708;
+}
+
+.profile-content-panel .profile-tabs {
+  background: transparent;
+}
+
+.profile-content-panel .family-relations {
+  padding: 26px 0 28px;
+}
+
+.profile-content-panel .family-relations > section {
+  min-width: 0;
+}
+
+.profile-content-panel .family-relations h3 {
+  color: #35312b;
+}
+
+.profile-content-panel .family-relations .member-tile {
+  border-color: #e5ddd1;
+  border-radius: var(--radius-md);
+  background: #fffefa;
+  box-shadow: 0 2px 7px #3d2e1705;
+}
+
+.profile-content-panel .family-relations .member-tile:hover {
+  border-color: #ceb996;
+  background: #fffdf8;
+}
+
+.profile-content-panel .family-relations .muted {
+  color: #746d64;
+}
+
+.profile-content-panel .biography {
+  padding-bottom: 28px;
+}
+
+@media (max-width: 900px) {
+  .profile-layout > .profile-info-panel {
+    padding: 24px;
+  }
+
+  .profile-content-panel {
+    padding: 0 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .profile-layout > .profile-info-panel {
+    padding: 20px;
+    border-bottom: 1px solid #e0d7c8;
+  }
+
+  .profile-layout > .profile-info-panel .person-facts {
+    gap: 0 18px;
+  }
+
+  .profile-layout > .profile-info-panel .person-facts > div {
+    padding: 13px 0;
+  }
+
+  .profile-content-panel {
+    padding: 0 20px;
+  }
+
+  .profile-content-panel .family-relations {
+    padding: 20px 0 22px;
+  }
+}
+
 /* The home hero keeps its reading column calm; the cultural artwork stays on the right. */
 .home-hero {
   background-color: #f7f3e9;
