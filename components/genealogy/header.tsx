@@ -10,13 +10,13 @@ import {
   Settings2,
   ChevronRight,
   LogOut,
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFamily } from './provider';
 const navigation = [
   ['/', 'Trang chủ'],
   ['/family-tree', 'Cây gia phả'],
-  ['/members', 'Thành viên'],
   ['/lunar-calendar', 'Lịch âm & ngày giỗ'],
   ['/history', 'Lịch sử dòng họ'],
 ];
@@ -55,11 +55,18 @@ export function Header() {
                 {label}
               </Link>
             ))}
+            <Link
+              className="mobile-admin-link"
+              href="/admin"
+              onClick={() => setOpen(false)}
+            >
+              <Settings2 size={17} /> Quản trị
+            </Link>
           </nav>
           <div className="header-actions">
             <Link
               className="icon-button"
-              href="/members"
+              href="/family-tree?view=list"
               title="Tìm thành viên"
               aria-label="Tìm thành viên"
             >
@@ -78,13 +85,22 @@ export function Header() {
               </Button>
             )}
             <Link
-              className="admin-link"
+              className="admin-link admin-access"
               href="/admin"
               aria-label="Khu vực quản trị"
               title="Khu vực quản trị"
             >
               <Settings2 size={17} />
-              <span>Quản trị</span>
+            </Link>
+            <Link
+              className="header-tree-link"
+              href="/family-tree"
+              title="Khám phá cây gia phả"
+              aria-label="Khám phá cây gia phả"
+            >
+              <GitFork size={17} />
+              <span>Khám phá cây</span>
+              <ArrowRight size={15} />
             </Link>
             <Button
               className="icon-button mobile-menu"

@@ -56,6 +56,15 @@ export function MembersPage() {
   const [generation, setGeneration] = useState('all');
   const [view, setView] = useState('grid');
   const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Member | null>(null);
+  const generationCount = members.length
+    ? Math.max(...members.map((person) => person.generation))
+    : 0;
+  const branchCount = new Set(
+    members
+      .filter((person) => person.branch > 0)
+      .map((person) => person.branch),
+  ).size;
   useEffect(() => {
     setPage(1);
   }, [query, branch, generation]);
@@ -74,17 +83,19 @@ export function MembersPage() {
           <div>
             <div className="eyebrow">NHỮNG NGƯỜI CHUNG CỘI NGUỒN</div>
             <h1>Thành viên dòng họ</h1>
-            <p>{members.length} thành viên · 5 thế hệ · 3 chi</p>
+            <p>
+              {members.length} thành viên · {generationCount} thế hệ ·{' '}
+              {branchCount} chi
+            </p>
           </div>
-          <Button
-            variant="outline"
-            className="action-button"
-            render={<Link href="/family-tree" />}
-            nativeButton={false}
-          >
-            <GitFork />
-            Xem cây gia phả
-          </Button>
+          <nav className="family-mode-switch" aria-label="Chế độ xem gia phả">
+            <Link href="/family-tree">
+              <GitFork size={16} /> Sơ đồ
+            </Link>
+            <Link className="active" href="/family-tree?view=list">
+              <List size={16} /> Danh sách
+            </Link>
+          </nav>
         </div>
         <div className="filter-bar">
           <SearchBox query={query} setQuery={setQuery} />
@@ -99,7 +110,7 @@ export function MembersPage() {
             value={generation}
             onChange={setGeneration}
             options={generationOptions.filter(
-              (o) => o.value === 'all' || Number(o.value) <= 5,
+              (o) => o.value === 'all' || Number(o.value) <= generationCount,
             )}
           />
           <div className="view-toggle">
@@ -142,10 +153,11 @@ export function MembersPage() {
         ) : (
           <div className={`member-results ${view}`}>
             {filtered.slice((page - 1) * 12, page * 12).map((p) => (
-              <Link
-                href={`/members/${p.id}`}
+              <button
+                type="button"
                 className={`person-card branch-${p.branch}`}
                 key={p.id}
+                onClick={() => setSelected(p)}
               >
                 <div className="person-card-top">
                   <Avatar person={p} />
@@ -162,7 +174,7 @@ export function MembersPage() {
                   </span>
                   <ArrowRight size={17} />
                 </div>
-              </Link>
+              </button>
             ))}
           </div>
         )}
@@ -192,6 +204,12 @@ export function MembersPage() {
           </div>
         )}
       </div>
+      <QuickView
+        person={selected}
+        onClose={() => setSelected(null)}
+        onSelect={setSelected}
+        nonModal
+      />
       <Footer />
     </main>
   );
@@ -385,10 +403,12 @@ export function QuickView({
   person,
   onClose,
   onSelect,
+  nonModal = false,
 }: {
   person: Member | null;
   onClose: () => void;
   onSelect: (p: Member) => void;
+  nonModal?: boolean;
 }) {
   const mobile = useIsMobile();
   const profile = person && (
@@ -410,23 +430,11 @@ export function QuickView({
       </section>
     </div>
   );
-  const actions = person && (
-    <div className="quick-actions">
-      <Button
-        className="action-button w-full"
-        render={<Link href={`/members/${person.id}`} />}
-        nativeButton={false}
-      >
-        <UserRound />
-        Xem hồ sơ đầy đủ
-        <ArrowRight />
-      </Button>
-    </div>
-  );
   return mobile ? (
     <Drawer
       open={!!person}
       onOpenChange={(o) => !o && onClose()}
+      modal={!nonModal}
       snapPoints={[0.5, 0.9]}
       defaultSnapPoint={0.5}
       showSwipeHandle
@@ -441,7 +449,6 @@ export function QuickView({
         </DrawerHeader>
         <div className="quick-scroll">
           {profile}
-          {actions}
           <DrawerClose
             render={
               <Button
@@ -456,8 +463,8 @@ export function QuickView({
       </DrawerContent>
     </Drawer>
   ) : (
-    <Sheet open={!!person} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="quick-sheet">
+    <Sheet open={!!person} onOpenChange={(o) => !o && onClose()} modal={!nonModal}>
+      <SheetContent className="quick-sheet" showOverlay={!nonModal}>
         <SheetHeader>
           <p className="sheet-kicker">Hồ sơ thành viên</p>
           <SheetTitle>{person?.name}</SheetTitle>
@@ -467,7 +474,6 @@ export function QuickView({
         </SheetHeader>
         <div className="quick-scroll">
           {profile}
-          {actions}
         </div>
       </SheetContent>
     </Sheet>

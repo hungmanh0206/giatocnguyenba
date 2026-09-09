@@ -1,9 +1,5 @@
-import { MembersPage } from '@/components/genealogy/members';
-import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
+
 export default function Page() {
-  return (
-    <Suspense fallback={<main id="main" className="container page-space" />}>
-      <MembersPage />
-    </Suspense>
-  );
+  redirect('/family-tree?view=list');
 }
