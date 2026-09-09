@@ -333,6 +333,9 @@ export function validateMember(
   person: Member,
   members: Member[],
 ): string | null {
+  if (person.gender !== 'male' && person.gender !== 'female') {
+    return 'Vui lòng chọn giới tính.';
+  }
   if (
     !Number.isInteger(person.generation) ||
     person.generation < 1 ||
@@ -341,7 +344,7 @@ export function validateMember(
     person.branch < 0 ||
     person.branch > 3
   )
-    return 'Đời hoặc chi chưa hợp lệ.';
+    return 'Vui lòng chọn đời và chi.';
   if (!person.name.trim()) return 'Vui lòng nhập họ và tên.';
   if (
     !Number.isInteger(person.born) ||

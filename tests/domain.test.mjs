@@ -70,6 +70,14 @@ test('removing a member also clears parent and spouse links', () => {
 });
 test('validation rejects cycles, self-parenting and inconsistent edits to a parent', () => {
   const root = seedMembers[0];
+  assert.equal(
+    validateMember({ ...root, gender: '' }, seedMembers),
+    'Vui lòng chọn giới tính.',
+  );
+  assert.equal(
+    validateMember({ ...root, generation: 0 }, seedMembers),
+    'Vui lòng chọn đời và chi.',
+  );
   assert.ok(validateMember({ ...root, parents: ['p19'] }, seedMembers));
   assert.ok(validateMember({ ...root, parents: [root.id] }, seedMembers));
   assert.ok(validateMember({ ...root, born: 1910 }, seedMembers));

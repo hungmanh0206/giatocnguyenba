@@ -49,10 +49,10 @@ import { canManageFamily } from '@/lib/access';
 const blank = (): Member => ({
   id: crypto.randomUUID(),
   name: '',
-  gender: 'male',
-  generation: 5,
-  branch: 1,
-  born: 2000,
+  gender: '' as Member['gender'],
+  generation: 0,
+  branch: -1,
+  born: 0,
   parents: [],
   spouses: [],
 });
@@ -350,12 +350,18 @@ export function AdminPage() {
                 </label>
                 <div className="form-columns">
                   <label>
-                    Giới tính
+                    Giới tính <span>*</span>
                     <Choice
                       label="Giới tính"
-                      value={editing.gender}
-                      onChange={(v) => update('gender', v as Member['gender'])}
+                      value={editing.gender || 'unselected'}
+                      onChange={(v) =>
+                        update(
+                          'gender',
+                          (v === 'unselected' ? '' : v) as Member['gender'],
+                        )
+                      }
                       options={[
+                        { value: 'unselected', label: 'Chọn giới tính' },
                         { value: 'male', label: 'Nam' },
                         { value: 'female', label: 'Nữ' },
                       ]}
@@ -368,8 +374,10 @@ export function AdminPage() {
                       type="number"
                       min={1600}
                       max={new Date().getFullYear()}
-                      value={editing.born}
-                      onChange={(e) => update('born', Number(e.target.value))}
+                      value={editing.born || ''}
+                      onChange={(e) =>
+                        update('born', e.target.value ? Number(e.target.value) : 0)
+                      }
                     />
                   </label>
                 </div>
@@ -383,23 +391,37 @@ export function AdminPage() {
                 </label>
                 <div className="form-columns">
                   <label>
-                    Đời
+                    Đời <span>*</span>
                     <Choice
                       label="Đời"
-                      value={String(editing.generation)}
-                      onChange={(v) => update('generation', Number(v))}
-                      options={generationOptions.filter(
-                        (o) => o.value !== 'all',
-                      )}
+                      value={
+                        editing.generation > 0
+                          ? String(editing.generation)
+                          : 'unselected'
+                      }
+                      onChange={(v) =>
+                        update('generation', v === 'unselected' ? 0 : Number(v))
+                      }
+                      options={[
+                        { value: 'unselected', label: 'Chọn đời' },
+                        ...generationOptions.filter((o) => o.value !== 'all'),
+                      ]}
                     />
                   </label>
                   <label>
-                    Chi
+                    Chi <span>*</span>
                     <Choice
                       label="Chi"
-                      value={String(editing.branch)}
-                      onChange={(v) => update('branch', Number(v))}
-                      options={branchOptions.filter((o) => o.value !== 'all')}
+                      value={
+                        editing.branch >= 0 ? String(editing.branch) : 'unselected'
+                      }
+                      onChange={(v) =>
+                        update('branch', v === 'unselected' ? -1 : Number(v))
+                      }
+                      options={[
+                        { value: 'unselected', label: 'Chọn chi' },
+                        ...branchOptions.filter((o) => o.value !== 'all'),
+                      ]}
                     />
                   </label>
                 </div>
