@@ -4309,6 +4309,10 @@ main#main:not(.tree-page) {
   background-size: auto, 780px 780px;
 }
 
+.home-anniversary-band {
+  background: #fffefa;
+}
+
 /* The family summary belongs to the hero, not to a separate full-width section. */
 .hero-summary {
   display: grid;
@@ -4429,7 +4433,7 @@ main#main:not(.tree-page) {
   position: relative;
   width: 260px;
   height: 176px;
-  overflow: visible;
+  overflow: hidden;
   border: 1px solid #ded6c8;
   border-top: 1px solid #ded6c8;
   border-radius: 18px;
@@ -4447,9 +4451,9 @@ main#main:not(.tree-page) {
 
 .tree-person::before {
   position: absolute;
-  top: -1px;
-  right: -1px;
-  left: -1px;
+  top: 0;
+  right: 0;
+  left: 0;
   height: 4px;
   border-radius: 18px 18px 0 0;
   background: #99712f;
@@ -5479,7 +5483,6 @@ main#main:not(.tree-page) {
   background-size: auto, 840px 840px;
 }
 
-.home-anniversary-band,
 .history-band {
   background-color: #f7f3e9;
   background-image:
@@ -5492,5 +5495,260 @@ main#main:not(.tree-page) {
 @media (max-width: 767px) {
   main#main:not(.tree-page) {
     background-size: auto, 600px 600px;
+  }
+}
+
+/* The tree canvas carries the same motif at low contrast, behind the interactive graph. */
+.tree-canvas {
+  background-color: #f5f3eb;
+  background-image:
+    linear-gradient(#f5f3ebc9, #f5f3ebc9),
+    url('/vietnamese-heritage-pattern.png');
+  background-repeat: repeat;
+  background-size: auto, 600px 600px;
+}
+
+.tree-canvas .react-flow__background {
+  opacity: 0.56;
+}
+
+@media (max-width: 767px) {
+  .tree-canvas {
+    background-size: auto, 540px 540px;
+  }
+}
+
+/* The home hero keeps its reading column calm; the cultural artwork stays on the right. */
+.home-hero {
+  background-color: #f7f3e9;
+  background-image:
+    linear-gradient(90deg, #f7f3e9 0%, #f7f3e9 40%, #f7f3e9f5 59%, #f7f3e9d9 100%),
+    url('/vietnamese-heritage-pattern.png');
+  background-repeat: no-repeat, repeat;
+  background-size: auto, 760px 760px;
+}
+
+.home-hero .heritage-art {
+  right: 0 !important;
+  left: auto !important;
+  width: min(48vw, 940px) !important;
+  opacity: 0.56;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, transparent 12%, #000 52%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, transparent 12%, #000 52%, #000 100%);
+}
+
+.home-hero .hero-content {
+  position: relative;
+  padding-top: 58px;
+  padding-bottom: 46px;
+}
+
+.home-hero .hero-content > p {
+  max-width: 560px;
+}
+
+.home-hero .hero-actions {
+  margin-bottom: 25px;
+}
+
+.hero-utility {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 38px;
+  align-items: center;
+  gap: 11px;
+  margin-top: 12px;
+  color: #665d51;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.4;
+}
+
+.hero-utility-item {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.hero-utility-item > svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  color: #9b7541;
+}
+
+.hero-utility-divider {
+  width: 1px;
+  height: 16px;
+  flex: 0 0 auto;
+  background: #d9cfbe;
+}
+
+.hero-utility-time {
+  color: #3b3028;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.home-stats-band {
+  border-bottom: 1px solid #e2d8c8;
+  background: #fffefa;
+}
+
+.home-stats-band .container {
+  padding-top: 26px;
+  padding-bottom: 26px;
+}
+
+.home-quick-stats {
+  display: grid;
+  min-height: 70px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid #e5dccd;
+  border-radius: 14px;
+  background: #fffdf9;
+  box-shadow: 0 4px 12px #3d2e1707;
+}
+
+.home-quick-stat {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 20px;
+}
+
+.home-quick-stat + .home-quick-stat {
+  border-left: 1px solid #eae3d7;
+}
+
+.home-quick-stat > svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: #a08b67;
+}
+
+.home-quick-stat > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.home-quick-stat strong {
+  color: #302a24;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.home-quick-stat span {
+  margin-top: 3px;
+  overflow: hidden;
+  color: #7b7063;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .home-hero .heritage-art {
+    width: 64vw !important;
+    opacity: 0.34;
+  }
+}
+
+@media (min-width: 561px) and (max-width: 767px) {
+  .hero-utility {
+    width: fit-content;
+    flex-wrap: nowrap;
+  }
+
+  .hero-utility-item:first-child {
+    flex-basis: auto;
+  }
+
+  .hero-utility-divider:first-of-type {
+    display: block;
+  }
+}
+
+@media (max-width: 767px) {
+  .home-hero {
+    background-image:
+      linear-gradient(#f7f3e9e8, #f7f3e9e8),
+      url('/vietnamese-heritage-pattern.png');
+    background-size: auto, 560px 560px;
+  }
+
+  .home-hero .heritage-art {
+    width: 100% !important;
+    opacity: 0.17;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, transparent 25%, #000 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, transparent 25%, #000 100%);
+  }
+
+  .home-hero .hero-content {
+    padding-top: 34px;
+    padding-bottom: 32px;
+  }
+
+  .hero-utility {
+    width: 100%;
+    flex-wrap: wrap;
+    column-gap: 10px;
+    row-gap: 7px;
+    margin-top: 13px;
+    font-size: 11px;
+  }
+
+  .hero-utility-item:first-child {
+    flex-basis: 100%;
+  }
+
+  .hero-utility-divider:first-of-type {
+    display: none;
+  }
+
+  .home-stats-band .container {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .home-quick-stats {
+    min-height: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-quick-stat {
+    gap: 9px;
+    padding: 12px 14px;
+  }
+
+  .home-quick-stat:nth-child(3) {
+    border-left: 0;
+  }
+
+  .home-quick-stat:nth-child(n + 3) {
+    border-top: 1px solid #eae3d7;
+  }
+
+  .home-quick-stat > svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .home-quick-stat strong {
+    font-size: 20px;
+  }
+
+  .home-quick-stat span {
+    font-size: 11px;
   }
 }

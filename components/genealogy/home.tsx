@@ -83,10 +83,9 @@ function VietnamClock() {
         timeZone: 'Asia/Ho_Chi_Minh',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit',
         hourCycle: 'h23',
       }).format(now)
-    : '--:--:--';
+    : '--:--';
   const solarDate = now
     ? new Intl.DateTimeFormat('vi-VN', {
         timeZone: 'Asia/Ho_Chi_Minh',
@@ -99,33 +98,24 @@ function VietnamClock() {
   const lunar = now ? lunarOf(vietnamDate(now)) : null;
 
   return (
-    <div className="hero-clock" aria-live="polite">
-      <div className="clock-dates">
-        <div className="clock-date">
-          <CalendarDays aria-hidden="true" />
-          <span>
-            <small>Dương lịch</small>
-            <strong>{solarDate}</strong>
-          </span>
-        </div>
-        <div className="clock-date">
-          <MoonStar aria-hidden="true" />
-          <span>
-            <small>Âm lịch</small>
-            <strong>
-              {lunar
-                ? `Ngày ${lunar.day} tháng ${lunar.month}${lunar.leap ? ' nhuận' : ''}, năm ${getYearCanChi(lunar.year)}`
-                : 'Đang cập nhật ngày âm'}
-            </strong>
-          </span>
-        </div>
-      </div>
-      <time className="clock-time" dateTime={now?.toISOString()}>
-        <Clock3 aria-hidden="true" />
+    <div className="hero-utility" aria-live="polite">
+      <span className="hero-utility-item">
+        <CalendarDays aria-hidden="true" />
+        <span>{solarDate}</span>
+      </span>
+      <span className="hero-utility-divider" aria-hidden="true" />
+      <span className="hero-utility-item">
+        <MoonStar aria-hidden="true" />
         <span>
-          <strong>{displayTime}</strong>
-          <small>Giờ hiện tại · Việt Nam</small>
+          {lunar
+            ? `${lunar.day}/${lunar.month}${lunar.leap ? ' nhuận' : ''} ${getYearCanChi(lunar.year)}`
+            : 'Đang cập nhật ngày âm'}
         </span>
+      </span>
+      <span className="hero-utility-divider" aria-hidden="true" />
+      <time className="hero-utility-item hero-utility-time" dateTime={now?.toISOString()}>
+        <Clock3 aria-hidden="true" />
+        <span>{displayTime}</span>
       </time>
     </div>
   );
@@ -161,7 +151,7 @@ function getBranchSummary(person: Member, members: Member[]) {
 }
 
 export function HomePage() {
-  const { members, connection } = useFamily();
+  const { members } = useFamily();
   const [query, setQuery] = useState('');
   const found = searchMembers(members, query).slice(0, 4);
   const [today] = useState(vietnamToday);
@@ -261,17 +251,13 @@ export function HomePage() {
             )}
           </div>
           <VietnamClock />
-          <div className="sample-note">
-            <span />
-            {connection.mode === 'demo'
-              ? 'Gia phả minh họa · Dữ liệu mẫu'
-              : connection.mode === 'connected'
-                ? 'Đang đồng bộ từ Firestore'
-                : connection.message || 'Đang kết nối gia phả'}
-          </div>
-          <div className="hero-summary" aria-label="Tổng quan về dòng họ">
+        </div>
+      </section>
+      <section className="home-stats-band" aria-label="Tổng quan về dòng họ">
+        <div className="container">
+          <div className="home-quick-stats">
             {stats.map((stat) => (
-              <div className="hero-summary-item" key={stat.label}>
+              <div className="home-quick-stat" key={stat.label}>
                 <stat.icon aria-hidden="true" />
                 <div>
                   <strong>{stat.value}</strong>
