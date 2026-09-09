@@ -4292,19 +4292,136 @@ button:disabled,
   background: #f8e9e6;
 }
 
+.delete-dialog {
+  width: min(100% - 32px, 460px) !important;
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid #ded4c6;
+  border-radius: 20px !important;
+  padding: 0 !important;
+  background: #fffdf8;
+  box-shadow: 0 20px 54px #35281f2e, 0 4px 14px #35281f14;
+}
+
+.delete-dialog-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 14px !important;
+  padding: 24px 24px 21px;
+  text-align: left !important;
+}
+
+.delete-dialog-icon {
+  width: 44px !important;
+  height: 44px !important;
+  margin: 0 !important;
+  flex: 0 0 44px;
+  border: 1px solid #efd4cb;
+  border-radius: 14px !important;
+  background: #faece7 !important;
+  color: #983333;
+}
+
+.delete-dialog-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.delete-dialog-copy {
+  min-width: 0;
+}
+
+.delete-dialog-kicker {
+  margin: 1px 0 5px;
+  color: #9d5948;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  line-height: 1.35;
+}
+
+.delete-dialog [data-slot='alert-dialog-title'] {
+  color: #302b26;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
 .delete-dialog [data-slot='alert-dialog-description'] {
-  max-width: 32rem;
-  line-height: 1.65;
+  max-width: 34rem;
+  margin-top: 7px;
+  color: #71675d;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.delete-dialog-footer {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 16px 24px 20px !important;
+  border-top: 1px solid #e8e0d4 !important;
+  border-radius: 0 !important;
+  background: #faf7f0 !important;
+}
+
+.delete-cancel-button,
+.delete-confirm-button {
+  min-height: 42px;
+  padding-inline: 16px;
+}
+
+.delete-cancel-button {
+  min-width: 78px;
+  border-color: #ded6ca !important;
+  background: #fffdf9 !important;
+  color: #554d44 !important;
+}
+
+.delete-cancel-button:hover {
+  border-color: #cfc4b4 !important;
+  background: #f4eee4 !important;
 }
 
 .delete-confirm-button {
-  min-width: 132px;
+  min-width: 152px;
   background: #8e2f2f !important;
   color: #fff !important;
 }
 
 .delete-confirm-button:hover {
   background: #742424 !important;
+}
+
+@media (max-width: 480px) {
+  .delete-dialog-header {
+    gap: 12px !important;
+    padding: 21px 20px 18px;
+  }
+
+  .delete-dialog-icon {
+    width: 40px !important;
+    height: 40px !important;
+    flex-basis: 40px;
+  }
+
+  .delete-dialog [data-slot='alert-dialog-title'] {
+    font-size: 19px;
+  }
+
+  .delete-dialog-footer {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr);
+    padding: 14px 20px 18px !important;
+  }
+
+  .delete-cancel-button,
+  .delete-confirm-button {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 /* Home page: give the record-rich areas enough scale to carry the desktop canvas. */

@@ -32,6 +32,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogMedia,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useFamily } from './provider';
@@ -597,24 +598,35 @@ export function AdminPage() {
         }}
       >
         <AlertDialogContent className="delete-dialog">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Xóa hồ sơ {deleting?.name}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Hồ sơ sẽ bị xóa vĩnh viễn. Các liên kết cha mẹ và vợ/chồng liên
-              quan cũng sẽ được gỡ khỏi gia phả.
-            </AlertDialogDescription>
+          <AlertDialogHeader className="delete-dialog-header">
+            <AlertDialogMedia className="delete-dialog-icon">
+              <Trash2 />
+            </AlertDialogMedia>
+            <div className="delete-dialog-copy">
+              <p className="delete-dialog-kicker">THAO TÁC KHÔNG THỂ HOÀN TÁC</p>
+              <AlertDialogTitle>
+                Xóa hồ sơ {deleting?.name}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Hồ sơ và các dữ liệu ghi chú sẽ bị xóa. Những liên kết cha mẹ,
+                vợ/chồng liên quan cũng được gỡ khỏi gia phả.
+              </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingPending}>Hủy</AlertDialogCancel>
+          <AlertDialogFooter className="delete-dialog-footer">
+            <AlertDialogCancel
+              className="delete-cancel-button"
+              disabled={deletingPending}
+            >
+              Hủy
+            </AlertDialogCancel>
             <AlertDialogAction
               className="delete-confirm-button"
               disabled={deletingPending}
               onClick={() => void confirmDelete()}
             >
               <Trash2 />
-              {deletingPending ? 'Đang xóa...' : 'Xóa hồ sơ'}
+              {deletingPending ? 'Đang xóa...' : 'Xóa vĩnh viễn'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
