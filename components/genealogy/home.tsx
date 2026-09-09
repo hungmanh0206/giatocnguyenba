@@ -200,9 +200,9 @@ export function HomePage() {
 
     return [
       { icon: Users, value: members.length, label: 'Thành viên' },
-      { icon: Layers3, value: generations, label: 'Thế hệ tiếp nối' },
-      { icon: GitFork, value: branches || 3, label: 'Chi trong dòng họ' },
-      { icon: BookOpen, value: founderYear, label: 'Khởi đầu gia phả' },
+      { icon: Layers3, value: generations, label: 'Thế hệ' },
+      { icon: GitFork, value: branches || 3, label: 'Chi họ' },
+      { icon: BookOpen, value: founderYear, label: 'Khởi nguồn' },
     ];
   }, [members]);
   return (
@@ -269,19 +269,17 @@ export function HomePage() {
                 ? 'Đang đồng bộ từ Firestore'
                 : connection.message || 'Đang kết nối gia phả'}
           </div>
-        </div>
-      </section>
-      <section className="stats-band">
-        <div className="container stats-grid">
-          {stats.map((s) => (
-            <div className="stat" key={s.label}>
-              <s.icon />
-              <div className="stat-copy">
-                <strong>{s.value}</strong>
-                <span>{s.label}</span>
+          <div className="hero-summary" aria-label="Tổng quan về dòng họ">
+            {stats.map((stat) => (
+              <div className="hero-summary-item" key={stat.label}>
+                <stat.icon aria-hidden="true" />
+                <div>
+                  <strong>{stat.value}</strong>
+                  <span>{stat.label}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
       <section className="home-tree-band">
