@@ -4091,3 +4091,119 @@ button:disabled,
     font-size: 12px;
   }
 }
+
+.profile-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 23px;
+}
+
+.profile-summary {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .profile-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 10px 0 25px;
+  }
+
+  .profile-identity {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 58px minmax(0, 1fr);
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .profile-hero .profile-summary {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .profile-hero h1 {
+    margin: 5px 0 7px;
+    font-size: 27px;
+    line-height: 1.18;
+  }
+
+  .profile-hero p {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    line-height: 1.45;
+  }
+
+  .profile-hero p > span {
+    align-items: flex-start;
+  }
+
+  .profile-tree-button {
+    width: 100% !important;
+    min-height: 46px;
+    margin-left: 0 !important;
+    justify-content: center;
+  }
+
+  .profile-layout {
+    padding-top: 24px;
+  }
+
+  .profile-layout > aside {
+    padding-bottom: 27px;
+    border-bottom: 0;
+  }
+
+  .profile-layout > aside > h3 {
+    margin-bottom: 16px;
+    color: #35312b;
+    font-size: 18px;
+  }
+
+  .profile-layout > aside .person-facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 18px;
+    border-top: 1px solid #e4ddd2;
+  }
+
+  .profile-layout > aside .person-facts > div {
+    display: block;
+    min-width: 0;
+    padding: 13px 0;
+    border-bottom: 1px solid #e9e3d9;
+  }
+
+  .profile-layout > aside .person-facts .fact-hometown {
+    grid-column: 1 / -1;
+  }
+
+  .profile-layout > aside .person-facts dt {
+    margin-bottom: 4px;
+    color: #8a8175;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .profile-layout > aside .person-facts dd {
+    overflow-wrap: anywhere;
+    color: #35312b;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+    text-align: left;
+  }
+
+  .profile-layout > aside .sample-note {
+    margin-top: 15px;
+  }
+
+  .profile-layout > aside .memorial-link {
+    max-width: none;
+    margin-top: 18px;
+    padding: 15px;
+  }
+}

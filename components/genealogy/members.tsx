@@ -266,7 +266,7 @@ function Facts({ person }: { person: Member }) {
           Đời {person.generation} · {branchName(person.branch)}
         </dd>
       </div>
-      <div>
+      <div className="fact-hometown">
         <dt>Quê quán</dt>
         <dd>{person.hometown || 'Chưa cập nhật'}</dd>
       </div>
@@ -309,24 +309,26 @@ export function MemberDetail({ id }: { id: string }) {
           <ArrowLeft size={17} /> Thành viên dòng họ
         </Link>
         <div className="profile-hero">
-          <Avatar person={p} large />
-          <div>
-            <div className="eyebrow">
-              ĐỜI THỨ {p.generation} ·{' '}
-              {branchName(p.branch).toLocaleUpperCase('vi')}
+          <div className="profile-identity">
+            <Avatar person={p} large />
+            <div className="profile-summary">
+              <div className="eyebrow">
+                ĐỜI THỨ {p.generation} ·{' '}
+                {branchName(p.branch).toLocaleUpperCase('vi')}
+              </div>
+              <h1>{p.name}</h1>
+              <p>
+                {p.born}
+                {p.died ? ` – ${p.died}` : ' · Còn sống'}
+                <span>
+                  <MapPin size={15} />
+                  {p.hometown || 'Chưa cập nhật quê quán'}
+                </span>
+              </p>
             </div>
-            <h1>{p.name}</h1>
-            <p>
-              {p.born}
-              {p.died ? ` – ${p.died}` : ' · Còn sống'}
-              <span>
-                <MapPin size={15} />
-                {p.hometown || 'Chưa cập nhật quê quán'}
-              </span>
-            </p>
           </div>
           <Button
-            className="action-button"
+            className="action-button profile-tree-button"
             render={<Link href={`/family-tree?person=${id}`} />}
             nativeButton={false}
           >
