@@ -2,15 +2,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import {
-  GitFork,
-  Menu,
-  X,
-  Settings2,
-  ChevronRight,
-  LogOut,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { HeritageIcon } from './heritage-icon';
 import { useFamily } from './provider';
 const navigation = [
   ['/', 'Trang chủ'],
@@ -32,7 +26,7 @@ export function Header() {
         <div className="header-inner">
           <Link href="/" className="brand" onClick={() => setOpen(false)}>
             <span className="brand-mark">
-              <GitFork size={25} />
+              <HeritageIcon name="tree" size={25} />
             </span>
             <span>
               <small>GIA PHẢ DÒNG HỌ</small>
@@ -66,7 +60,7 @@ export function Header() {
                 title={`Đăng xuất ${connection.user.email || connection.user.displayName || ''}`}
                 aria-label="Đăng xuất"
               >
-                <LogOut size={18} />
+                <HeritageIcon name="logout" size={18} />
               </Button>
             )}
             <Link
@@ -75,7 +69,7 @@ export function Header() {
               aria-label="Khu vực quản trị"
               title="Khu vực quản trị"
             >
-              <Settings2 size={17} />
+              <HeritageIcon name="settings" size={17} />
               <span>Quản trị</span>
             </Link>
             <Button
@@ -87,7 +81,7 @@ export function Header() {
               aria-label={open ? 'Đóng menu' : 'Mở menu'}
               aria-expanded={open}
             >
-              {open ? <X /> : <Menu />}
+              {open ? <X /> : <HeritageIcon name="list" size={21} />}
             </Button>
           </div>
         </div>
@@ -100,12 +94,12 @@ export function Footer() {
     <footer className="site-footer">
       <div className="container footer-inner">
         <div className="brand">
-          <GitFork size={23} />
+          <HeritageIcon name="tree" size={23} />
           <strong>Họ Nguyễn Bá</strong>
         </div>
         <span>Gìn giữ cội nguồn · Kết nối thế hệ</span>
         <Link href="/history">
-          Về dòng họ <ChevronRight size={15} />
+          Về dòng họ <HeritageIcon name="next" size={15} />
         </Link>
       </div>
     </footer>

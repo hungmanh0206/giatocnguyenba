@@ -5,21 +5,12 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { isSameMonth } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import {
-  Calendar as CalendarIcon,
-  ChevronRight,
-  Clock3,
-  Compass,
-  Flower2,
-  GitFork,
-  Sparkles,
-  Stars,
-} from 'lucide-react';
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFamily } from './provider';
 import { Footer } from './header';
+import { HeritageIcon } from './heritage-icon';
 import { Avatar } from './home';
 import { Choice, branchOptions } from './common';
 import { branchName } from '@/lib/family';
@@ -89,7 +80,7 @@ export function LunarPage() {
               setSelected(today);
             }}
           >
-            <CalendarIcon />
+            <HeritageIcon name="today" size={20} />
             Hôm nay
           </Button>
         </div>
@@ -204,7 +195,7 @@ export function LunarPage() {
 
                 <section className="day-traditional">
                   <h3>
-                    <Sparkles size={17} /> Lịch truyền thống
+                    <HeritageIcon name="family-record" size={17} /> Lịch truyền thống
                   </h3>
                   <Tabs
                     defaultValue="overview"
@@ -257,7 +248,7 @@ export function LunarPage() {
                       <div className="hour-groups">
                         <div>
                           <h4>
-                            <Clock3 size={15} /> Giờ Hoàng Đạo
+                            <HeritageIcon name="time" size={15} /> Giờ Hoàng Đạo
                           </h4>
                           <div className="chip-row">
                             {info.goodHours.map((hour) => (
@@ -277,7 +268,7 @@ export function LunarPage() {
 
                       <div className="trad-subsection direction-section">
                         <h4>
-                          <Compass size={15} /> Hướng xuất hành
+                          <HeritageIcon name="location" size={15} /> Hướng xuất hành
                         </h4>
                         <div className="direction-row">
                           <span>
@@ -330,7 +321,7 @@ export function LunarPage() {
                       {info.traditional.festivals.length > 0 && (
                         <div className="festival-list">
                           <h4>
-                            <Stars size={15} /> Ngày lễ
+                            <HeritageIcon name="favorite" size={15} /> Ngày lễ
                           </h4>
                           {info.traditional.festivals.map((festival) => (
                             <span key={festival.id}>{festival.name}</span>
@@ -343,7 +334,7 @@ export function LunarPage() {
 
                 <section className="day-events">
                   <h3>
-                    <Flower2 size={18} /> Ngày giỗ{' '}
+                    <HeritageIcon name="memorial" size={18} /> Ngày giỗ{' '}
                     {events.length > 0 && `(${events.length})`}
                   </h3>
                   {events.length ? (
@@ -364,7 +355,7 @@ export function LunarPage() {
                             aria-label={`Xem ${event.person.name} trên cây`}
                             href={`/family-tree?person=${event.person.id}`}
                           >
-                            <GitFork size={19} />
+                            <HeritageIcon name="tree" size={19} />
                           </Link>
                         </div>
                       ) : null,
@@ -426,7 +417,7 @@ export function LunarPage() {
                             {isApproximate ? ' · Tháng thiếu' : ''}
                           </em>
                         </span>
-                        <ChevronRight size={17} />
+                        <HeritageIcon name="next" size={17} />
                       </button>,
                     ]
                   : [],

@@ -1,12 +1,6 @@
 import Link from 'next/link';
-import {
-  ArrowRight,
-  BookOpen,
-  GitFork,
-  MapPin,
-  ScrollText,
-} from 'lucide-react';
 import { Footer } from '@/components/genealogy/header';
+import { HeritageIcon } from '@/components/genealogy/heritage-icon';
 export default function Page() {
   return (
     <main id="main">
@@ -19,7 +13,7 @@ export default function Page() {
           </h1>
           <p>Những thế hệ nối tiếp. Những giá trị còn mãi.</p>
           <span className="history-location">
-            <MapPin size={17} /> Thôn Quảng Trường, xã Quảng Chính, tỉnh Thanh Hóa
+            <HeritageIcon name="location" size={17} /> Thôn Quảng Trường, xã Quảng Chính, tỉnh Thanh Hóa
           </span>
         </div>
       </section>
@@ -41,7 +35,7 @@ export default function Page() {
         </aside>
         <article className="history-article">
           <div className="notice">
-            <ScrollText size={20} />
+            <HeritageIcon name="history" size={20} />
             <p>
               Đây là câu chuyện minh họa cho website. Tên người, niên đại và quê
               quán cần được thay bằng tư liệu đã xác minh của dòng họ.
@@ -62,7 +56,7 @@ export default function Page() {
               thân và nhớ về những người đã đi trước.
             </p>
             <Link className="text-link" href="/members/p1">
-              Hồ sơ vị khởi tổ <ArrowRight size={16} />
+              Hồ sơ vị khởi tổ <HeritageIcon name="next" size={16} />
             </Link>
           </section>
           <section id="generations">
@@ -136,19 +130,19 @@ export default function Page() {
             </p>
             <div className="record-links">
               <Link href="/family-tree">
-                <GitFork />
+                <HeritageIcon name="tree" size={20} />
                 <span>
                   Cây gia phả<small>Khám phá quan hệ giữa các thế hệ</small>
                 </span>
-                <ArrowRight />
+                <HeritageIcon name="next" size={20} />
               </Link>
               <Link href="/members">
-                <BookOpen />
+                <HeritageIcon name="history" size={20} />
                 <span>
                   Danh sách thành viên
                   <small>Hồ sơ của từng người trong dòng họ</small>
                 </span>
-                <ArrowRight />
+                <HeritageIcon name="next" size={20} />
               </Link>
             </div>
           </section>

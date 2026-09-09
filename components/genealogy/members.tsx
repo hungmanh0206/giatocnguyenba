@@ -2,18 +2,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import {
-  ArrowLeft,
-  ArrowRight,
-  GitFork,
-  MapPin,
-  Flower2,
-  LayoutGrid,
-  List,
-  ChevronLeft,
-  ChevronRight,
-  UserRound,
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -35,6 +23,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useFamily } from './provider';
 import { Avatar, MemberTile } from './home';
 import { Footer } from './header';
+import { HeritageIcon } from './heritage-icon';
 import {
   Choice,
   branchOptions,
@@ -82,7 +71,7 @@ export function MembersPage() {
             render={<Link href="/family-tree" />}
             nativeButton={false}
           >
-            <GitFork />
+            <HeritageIcon name="tree" size={19} />
             Xem cây gia phả
           </Button>
         </div>
@@ -111,7 +100,7 @@ export function MembersPage() {
               title="Dạng thẻ"
               onClick={() => setView('grid')}
             >
-              <LayoutGrid />
+              <HeritageIcon name="grid" size={18} />
             </Button>
             <Button
               variant={view === 'list' ? 'secondary' : 'ghost'}
@@ -121,7 +110,7 @@ export function MembersPage() {
               title="Danh sách"
               onClick={() => setView('list')}
             >
-              <List />
+              <HeritageIcon name="list" size={18} />
             </Button>
           </div>
         </div>
@@ -158,9 +147,9 @@ export function MembersPage() {
                 </p>
                 <div className="person-card-bottom">
                   <span>
-                    <UserRound size={14} /> Đời thứ {p.generation}
+                    <HeritageIcon name="profile" size={14} /> Đời thứ {p.generation}
                   </span>
-                  <ArrowRight size={17} />
+                  <HeritageIcon name="next" size={17} />
                 </div>
               </Link>
             ))}
@@ -175,7 +164,7 @@ export function MembersPage() {
               aria-label="Trang trước"
               onClick={() => setPage((p) => p - 1)}
             >
-              <ChevronLeft />
+              <HeritageIcon name="previous" size={18} />
             </Button>
             <span>
               Trang {page} / {total}
@@ -187,7 +176,7 @@ export function MembersPage() {
               aria-label="Trang sau"
               onClick={() => setPage((p) => p + 1)}
             >
-              <ChevronRight />
+              <HeritageIcon name="next" size={18} />
             </Button>
           </div>
         )}
@@ -235,7 +224,7 @@ export function FamilyRelations({
                       Đời {p.generation} · {p.born}
                     </small>
                   </span>
-                  <ChevronRight size={16} />
+                  <HeritageIcon name="next" size={16} />
                 </button>
               ) : (
                 <MemberTile person={p} key={p.id} />
@@ -298,7 +287,7 @@ export function MemberDetail({ id }: { id: string }) {
           description="Hồ sơ có thể không tồn tại trong bản gia phả hiện tại."
         />
         <Link className="text-link" href="/members">
-          <ArrowLeft size={16} /> Về danh sách thành viên
+          <HeritageIcon name="previous" size={16} /> Về danh sách thành viên
         </Link>
       </main>
     );
@@ -306,7 +295,7 @@ export function MemberDetail({ id }: { id: string }) {
     <main id="main">
       <div className="container page-space">
         <Link className="back-link" href="/members">
-          <ArrowLeft size={17} /> Thành viên dòng họ
+          <HeritageIcon name="previous" size={17} /> Thành viên dòng họ
         </Link>
         <div className="profile-hero">
           <div className="profile-identity">
@@ -321,7 +310,7 @@ export function MemberDetail({ id }: { id: string }) {
                 {p.born}
                 {p.died ? ` – ${p.died}` : ' · Còn sống'}
                 <span>
-                  <MapPin size={15} />
+                  <HeritageIcon name="location" size={15} />
                   {p.hometown || 'Chưa cập nhật quê quán'}
                 </span>
               </p>
@@ -332,7 +321,7 @@ export function MemberDetail({ id }: { id: string }) {
             render={<Link href={`/family-tree?person=${id}`} />}
             nativeButton={false}
           >
-            <GitFork />
+            <HeritageIcon name="tree" size={19} />
             Xem trên cây
           </Button>
         </div>
@@ -346,12 +335,12 @@ export function MemberDetail({ id }: { id: string }) {
                 className="memorial-link"
                 href={`/lunar-calendar?person=${id}`}
               >
-                <Flower2 />
+                <HeritageIcon name="memorial" size={20} />
                 <span>
                   Ngày giỗ {p.anniversary.day}/{p.anniversary.month} âm lịch
                   <small>Xem ngày dương lịch tương ứng</small>
                 </span>
-                <ArrowRight size={17} />
+                <HeritageIcon name="next" size={17} />
               </Link>
             )}
           </aside>
@@ -417,9 +406,9 @@ export function QuickView({
         render={<Link href={`/members/${person.id}`} />}
         nativeButton={false}
       >
-        <UserRound />
+        <HeritageIcon name="profile" size={20} />
         Xem hồ sơ đầy đủ
-        <ArrowRight />
+        <HeritageIcon name="next" size={20} />
       </Button>
     </div>
   );

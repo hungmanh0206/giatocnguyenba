@@ -13,13 +13,6 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
-  Plus,
-  Minus,
-  Scan,
-  Maximize,
-  Minimize,
-  GitFork,
-  RotateCcw,
   ChevronDown,
   ChevronUp,
   X,
@@ -27,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useFamily } from './provider';
 import { Avatar } from './home';
+import { HeritageIcon } from './heritage-icon';
 import { QuickView } from './members';
 import { Choice, branchOptions, generationOptions, SearchBox } from './common';
 import {
@@ -329,7 +323,7 @@ function TreeCanvas() {
     >
       <div className="tree-toolbar">
         <div className="tree-title">
-          <GitFork size={22} />
+          <HeritageIcon name="tree" size={22} />
           <div>
             <h1>Cây gia phả</h1>
             <small>Họ Nguyễn Bá · {members.length} thành viên</small>
@@ -386,7 +380,7 @@ function TreeCanvas() {
           aria-label="Đặt lại chế độ xem"
           onClick={reset}
         >
-          <RotateCcw />
+          <HeritageIcon name="reset" size={19} />
         </Button>
       </div>
       <div className="tree-canvas">
@@ -444,7 +438,7 @@ function TreeCanvas() {
             title="Thu nhỏ"
             aria-label="Thu nhỏ"
           >
-            <Minus />
+            <HeritageIcon name="zoom-out" size={19} />
           </Button>
           <output>{Math.round(zoom * 100)}%</output>
           <Button
@@ -454,7 +448,7 @@ function TreeCanvas() {
             title="Phóng to"
             aria-label="Phóng to"
           >
-            <Plus />
+            <HeritageIcon name="zoom-in" size={19} />
           </Button>
           <span />
           <Button
@@ -464,7 +458,7 @@ function TreeCanvas() {
             title="Vừa màn hình"
             aria-label="Vừa màn hình"
           >
-            <Scan />
+            <HeritageIcon name="fit-view" size={19} />
           </Button>
           <span />
           <Button
@@ -504,7 +498,7 @@ function TreeCanvas() {
             title="Toàn màn hình"
             aria-label="Toàn màn hình"
           >
-            {full ? <Minimize /> : <Maximize />}
+            <HeritageIcon name="open-link" size={19} />
           </Button>
         </div>
         {(branch !== 'all' || generation !== 'all') && (

@@ -1,18 +1,6 @@
 'use client';
 import { useState, type FormEvent } from 'react';
-import {
-  Plus,
-  Pencil,
-  Save,
-  Info,
-  Check,
-  ArrowUpRight,
-  LogIn,
-  Copy,
-  LockKeyhole,
-  ShieldCheck,
-  Trash2,
-} from 'lucide-react';
+import { Check } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useFamily } from './provider';
 import { Avatar } from './home';
+import { HeritageIcon } from './heritage-icon';
 import {
   Choice,
   SearchBox,
@@ -147,7 +136,7 @@ export function AdminPage() {
           </div>
         </div>
         <div className="notice">
-          {needsLogin ? <LockKeyhole size={20} /> : <ShieldCheck size={20} />}
+          <HeritageIcon name="security" size={20} />
           <div>
             <p>
               {connection.mode === 'demo'
@@ -172,7 +161,7 @@ export function AdminPage() {
               onClick={() => void login()}
               disabled={authPending}
             >
-              <LogIn size={16} />
+              <HeritageIcon name="login" size={16} />
               {authPending ? 'Đang mở...' : 'Đăng nhập Google'}
             </Button>
           )}
@@ -182,7 +171,7 @@ export function AdminPage() {
               variant="outline"
               onClick={() => void copyUid()}
             >
-              <Copy size={16} />
+              <HeritageIcon name="link" size={16} />
               Sao chép UID
             </Button>
           )}
@@ -215,12 +204,12 @@ export function AdminPage() {
             setSuccess('');
           }}
         >
-          <Plus />
+          <HeritageIcon name="add-member" size={20} />
           Thêm thành viên
         </Button>
       </div>
       <div className="notice">
-        <Info size={20} />
+        <HeritageIcon name="info" size={20} />
         <p>
           {connection.mode === 'demo'
             ? 'Chế độ dùng thử. Thay đổi chỉ có hiệu lực trong phiên này và sẽ mất khi tải lại trang.'
@@ -290,7 +279,7 @@ export function AdminPage() {
                         setSuccess('');
                       }}
                     >
-                      <Pencil size={17} />
+                      <HeritageIcon name="edit" size={17} />
                     </Button>
                     <Button
                       variant="ghost"
@@ -303,7 +292,7 @@ export function AdminPage() {
                         setSuccess('');
                       }}
                     >
-                      <Trash2 size={17} />
+                      <HeritageIcon name="delete" size={17} />
                     </Button>
                     <Link
                       className="icon-button"
@@ -311,7 +300,7 @@ export function AdminPage() {
                       aria-label={`Mở hồ sơ ${p.name}`}
                       href={`/members/${p.id}`}
                     >
-                      <ArrowUpRight size={17} />
+                      <HeritageIcon name="open-link" size={17} />
                     </Link>
                   </td>
                 </tr>
@@ -588,7 +577,7 @@ export function AdminPage() {
                       setError('');
                     }}
                   >
-                    <Trash2 />
+                    <HeritageIcon name="delete" size={19} />
                     Xóa hồ sơ
                   </Button>
                 )}
@@ -605,7 +594,7 @@ export function AdminPage() {
                   className="action-button"
                   disabled={saving}
                 >
-                  <Save />
+                  <HeritageIcon name="backup" size={19} />
                   {saving ? 'Đang lưu...' : 'Lưu hồ sơ'}
                 </Button>
               </div>
@@ -622,7 +611,7 @@ export function AdminPage() {
         <AlertDialogContent className="delete-dialog">
           <AlertDialogHeader className="delete-dialog-header">
             <AlertDialogMedia className="delete-dialog-icon">
-              <Trash2 />
+              <HeritageIcon name="delete" size={19} />
             </AlertDialogMedia>
             <div className="delete-dialog-copy">
               <p className="delete-dialog-kicker">THAO TÁC KHÔNG THỂ HOÀN TÁC</p>
@@ -647,7 +636,7 @@ export function AdminPage() {
               disabled={deletingPending}
               onClick={() => void confirmDelete()}
             >
-              <Trash2 />
+              <HeritageIcon name="delete" size={19} />
               {deletingPending ? 'Đang xóa...' : 'Xóa vĩnh viễn'}
             </AlertDialogAction>
           </AlertDialogFooter>

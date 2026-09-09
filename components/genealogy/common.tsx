@@ -1,5 +1,5 @@
 'use client';
-import { Search, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { HeritageIcon } from './heritage-icon';
 export function Choice({
   value,
   onChange,
@@ -64,7 +65,7 @@ export function SearchBox({
 }) {
   return (
     <div className="search-box">
-      <Search size={19} />
+      <HeritageIcon name="search" size={19} />
       <Input
         aria-label={placeholder}
         placeholder={placeholder}
@@ -95,7 +96,7 @@ export function EmptyState({
 }) {
   return (
     <div className="empty-state">
-      <Search size={30} />
+      <HeritageIcon name="search" size={30} />
       <h3>{title}</h3>
       <p>{description}</p>
       {onReset && (

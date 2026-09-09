@@ -2,21 +2,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  ArrowRight,
-  Search,
-  GitFork,
-  Users,
-  Layers3,
-  Flower2,
-  BookOpen,
-  ChevronRight,
-  MapPin,
-  CalendarDays,
-  MoonStar,
-  Clock3,
-} from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { HeritageIcon, type HeritageIconName } from './heritage-icon';
 import { useFamily } from './provider';
 import { Footer } from './header';
 import { branchName, initials, searchMembers, type Member } from '@/lib/family';
@@ -53,7 +40,7 @@ export function MemberTile({ person }: { person: Member }) {
           Đời {person.generation} · {branchName(person.branch)}
         </small>
       </span>
-      <ChevronRight size={17} />
+      <HeritageIcon name="next" size={17} />
     </Link>
   );
 }
@@ -100,12 +87,12 @@ function VietnamClock() {
   return (
     <div className="hero-utility" aria-live="polite">
       <span className="hero-utility-item">
-        <CalendarDays aria-hidden="true" />
+        <HeritageIcon name="calendar" size={16} />
         <span>{solarDate}</span>
       </span>
       <span className="hero-utility-divider" aria-hidden="true" />
       <span className="hero-utility-item">
-        <MoonStar aria-hidden="true" />
+        <HeritageIcon name="time" size={16} />
         <span>
           {lunar
             ? `${lunar.day}/${lunar.month}${lunar.leap ? ' nhuận' : ''} ${getYearCanChi(lunar.year)}`
@@ -114,7 +101,7 @@ function VietnamClock() {
       </span>
       <span className="hero-utility-divider" aria-hidden="true" />
       <time className="hero-utility-item hero-utility-time" dateTime={now?.toISOString()}>
-        <Clock3 aria-hidden="true" />
+        <HeritageIcon name="timeline" size={16} />
         <span>{displayTime}</span>
       </time>
     </div>
@@ -189,11 +176,11 @@ export function HomePage() {
     const founderYear = founderYears.length ? Math.min(...founderYears) : 1872;
 
     return [
-      { icon: Users, value: members.length, label: 'Thành viên' },
-      { icon: Layers3, value: generations, label: 'Thế hệ' },
-      { icon: GitFork, value: branches || 3, label: 'Chi họ' },
-      { icon: BookOpen, value: founderYear, label: 'Khởi nguồn' },
-    ];
+      { icon: 'members', value: members.length, label: 'Thành viên' },
+      { icon: 'generations', value: generations, label: 'Thế hệ' },
+      { icon: 'branch', value: branches || 3, label: 'Chi họ' },
+      { icon: 'history', value: founderYear, label: 'Khởi nguồn' },
+    ] satisfies { icon: HeritageIconName; label: string; value: number }[];
   }, [members]);
   return (
     <main id="main">
@@ -220,16 +207,16 @@ export function HomePage() {
           </p>
           <div className="hero-actions">
             <Link className="action-button hero-tree-link" href="/family-tree">
-              <GitFork />
+              <HeritageIcon name="tree" size={20} />
               Khám phá cây gia phả
-              <ArrowRight />
+              <HeritageIcon name="next" size={18} />
             </Link>
             <Link className="text-link" href="/history">
-              Lịch sử dòng họ <ArrowRight size={17} />
+              Lịch sử dòng họ <HeritageIcon name="next" size={17} />
             </Link>
           </div>
           <div className="hero-search">
-            <Search size={21} />
+            <HeritageIcon name="search" size={21} />
             <Input
               aria-label="Tìm người thân"
               placeholder="Tìm người thân trong gia phả…"
@@ -245,7 +232,7 @@ export function HomePage() {
                   <p>Không tìm thấy thành viên phù hợp.</p>
                 )}
                 <Link href={`/members?q=${encodeURIComponent(query)}`}>
-                  Xem tất cả kết quả <ArrowRight size={16} />
+                  Xem tất cả kết quả <HeritageIcon name="next" size={16} />
                 </Link>
               </div>
             )}
@@ -258,7 +245,7 @@ export function HomePage() {
           <div className="home-quick-stats">
             {stats.map((stat) => (
               <div className="home-quick-stat" key={stat.label}>
-                <stat.icon aria-hidden="true" />
+                <HeritageIcon name={stat.icon} size={18} />
                 <div>
                   <strong>{stat.value}</strong>
                   <span>{stat.label}</span>
@@ -277,12 +264,12 @@ export function HomePage() {
               <h2>Các thế hệ trong dòng họ</h2>
             </div>
             <Link className="text-link" href="/family-tree">
-              Toàn bộ gia phả <ArrowRight size={17} />
+              Toàn bộ gia phả <HeritageIcon name="next" size={17} />
             </Link>
           </div>
           <div className="tree-preview">
             <span className="preview-label">
-              <GitFork size={15} /> Sơ đồ khởi tổ
+              <HeritageIcon name="tree" size={15} /> Sơ đồ khởi tổ
             </span>
             <div className="root-couple">
               {members
@@ -317,7 +304,7 @@ export function HomePage() {
                     <span className="branch-preview-era">Đời thứ 2</span>
                     <span className="branch-preview-meta">
                       {descendants} hậu duệ · {generations} thế hệ
-                      <ArrowRight size={16} />
+                      <HeritageIcon name="next" size={16} />
                     </span>
                   </Link>
                 ))}
@@ -334,7 +321,7 @@ export function HomePage() {
               <div className="eyebrow">TƯỞNG NHỚ TIỀN NHÂN</div>
               <h2>Ngày giỗ sắp tới</h2>
             </div>
-            <Flower2 className="muted-icon" />
+            <HeritageIcon className="muted-icon" name="memorial" size={21} />
           </div>
           <div className="anniversary-list">
             {upcoming.map(({ person: p, daysAway }) => (
@@ -358,13 +345,13 @@ export function HomePage() {
                     Âm lịch ·{' '}
                     {daysAway === 0 ? 'Hôm nay' : `Còn ${daysAway} ngày`}
                   </span>
-                  <ChevronRight size={17} />
+                  <HeritageIcon name="next" size={17} />
                 </span>
               </Link>
             ))}
           </div>
           <Link className="calendar-link" href="/lunar-calendar">
-            Xem lịch âm & ngày giỗ <ArrowRight size={17} />
+            Xem lịch âm & ngày giỗ <HeritageIcon name="next" size={17} />
           </Link>
           <p className="quiet-note">
             Uống nước nhớ nguồn,
@@ -389,15 +376,15 @@ export function HomePage() {
               được trao truyền qua từng thế hệ.
             </p>
             <Link className="text-link" href="/history">
-              Đọc lịch sử dòng họ <ArrowRight size={17} />
+              Đọc lịch sử dòng họ <HeritageIcon name="next" size={17} />
             </Link>
           </div>
           <div className="heritage-seal">
-            <BookOpen size={30} />
+            <HeritageIcon name="history" size={30} />
             <span>GIA PHẢ</span>
             <strong>Nguyễn Bá</strong>
             <small>
-              <MapPin size={13} /> Thôn Quảng Trường, Quảng Chính, Thanh Hóa
+              <HeritageIcon name="location" size={13} /> Thôn Quảng Trường, Quảng Chính, Thanh Hóa
             </small>
           </div>
         </div>

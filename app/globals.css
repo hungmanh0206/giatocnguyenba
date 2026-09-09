@@ -230,6 +230,12 @@ small {
 svg {
   flex-shrink: 0;
 }
+.heritage-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  object-fit: contain;
+  vertical-align: middle;
+}
 .container {
   max-width: 1380px;
   margin: auto;
@@ -2561,6 +2567,9 @@ h1 > span {
 .notice svg {
   margin-top: 2px;
 }
+.notice .heritage-icon {
+  margin-top: 2px;
+}
 .history-timeline {
   margin: 30px 0 0 6px;
   border-left: 1px solid #d9cab0;
@@ -3080,6 +3089,9 @@ h1 > span {
     font-size: 10px;
   }
   .tree-title > svg {
+    display: none;
+  }
+  .tree-title > .heritage-icon {
     display: none;
   }
   .tree-search {
@@ -4958,6 +4970,9 @@ main#main:not(.tree-page) {
 .anniversary-footer > svg {
   color: #8e2f2f;
 }
+.anniversary-footer > .heritage-icon {
+  margin-left: auto;
+}
 
 .home-anniversary-band .calendar-link {
   max-width: 330px;
@@ -5023,6 +5038,10 @@ main#main:not(.tree-page) {
   }
 
   .brand-mark svg {
+    width: 27px;
+    height: 27px;
+  }
+  .brand-mark .heritage-icon {
     width: 27px;
     height: 27px;
   }
@@ -5697,17 +5716,13 @@ main#main:not(.tree-page) {
   display: flex;
   width: fit-content;
   max-width: 100%;
-  min-height: 48px;
+  min-height: 38px;
   align-items: center;
-  gap: 14px;
+  gap: 11px;
   margin-top: 12px;
-  padding: 0 15px;
-  border: 1px solid #ddcfbb;
-  border-radius: var(--radius-lg);
-  background: #fffdf9e8;
-  box-shadow: 0 5px 14px #3d2e170d;
+  padding: 0;
   color: #554c41;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -5721,15 +5736,15 @@ main#main:not(.tree-page) {
 }
 
 .hero-utility-item > svg {
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
   flex: 0 0 auto;
   color: #9b7541;
 }
 
 .hero-utility-divider {
   width: 1px;
-  height: 22px;
+  height: 18px;
   flex: 0 0 auto;
   background: #d9cfbe;
 }
@@ -5739,9 +5754,13 @@ main#main:not(.tree-page) {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
 }
+.hero-utility-item > .heritage-icon {
+  width: 16px;
+  height: 16px;
+}
 
 .hero-utility-time > span {
-  font-size: 18px;
+  font-size: 17px;
 }
 
 .home-stats-band {
@@ -5782,6 +5801,10 @@ main#main:not(.tree-page) {
   height: 18px;
   flex: 0 0 auto;
   color: #a08b67;
+}
+.home-quick-stat > .heritage-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .home-quick-stat > div {
@@ -5897,6 +5920,10 @@ main#main:not(.tree-page) {
   }
 
   .home-quick-stat > svg {
+    width: 16px;
+    height: 16px;
+  }
+  .home-quick-stat > .heritage-icon {
     width: 16px;
     height: 16px;
   }
