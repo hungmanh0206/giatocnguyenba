@@ -807,7 +807,8 @@ h1 > span {
 .calendar-link {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 8px;
   margin-top: 18px;
   color: var(--primary);
   font-size: 14px;
@@ -1579,7 +1580,7 @@ h1 > span {
 .profile-layout {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
-  gap: 48px;
+  gap: 32px;
   padding-top: 32px;
 }
 .profile-layout > aside {
@@ -1631,9 +1632,9 @@ h1 > span {
 }
 .profile-tabs {
   height: 42px !important;
-  gap: 28px !important;
+  gap: 24px !important;
   border-bottom: 1px solid var(--border);
-  width: 100% !important;
+  width: fit-content !important;
   justify-content: flex-start !important;
   padding: 0 !important;
 }
@@ -5561,7 +5562,7 @@ main#main:not(.tree-page) {
   min-width: 0;
   border: 1px solid #e0d7c8;
   border-radius: var(--radius-lg);
-  padding: 0 28px;
+  padding: 14px 28px 0;
   background: #fffefaf2;
   box-shadow: 0 8px 22px #3d2e1708;
 }
