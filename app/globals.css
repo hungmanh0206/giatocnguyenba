@@ -315,93 +315,6 @@ svg {
   align-items: center;
   gap: 16px;
 }
-.header-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  position: relative;
-}
-.header-search-input {
-  display: flex;
-  width: 220px;
-  align-items: center;
-  gap: 9px;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid #dcd2c2;
-  border-radius: var(--radius-md);
-  background: #fffdf8;
-  color: #877b6a;
-}
-.header-search-input:focus-within {
-  border-color: #a88450;
-  box-shadow: 0 0 0 3px #a884501c;
-}
-.header-search-input input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #2d2922;
-  font: inherit;
-  font-size: 14px;
-}
-.header-search-input input::placeholder {
-  color: #9a9082;
-}
-.header-search-results {
-  position: absolute;
-  z-index: 60;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 264px;
-  display: grid;
-  gap: 3px;
-  max-height: min(360px, 55dvh);
-  padding: 6px;
-  border: 1px solid #ded5c5;
-  border-radius: var(--radius-lg);
-  background: #fffefa;
-  box-shadow: 0 14px 34px #3d2e171c;
-  overflow-y: auto;
-}
-.header-search-results a {
-  display: grid;
-  gap: 2px;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-}
-.header-search-results a:hover,
-.header-search-results a:focus-visible {
-  background: #f5f0e5;
-}
-.header-search-results strong {
-  color: #2d2922;
-  font-size: 14px;
-  font-weight: 600;
-}
-.header-search-results span,
-.header-search-results p {
-  margin: 0;
-  color: #7d7366;
-  font-size: 12px;
-  line-height: 1.45;
-}
-.header-search-results p {
-  padding: 12px;
-}
-@media (max-width: 1200px) {
-  .header-search-input {
-    width: 168px;
-  }
-}
-@media (max-width: 767px) {
-  .header-search,
-  .header-search + .header-divider {
-    display: none;
-  }
-}
 .icon-button {
   width: 42px;
   height: 42px !important;
@@ -2541,6 +2454,7 @@ h1 > span {
 .upcoming-event .date-block {
   width: 70px;
   min-width: 70px;
+  border-radius: var(--radius-lg);
 }
 .calendar-policy {
   font-size: 12px;
@@ -5830,58 +5744,6 @@ main#main:not(.tree-page) {
   font-size: 18px;
 }
 
-/* Keep memorial information readable without removing the ceremonial pattern. */
-.upcoming-grid {
-  gap: 12px;
-}
-
-.upcoming-section .upcoming-event {
-  min-height: 104px;
-  padding: 14px;
-  border: 1px solid #ded5c7;
-  border-radius: var(--radius-lg);
-  background: #fffefa;
-  box-shadow: 0 4px 12px #3d2e1708;
-}
-
-.upcoming-section .upcoming-event:hover {
-  padding: 14px;
-  border-color: #cbb999;
-  background: #fffefa;
-  box-shadow: 0 8px 18px #3d2e1710;
-}
-
-.upcoming-section .upcoming-event .date-block {
-  width: 72px;
-  min-width: 72px;
-  height: 76px;
-  border-radius: var(--radius-lg);
-}
-
-.upcoming-section .upcoming-event > span:nth-child(2) {
-  gap: 5px;
-}
-
-.upcoming-section .upcoming-event > span > strong {
-  color: #302d28;
-  font-size: 16px;
-  font-weight: 650;
-}
-
-.upcoming-section .upcoming-event small,
-.upcoming-section .upcoming-event em {
-  font-size: 12px;
-}
-
-.calendar-policy {
-  padding: 12px 14px;
-  border: 1px solid #e3dacd;
-  border-radius: var(--radius-md);
-  background: #fffdf9d9;
-  color: #776b5c;
-  line-height: 1.65;
-}
-
 .home-stats-band {
   border-bottom: 1px solid #e2d8c8;
   background: #fffefa;
@@ -6009,15 +5871,6 @@ main#main:not(.tree-page) {
 
   .hero-utility-time > span {
     font-size: 16px;
-  }
-
-  .upcoming-section .upcoming-event {
-    min-height: 92px;
-    padding: 12px;
-  }
-
-  .upcoming-section .upcoming-event:hover {
-    padding: 12px;
   }
 
   .home-stats-band .container {
