@@ -5519,10 +5519,6 @@ main#main:not(.tree-page) {
 }
 
 /* The heritage pattern remains visible around a member profile, while facts stay on calm reading surfaces. */
-.profile-layout {
-  align-items: start;
-}
-
 .profile-layout > .profile-info-panel {
   border: 1px solid #e0d7c8;
   border-radius: var(--radius-lg);
