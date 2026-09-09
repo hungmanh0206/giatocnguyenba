@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   GitFork,
   Menu,
@@ -12,6 +12,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { searchMembers } from '@/lib/family';
 import { useFamily } from './provider';
 const navigation = [
   ['/', 'Trang chủ'],
@@ -23,7 +24,22 @@ const navigation = [
 export function Header() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
-  const { connection, signOut } = useFamily();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const searchInput = useRef<HTMLInputElement>(null);
+  const { connection, members, signOut } = useFamily();
+  const matches = query.trim()
+    ? searchMembers(members, query).slice(0, 5)
+    : [];
+
+  useEffect(() => {
+    if (searchOpen) searchInput.current?.focus();
+  }, [searchOpen]);
+
+  function closeSearch() {
+    setSearchOpen(false);
+    setQuery('');
+  }
   return (
     <>
       <a className="skip-link" href="#main">
@@ -48,7 +64,10 @@ export function Header() {
               <Link
                 key={url}
                 href={url}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setOpen(false);
+                  closeSearch();
+                }}
                 className={path === url ? 'active' : ''}
                 aria-current={path === url ? 'page' : undefined}
               >
@@ -57,14 +76,58 @@ export function Header() {
             ))}
           </nav>
           <div className="header-actions">
-            <Link
-              className="icon-button"
-              href="/members"
-              title="Tìm thành viên"
-              aria-label="Tìm thành viên"
-            >
-              <Search size={20} />
-            </Link>
+            <div className="header-search">
+              <Button
+                className="icon-button"
+                variant="ghost"
+                onClick={() => {
+                  setSearchOpen((current) => !current);
+                  setQuery('');
+                }}
+                aria-label={searchOpen ? 'Đóng tìm kiếm' : 'Tìm thành viên'}
+                aria-expanded={searchOpen}
+                title="Tìm thành viên"
+              >
+                {searchOpen ? <X size={20} /> : <Search size={20} />}
+              </Button>
+              {searchOpen ? (
+                <div className="header-search-panel">
+                  <label className="header-search-input">
+                    <Search size={18} />
+                    <input
+                      ref={searchInput}
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape') closeSearch();
+                      }}
+                      placeholder="Tìm người trong gia phả..."
+                      aria-label="Tìm người trong gia phả"
+                    />
+                  </label>
+                  {query.trim() ? (
+                    <div className="header-search-results">
+                      {matches.length ? (
+                        matches.map((person) => (
+                          <Link
+                            href={`/members/${person.id}`}
+                            key={person.id}
+                            onClick={closeSearch}
+                          >
+                            <strong>{person.name}</strong>
+                            <span>Đời {person.generation}</span>
+                          </Link>
+                        ))
+                      ) : (
+                        <p>Không tìm thấy thành viên phù hợp.</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="header-search-hint">Nhập họ và tên để tìm.</p>
+                  )}
+                </div>
+              ) : null}
+            </div>
             <span className="header-divider" />
             {connection.user && (
               <Button
@@ -89,7 +152,10 @@ export function Header() {
             <Button
               className="icon-button mobile-menu"
               variant="ghost"
-              onClick={() => setOpen(!open)}
+              onClick={() => {
+                setOpen(!open);
+                closeSearch();
+              }}
               aria-label={open ? 'Đóng menu' : 'Mở menu'}
               aria-expanded={open}
             >

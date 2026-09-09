@@ -270,7 +270,7 @@ export function HomePage() {
       </section>
       <section className="home-tree-band">
         <div className="container">
-          <section className="tree-overview">
+          <section className="tree-overview tree-overview-compact">
           <div className="section-heading">
             <div>
               <div className="eyebrow">TỪ MỘT CỘI NGUỒN</div>

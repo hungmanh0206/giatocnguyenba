@@ -2,7 +2,7 @@ import dagre from '@dagrejs/dagre';
 import type { Member } from './family';
 export const PERSON_WIDTH = 260;
 export const PERSON_GAP = 26;
-export const PERSON_HEIGHT = 176;
+export const PERSON_HEIGHT = 160;
 export type Household = {
   id: string;
   people: Member[];
