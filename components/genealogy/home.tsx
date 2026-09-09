@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -123,11 +124,40 @@ function VietnamClock() {
         <Clock3 aria-hidden="true" />
         <span>
           <strong>{displayTime}</strong>
-          <small>Giờ Việt Nam</small>
+          <small>Giờ hiện tại · Việt Nam</small>
         </span>
       </time>
     </div>
   );
+}
+
+function getBranchSummary(person: Member, members: Member[]) {
+  const descendantIds = new Set<string>();
+  const pending = [person.id];
+
+  while (pending.length) {
+    const parentId = pending.shift();
+    if (!parentId) continue;
+
+    for (const child of members) {
+      if (!child.parents.includes(parentId) || descendantIds.has(child.id))
+        continue;
+      descendantIds.add(child.id);
+      pending.push(child.id);
+    }
+  }
+
+  const farthestGeneration = Math.max(
+    person.generation,
+    ...members
+      .filter((member) => descendantIds.has(member.id))
+      .map((member) => member.generation),
+  );
+
+  return {
+    descendants: descendantIds.size,
+    generations: farthestGeneration - person.generation + 1,
+  };
 }
 
 export function HomePage() {
@@ -139,10 +169,53 @@ export function HomePage() {
     () => upcomingAnniversaries(members, today).slice(0, 3),
     [members, today],
   );
+  const branchPreviews = useMemo(
+    () =>
+      members
+        .filter(
+          (person) =>
+            person.generation === 2 &&
+            person.branch > 0 &&
+            person.gender === 'male',
+        )
+        .map((person) => ({
+          person,
+          ...getBranchSummary(person, members),
+        })),
+    [members],
+  );
+  const stats = useMemo(() => {
+    const generations = members.length
+      ? Math.max(...members.map((person) => person.generation))
+      : 5;
+    const branches = new Set(
+      members
+        .filter((person) => person.branch > 0)
+        .map((person) => person.branch),
+    ).size;
+    const founderYears = members
+      .map((person) => person.born)
+      .filter(Boolean);
+    const founderYear = founderYears.length ? Math.min(...founderYears) : 1872;
+
+    return [
+      { icon: Users, value: members.length, label: 'Thành viên' },
+      { icon: Layers3, value: generations, label: 'Thế hệ tiếp nối' },
+      { icon: GitFork, value: branches || 3, label: 'Chi trong dòng họ' },
+      { icon: BookOpen, value: founderYear, label: 'Khởi đầu gia phả' },
+    ];
+  }, [members]);
   return (
     <main id="main">
       <section className="home-hero">
-        <img className="heritage-art" src="/heritage-hero.png" alt="" />
+        <Image
+          className="heritage-art"
+          src="/heritage-hero.png"
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 900px) 100vw, 1200px"
+        />
         <div className="container hero-content">
           <div className="eyebrow">
             <span /> CỘI NGUỒN CÒN MÃI
@@ -200,22 +273,19 @@ export function HomePage() {
       </section>
       <section className="stats-band">
         <div className="container stats-grid">
-          {[
-            { icon: Users, value: members.length, label: 'Thành viên' },
-            { icon: Layers3, value: 5, label: 'Thế hệ tiếp nối' },
-            { icon: GitFork, value: 3, label: 'Chi trong dòng họ' },
-            { icon: BookOpen, value: 1872, label: 'Khởi đầu gia phả' },
-          ].map((s) => (
+          {stats.map((s) => (
             <div className="stat" key={s.label}>
               <s.icon />
-              <strong>{s.value}</strong>
-              <span>{s.label}</span>
+              <div className="stat-copy">
+                <strong>{s.value}</strong>
+                <span>{s.label}</span>
+              </div>
             </div>
           ))}
         </div>
       </section>
-      <section className="home-main">
-        <div className="container home-main-inner">
+      <section className="home-tree-band">
+        <div className="container">
           <section className="tree-overview">
           <div className="section-heading">
             <div>
@@ -252,31 +322,35 @@ export function HomePage() {
               <span className="couple-line" />
             </div>
             <div className="preview-branches">
-              {members
-                .filter((p) => p.parents.includes('p1'))
-                .map((p) => (
+              {branchPreviews.map(({ person, descendants, generations }) => (
                   <Link
-                    href={`/family-tree?person=${p.id}`}
-                    className={`branch-preview branch-${p.branch}`}
-                    key={p.id}
+                    href={`/family-tree?person=${person.id}`}
+                    className={`branch-preview branch-${person.branch}`}
+                    key={person.id}
                   >
-                    <small>{branchName(p.branch)}</small>
-                    <strong>{p.name}</strong>
-                    <span>
-                      Đời thứ 2 <ArrowRight size={16} />
+                    <small>{branchName(person.branch)}</small>
+                    <strong>{person.name}</strong>
+                    <span className="branch-preview-era">Đời thứ 2</span>
+                    <span className="branch-preview-meta">
+                      {descendants} hậu duệ · {generations} thế hệ
+                      <ArrowRight size={16} />
                     </span>
                   </Link>
                 ))}
             </div>
             <Link className="preview-bottom" href="/family-tree">
               <CornerDownRight size={16} />
-              <span>Tiếp nối qua 5 thế hệ</span>
+              <span>Tiếp nối qua {stats[1].value} thế hệ</span>
               <span>
                 Khám phá <ArrowRight size={15} />
               </span>
             </Link>
           </div>
           </section>
+        </div>
+      </section>
+      <section className="home-anniversary-band">
+        <div className="container">
           <section className="anniversary-overview">
           <div className="section-heading">
             <div>
@@ -296,17 +370,19 @@ export function HomePage() {
                   <strong>{p.anniversary!.day}</strong>
                   <small>Tháng {p.anniversary!.month}</small>
                 </span>
-                <span>
+                <span className="anniversary-person">
                   <strong>{p.name}</strong>
                   <small>
                     Đời {p.generation} · {branchName(p.branch)}
                   </small>
+                </span>
+                <span className="anniversary-footer">
                   <span className="lunar-label">
                     Âm lịch ·{' '}
                     {daysAway === 0 ? 'Hôm nay' : `Còn ${daysAway} ngày`}
                   </span>
+                  <ChevronRight size={17} />
                 </span>
-                <ChevronRight size={17} />
               </Link>
             ))}
           </div>

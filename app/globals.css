@@ -4280,6 +4280,604 @@ button:disabled,
   }
 }
 
+/* Home page: give the record-rich areas enough scale to carry the desktop canvas. */
+.stat-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-copy > strong {
+  color: #292521;
+  font-weight: 650;
+}
+
+.stat-copy > span {
+  color: #746d64;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.home-tree-band {
+  border-top: 1px solid #e4dccc;
+  border-bottom: 1px solid #ded4c2;
+  background-color: #f7f3e9;
+  background-image:
+    linear-gradient(#f7f3e9f2, #f7f3e9f2),
+    url('/vietnamese-heritage-pattern.png');
+  background-repeat: repeat;
+  background-size: auto, 760px 760px;
+}
+
+.home-tree-band .tree-overview {
+  padding: 58px 0 66px;
+}
+
+.home-tree-band .section-heading {
+  margin-bottom: 30px;
+}
+
+.home-tree-band .section-heading h2,
+.home-anniversary-band .section-heading h2 {
+  font-size: 28px;
+}
+
+.home-tree-band .section-heading > .text-link {
+  min-height: 44px;
+  padding: 0 8px;
+  font-size: 14px;
+}
+
+.tree-preview {
+  padding: 34px 36px 0;
+  border-color: #d8cebd;
+  background: #fffefa;
+  box-shadow: 0 14px 32px #3d2e1710;
+}
+
+.preview-label {
+  top: 18px;
+  left: 22px;
+  color: #7c715f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.root-couple {
+  gap: 40px;
+  padding-top: 27px;
+}
+
+.ancestor {
+  width: 205px;
+  padding: 17px 14px 13px;
+  box-shadow: 0 5px 13px #3d2e170d;
+}
+
+.ancestor strong {
+  margin-top: 9px;
+  font-size: 15px;
+}
+
+.ancestor small {
+  font-size: 13px;
+}
+
+.couple-line {
+  top: 103px;
+}
+
+.preview-branches {
+  gap: 22px;
+  padding-top: 53px;
+}
+
+.preview-branches:before {
+  top: 28px;
+}
+
+.preview-branches:after {
+  height: 28px;
+}
+
+.branch-preview {
+  min-height: 142px;
+  padding: 16px;
+  border-color: #d9d2c6;
+  box-shadow: 0 4px 12px #3d2e1708;
+}
+
+.branch-preview:before {
+  top: -28px;
+  height: 27px;
+}
+
+.branch-preview small {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.branch-preview strong {
+  font-size: 16px;
+}
+
+.branch-preview > .branch-preview-era {
+  display: block;
+  color: #766c5c;
+  font-size: 13px;
+}
+
+.branch-preview > .branch-preview-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #eee8de;
+  color: #86775f;
+  font-size: 12px;
+}
+
+.branch-preview-meta > svg {
+  margin-left: auto;
+}
+
+.preview-bottom {
+  margin-top: 26px;
+  padding: 15px 0;
+  font-size: 13px;
+}
+
+.home-anniversary-band {
+  border-bottom: 1px solid #dfd6c7;
+  background: #fffefa;
+}
+
+.home-anniversary-band .anniversary-overview {
+  padding: 58px 0 64px;
+}
+
+.home-anniversary-band .section-heading {
+  margin-bottom: 28px;
+}
+
+.anniversary-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  border: 0;
+}
+
+.anniversary-row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-rows: minmax(76px, 1fr) auto;
+  gap: 0 16px;
+  min-height: 210px;
+  padding: 22px;
+  border: 1px solid #ded6c8;
+  border-radius: var(--radius-lg);
+  background: #fffdf8;
+  box-shadow: 0 4px 12px #3d2e1708;
+}
+
+.anniversary-row:hover {
+  border-color: #c8b998;
+  background: #fffdf8;
+  box-shadow: 0 10px 22px #3d2e1710;
+  transform: translateY(-2px);
+}
+
+.anniversary-row > .date-block {
+  grid-row: 1;
+  width: 76px;
+  min-width: 76px;
+  height: 76px;
+  border-radius: var(--radius-md);
+}
+
+.anniversary-person {
+  display: flex;
+  min-width: 0;
+  align-self: center;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.anniversary-person > strong {
+  color: #302d28;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.anniversary-person > small {
+  color: #776f64;
+  font-size: 13px;
+}
+
+.anniversary-footer {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 13px;
+  border-top: 1px solid #ece5da;
+}
+
+.anniversary-footer .lunar-label {
+  color: #8c6b3c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.anniversary-footer > svg {
+  color: #8e2f2f;
+}
+
+.home-anniversary-band .calendar-link {
+  max-width: 330px;
+  margin-top: 26px;
+  padding: 13px 0;
+  font-size: 15px;
+}
+
+.home-anniversary-band .quiet-note {
+  margin-top: 28px;
+  color: #83796c;
+  font-size: 14px;
+}
+
+.history-band {
+  padding: 64px 0;
+  border-top-color: #d9cdb8;
+  background: #f1ecdf;
+}
+
+.history-teaser {
+  grid-template-columns: 125px minmax(0, 1fr) 270px;
+  gap: 36px;
+}
+
+.history-teaser h2 {
+  margin: 10px 0 15px;
+  font-size: 30px;
+}
+
+.history-teaser p {
+  max-width: 620px;
+  color: #6f675d;
+  font-size: 17px;
+}
+
+.heritage-seal {
+  border-left-color: #d7c9ad;
+}
+
+.site-footer {
+  border-top-color: #cfbf9e;
+  background: #ebe3d3;
+}
+
+.footer-inner {
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+@media (min-width: 901px) {
+  .site-header {
+    height: 84px;
+  }
+
+  .brand-mark {
+    width: 48px;
+    height: 48px;
+  }
+
+  .brand-mark svg {
+    width: 27px;
+    height: 27px;
+  }
+
+  .brand small {
+    font-size: 11px;
+  }
+
+  .brand strong {
+    font-size: 20px;
+  }
+
+  .main-nav {
+    gap: 31px;
+  }
+
+  .main-nav a {
+    font-size: 15px;
+  }
+
+  .main-nav a.active {
+    color: #8e2f2f;
+    font-weight: 650;
+  }
+
+  .hero-content {
+    padding-top: 62px;
+    padding-bottom: 42px;
+  }
+
+  .hero-content h1 {
+    margin: 15px 0 19px;
+    font-size: 52px;
+    line-height: 1.18;
+  }
+
+  .hero-content > p {
+    font-size: 17px;
+    line-height: 1.8;
+  }
+
+  .hero-actions {
+    gap: 38px;
+    margin: 29px 0 30px;
+  }
+
+  .hero-actions > .text-link {
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: 15px;
+  }
+
+  .hero-search {
+    max-width: 640px;
+    height: 58px;
+    padding: 0 18px;
+  }
+
+  .hero-search input {
+    height: 54px;
+    font-size: 15px;
+  }
+
+  .hero-clock {
+    max-width: 640px;
+    min-height: 88px;
+    gap: 18px;
+    margin-top: 16px;
+    padding: 15px 18px;
+  }
+
+  .clock-dates {
+    gap: 18px;
+  }
+
+  .clock-date small,
+  .clock-time small {
+    color: #83786a;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .clock-date strong {
+    color: #403b34;
+    font-size: 13px;
+  }
+
+  .clock-time {
+    min-width: 128px;
+    padding-left: 18px;
+  }
+
+  .clock-time strong {
+    font-size: 22px;
+  }
+
+  .stats-grid {
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+
+  .stat {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    min-height: 68px;
+    gap: 15px;
+  }
+
+  .stat > svg {
+    grid-row: 1 / -1;
+    grid-column: 1;
+    width: 24px;
+    height: 24px;
+  }
+
+  .stat-copy {
+    display: contents;
+  }
+
+  .stat-copy > strong {
+    grid-row: 1;
+    grid-column: 2;
+    font-size: 29px;
+  }
+
+  .stat-copy > span {
+    grid-row: 2;
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-tree-band .tree-overview,
+  .home-anniversary-band .anniversary-overview {
+    padding-top: 46px;
+    padding-bottom: 48px;
+  }
+
+  .anniversary-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat .stat-copy {
+    display: flex;
+    width: auto;
+    max-width: none;
+    flex: 1;
+    padding: 0;
+  }
+
+  .stat .stat-copy > span {
+    width: auto;
+    max-width: none;
+    padding: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .home-tree-band {
+    background-size: auto, 560px 560px;
+  }
+
+  .home-tree-band .tree-overview,
+  .home-anniversary-band .anniversary-overview {
+    padding-top: 40px;
+    padding-bottom: 42px;
+  }
+
+  .home-tree-band .section-heading,
+  .home-anniversary-band .section-heading {
+    margin-bottom: 22px;
+  }
+
+  .home-tree-band .section-heading h2,
+  .home-anniversary-band .section-heading h2 {
+    font-size: 23px;
+  }
+
+  .home-tree-band .section-heading > .text-link {
+    min-width: 42px;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .tree-preview {
+    padding: 31px 12px 0;
+  }
+
+  .root-couple {
+    gap: 16px;
+  }
+
+  .ancestor {
+    width: min(46%, 175px);
+    padding: 13px 8px 10px;
+  }
+
+  .ancestor strong {
+    font-size: 13px;
+  }
+
+  .ancestor small {
+    font-size: 11px;
+  }
+
+  .couple-line {
+    top: 92px;
+  }
+
+  .preview-branches {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding-top: 39px;
+  }
+
+  .preview-branches:before {
+    top: 0;
+    right: auto;
+    left: 50%;
+    height: 29px;
+    border-top: 0;
+    border-left: 1px solid #b8afa0;
+  }
+
+  .preview-branches:after,
+  .branch-preview:before {
+    display: none;
+  }
+
+  .branch-preview {
+    min-height: 0;
+    padding: 13px 14px;
+  }
+
+  .branch-preview > .branch-preview-meta {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .anniversary-list {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .anniversary-row {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .anniversary-row > .date-block {
+    width: 66px;
+    min-width: 66px;
+    height: 66px;
+  }
+
+  .date-block > strong {
+    font-size: 24px !important;
+  }
+
+  .anniversary-person > strong {
+    font-size: 15px;
+  }
+
+  .anniversary-footer {
+    margin-top: 13px;
+    padding-top: 11px;
+  }
+
+  .home-anniversary-band .calendar-link {
+    max-width: none;
+    margin-top: 19px;
+  }
+
+  .home-anniversary-band .quiet-note {
+    display: none;
+  }
+
+  .history-band {
+    padding: 46px 0;
+  }
+
+  .history-teaser {
+    gap: 17px;
+  }
+
+  .history-teaser h2 {
+    font-size: 25px;
+  }
+
+  .history-teaser p {
+    font-size: 15px;
+  }
+
+  .site-footer {
+    background: #ebe3d3;
+  }
+}
+
 /* Keep the shared background ceremonial but quiet enough for long-form reading. */
 .site-header {
   background: #fffefaf2;
