@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFamily } from './provider';
 import { Footer } from './header';
 import { Avatar } from './home';
@@ -184,14 +185,19 @@ export function LunarPage() {
             {info.supported ? (
               <>
                 <div className="selected-date">
-                  <span>{info.solar.weekday}</span>
-                  <strong>{info.solar.day}</strong>
-                  <p>
-                    Tháng {info.solar.month}, {info.solar.year}
-                  </p>
-                  <div>
-                    Ngày {info.lunar.day} tháng {info.lunar.month}
-                    {info.lunar.leapMonth ? ' nhuận' : ''} âm lịch
+                  <div className="solar-date">
+                    <span>{info.solar.weekday}</span>
+                    <strong>{info.solar.day}</strong>
+                    <p>
+                      Tháng {info.solar.month}, {info.solar.year}
+                    </p>
+                  </div>
+                  <div className="lunar-date-summary">
+                    <span>Âm lịch</span>
+                    <strong>
+                      {info.lunar.day} tháng {info.lunar.month}
+                      {info.lunar.leapMonth ? ' nhuận' : ''}
+                    </strong>
                     <small>Năm {info.canChi.year}</small>
                   </div>
                 </div>
@@ -200,107 +206,139 @@ export function LunarPage() {
                   <h3>
                     <Sparkles size={17} /> Lịch truyền thống
                   </h3>
-                  <div className="trad-facts">
-                    <div>
-                      <span>Can Chi ngày</span>
-                      <strong>{info.canChi.day}</strong>
-                    </div>
-                    <div>
-                      <span>Tiết khí</span>
-                      <strong>{info.solarTerm}</strong>
-                    </div>
-                    <div>
-                      <span>Trực {info.truc}</span>
-                      <strong>{info.dayClassification}</strong>
-                    </div>
-                    <div>
-                      <span>28 Tú</span>
-                      <strong>{info.traditional.twentyEightMansion}</strong>
-                    </div>
-                    <div>
-                      <span>Ngũ hành ngày</span>
-                      <strong>{info.element.name}</strong>
-                    </div>
-                    <div>
-                      <span>Con giáp năm</span>
-                      <strong>{info.zodiac}</strong>
-                    </div>
-                  </div>
-                  <p className="truc-note">{info.traditional.trucMeaning}</p>
+                  <Tabs
+                    defaultValue="overview"
+                    className="day-traditional-tabs"
+                  >
+                    <TabsList
+                      className="day-traditional-tabs-list"
+                      aria-label="Thông tin ngày"
+                    >
+                      <TabsTrigger value="overview">Trong ngày</TabsTrigger>
+                      <TabsTrigger value="details">Việc nên biết</TabsTrigger>
+                    </TabsList>
 
-                  <div className="trad-subsection">
-                    <h4>
-                      <Clock3 size={15} /> Giờ Hoàng Đạo
-                    </h4>
-                    <div className="chip-row">
-                      {info.goodHours.map((hour) => (
-                        <span key={hour}>{hour}</span>
-                      ))}
-                    </div>
-                    <h4 className="secondary-trad-heading">Giờ Hắc Đạo</h4>
-                    <div className="chip-row chip-row-muted">
-                      {info.badHours.map((hour) => (
-                        <span key={hour}>{hour}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="trad-subsection">
-                    <h4>
-                      <Compass size={15} /> Hướng xuất hành
-                    </h4>
-                    <div className="direction-row">
-                      <span>
-                        Hỷ Thần: <b>{info.traditional.directions.hyThan}</b>
-                      </span>
-                      <span>
-                        Tài Thần: <b>{info.traditional.directions.taiThan}</b>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="trad-subsection star-grid">
-                    <div>
-                      <h4>Sao tốt</h4>
-                      <p>
-                        {info.traditional.stars.good.join(' · ') ||
-                          'Chưa ghi nhận'}
+                    <TabsContent
+                      value="overview"
+                      className="day-traditional-content"
+                    >
+                      <div className="trad-facts">
+                        <div>
+                          <span>Can Chi ngày</span>
+                          <strong>{info.canChi.day}</strong>
+                        </div>
+                        <div>
+                          <span>Tiết khí</span>
+                          <strong>{info.solarTerm}</strong>
+                        </div>
+                        <div>
+                          <span>Trực ngày</span>
+                          <strong>
+                            {info.truc} · {info.dayClassification}
+                          </strong>
+                        </div>
+                        <div>
+                          <span>28 Tú</span>
+                          <strong>{info.traditional.twentyEightMansion}</strong>
+                        </div>
+                        <div>
+                          <span>Ngũ hành</span>
+                          <strong>{info.element.name}</strong>
+                        </div>
+                        <div>
+                          <span>Con giáp năm</span>
+                          <strong>{info.zodiac}</strong>
+                        </div>
+                      </div>
+                      <p className="truc-note">
+                        {info.traditional.trucMeaning}
                       </p>
-                    </div>
-                    <div>
-                      <h4>Sao hạn chế</h4>
-                      <p>
-                        {info.traditional.stars.bad.join(' · ') ||
-                          'Chưa ghi nhận'}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="trad-subsection activity-grid">
-                    <div>
-                      <h4>Tốt cho</h4>
-                      {info.traditional.activities.good.map((activity) => (
-                        <span key={activity}>{activity}</span>
-                      ))}
-                    </div>
-                    <div>
-                      <h4>Hạn chế</h4>
-                      {info.traditional.activities.bad.map((activity) => (
-                        <span key={activity}>{activity}</span>
-                      ))}
-                    </div>
-                  </div>
+                      <div className="hour-groups">
+                        <div>
+                          <h4>
+                            <Clock3 size={15} /> Giờ Hoàng Đạo
+                          </h4>
+                          <div className="chip-row">
+                            {info.goodHours.map((hour) => (
+                              <span key={hour}>{hour}</span>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <h4>Giờ Hắc Đạo</h4>
+                          <div className="chip-row chip-row-muted">
+                            {info.badHours.map((hour) => (
+                              <span key={hour}>{hour}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
 
-                  {info.traditional.festivals.length > 0 && (
-                    <div className="trad-subsection festival-list">
-                      <h4>
-                        <Stars size={15} /> Ngày lễ
-                      </h4>
-                      {info.traditional.festivals.map((festival) => (
-                        <span key={festival.id}>{festival.name}</span>
-                      ))}
-                    </div>
-                  )}
+                      <div className="trad-subsection direction-section">
+                        <h4>
+                          <Compass size={15} /> Hướng xuất hành
+                        </h4>
+                        <div className="direction-row">
+                          <span>
+                            Hỷ Thần: <b>{info.traditional.directions.hyThan}</b>
+                          </span>
+                          <span>
+                            Tài Thần:{' '}
+                            <b>{info.traditional.directions.taiThan}</b>
+                          </span>
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent
+                      value="details"
+                      className="day-traditional-content"
+                    >
+                      <div className="star-grid">
+                        <div>
+                          <h4>Sao tốt</h4>
+                          <p>
+                            {info.traditional.stars.good.join(' · ') ||
+                              'Chưa ghi nhận'}
+                          </p>
+                        </div>
+                        <div>
+                          <h4>Sao hạn chế</h4>
+                          <p>
+                            {info.traditional.stars.bad.join(' · ') ||
+                              'Chưa ghi nhận'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="activity-grid">
+                        <div>
+                          <h4>Tốt cho</h4>
+                          {info.traditional.activities.good.map((activity) => (
+                            <span key={activity}>{activity}</span>
+                          ))}
+                        </div>
+                        <div>
+                          <h4>Hạn chế</h4>
+                          {info.traditional.activities.bad.map((activity) => (
+                            <span key={activity}>{activity}</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {info.traditional.festivals.length > 0 && (
+                        <div className="festival-list">
+                          <h4>
+                            <Stars size={15} /> Ngày lễ
+                          </h4>
+                          {info.traditional.festivals.map((festival) => (
+                            <span key={festival.id}>{festival.name}</span>
+                          ))}
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
                 </section>
 
                 <section className="day-events">
