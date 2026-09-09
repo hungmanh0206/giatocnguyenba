@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   ReactFlow,
@@ -29,10 +29,16 @@ import { useFamily } from './provider';
 import { Avatar } from './home';
 import { QuickView } from './members';
 import { Choice, branchOptions, generationOptions, SearchBox } from './common';
-import { branchName, searchMembers, type Member } from '@/lib/family';
+import {
+  branchName,
+  relatives,
+  searchMembers,
+  type Member,
+} from '@/lib/family';
 import {
   collapsedDescendantGroups,
   layoutFamily,
+  PERSON_HEIGHT,
   PERSON_WIDTH,
   PERSON_GAP,
   type Household,
@@ -145,6 +151,24 @@ function TreeCanvas() {
   const [ready, setReady] = useState(false);
   const flow = useReactFlow();
   const model = useMemo(() => layoutFamily(members), [members]);
+  const allTreeNodes = useMemo(
+    () => model.groups.map((group) => ({ id: group.id })),
+    [model.groups],
+  );
+  const desktopOverviewNodes = useMemo(
+    () =>
+      model.groups
+        .filter((group) => group.generation <= 2)
+        .map((group) => ({ id: group.id })),
+    [model.groups],
+  );
+  const mobileOverviewNodes = useMemo(
+    () =>
+      model.groups
+        .filter((group) => group.generation === 1)
+        .map((group) => ({ id: group.id })),
+    [model.groups],
+  );
   const collapsibleGroupIds = useMemo(
     () => new Set(model.links.map((link) => link.source)),
     [model.links],
@@ -156,26 +180,62 @@ function TreeCanvas() {
   const hidden = useMemo(() => {
     return collapsedDescendantGroups(model.links, collapsed);
   }, [collapsed, model]);
-  function select(p: Member) {
-    setCollapsed(new Set());
-    setSelected(p);
-    setQuery('');
-    const g = model.groups.find((g) => g.id === model.groupOf.get(p.id));
-    if (g) {
-      const i = g.people.findIndex((m) => m.id === p.id);
-      void flow.setCenter(
-        g.x + i * (PERSON_WIDTH + PERSON_GAP) + PERSON_WIDTH / 2,
-        g.y + 75,
-        { zoom: 0.95, duration: 450 },
-      );
-    }
-  }
+  const relatedIds = useMemo(() => {
+    if (!selected) return null;
+    const family = relatives(members, selected);
+    return new Set([
+      selected.id,
+      ...family.parents.map((person) => person.id),
+      ...family.spouses.map((person) => person.id),
+      ...family.children.map((person) => person.id),
+      ...family.siblings.map((person) => person.id),
+    ]);
+  }, [members, selected]);
+  const select = useCallback(
+    (p: Member) => {
+      setCollapsed(new Set());
+      setSelected(p);
+      setQuery('');
+      const g = model.groups.find((g) => g.id === model.groupOf.get(p.id));
+      if (g) {
+        const i = g.people.findIndex((m) => m.id === p.id);
+        void flow.setCenter(
+          g.x + i * (PERSON_WIDTH + PERSON_GAP) + PERSON_WIDTH / 2,
+          g.y + PERSON_HEIGHT / 2,
+          { zoom: 0.95, duration: 450 },
+        );
+      }
+    },
+    [flow, model],
+  );
   useEffect(() => {
     if (!ready) return;
     const id = params.get('person');
     const p = members.find((m) => m.id === id);
-    if (p) select(p);
-  }, [ready, params]);
+    if (!p) return;
+    const frame = requestAnimationFrame(() => select(p));
+    return () => cancelAnimationFrame(frame);
+  }, [members, params, ready, select]);
+  useEffect(() => {
+    if (!ready || !allTreeNodes.length) return;
+    const frame = requestAnimationFrame(() => {
+      void flow.fitView({
+        nodes: window.matchMedia('(max-width: 720px)').matches
+          ? mobileOverviewNodes
+          : desktopOverviewNodes,
+        padding: 0.16,
+        maxZoom: 0.9,
+        duration: 0,
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    allTreeNodes.length,
+    desktopOverviewNodes,
+    flow,
+    mobileOverviewNodes,
+    ready,
+  ]);
   useEffect(() => {
     const changed = () => setFull(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', changed);
@@ -198,7 +258,8 @@ function TreeCanvas() {
         .filter(
           (p) =>
             (branch !== 'all' && p.branch !== Number(branch)) ||
-            (generation !== 'all' && p.generation !== Number(generation)),
+            (generation !== 'all' && p.generation !== Number(generation)) ||
+            (!!relatedIds && !relatedIds.has(p.id)),
         )
         .map((p) => p.id),
       collapsed: collapsed.has(group.id),
@@ -222,25 +283,28 @@ function TreeCanvas() {
       targetHandle: `child-${link.childId}`,
       type: 'smoothstep',
       hidden: hidden.has(link.source) || hidden.has(link.target),
-      style: { stroke: '#a49d8d', strokeWidth: 1.3 },
+      style: { stroke: '#aaa69a', strokeWidth: 1.15 },
       pathOptions: { borderRadius: 3 },
     })),
   );
   const found = searchMembers(members, query).slice(0, 6);
+  function resetViewport() {
+    return flow.fitView({
+      nodes: window.matchMedia('(max-width: 720px)').matches
+        ? mobileOverviewNodes
+        : desktopOverviewNodes,
+      padding: 0.16,
+      maxZoom: 0.9,
+      duration: 400,
+    });
+  }
   function reset() {
     setCollapsed(new Set());
     setBranch('all');
     setGeneration('all');
     setQuery('');
     setSelected(null);
-    void flow.fitView({
-      nodes: model.groups
-        .filter((g) => g.generation <= 2)
-        .map((g) => ({ id: g.id })),
-      padding: 0.2,
-      maxZoom: 1,
-      duration: 400,
-    });
+    void resetViewport();
   }
   function collapseAll() {
     setCollapsed(new Set(collapsibleGroupIds));
@@ -314,7 +378,10 @@ function TreeCanvas() {
         </Button>
       </div>
       <div className="tree-canvas">
-        <div className="tree-legend" aria-label="Chú thích các chi trong gia phả">
+        <div
+          className="tree-legend"
+          aria-label="Chú thích các chi trong gia phả"
+        >
           <strong>Chú thích</strong>
           <div>
             <span>
@@ -338,20 +405,24 @@ function TreeCanvas() {
           nodesConnectable={false}
           nodesDraggable={false}
           elementsSelectable={false}
-          minZoom={0.3}
-          maxZoom={2}
-          fitView
-          fitViewOptions={{
-            nodes: model.groups
-              .filter((g) => g.generation <= 2)
-              .map((g) => ({ id: g.id })),
-            padding: 0.2,
-            maxZoom: 1,
+          minZoom={0.2}
+          maxZoom={1.8}
+          onInit={(instance) => {
+            setReady(true);
+            if (window.matchMedia('(max-width: 720px)').matches) {
+              requestAnimationFrame(() => {
+                void instance.fitView({
+                  nodes: mobileOverviewNodes,
+                  padding: 0.16,
+                  maxZoom: 0.9,
+                  duration: 0,
+                });
+              });
+            }
           }}
-          onInit={() => setReady(true)}
           onMove={(_, v) => setZoom(v.zoom)}
         >
-          <Background color="#d6d8ce" gap={24} size={1} />
+          <Background color="#dfe2d8" gap={28} size={1} />
         </ReactFlow>
         <div className="tree-controls">
           <Button

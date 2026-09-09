@@ -62,6 +62,12 @@
   --primary: #7e2424;
   --muted-foreground: #73716b;
   --border: #e5e4de;
+  --surface-muted: #f6f4ee;
+  --surface-heritage: #fbf8f1;
+  --text-secondary: #756f64;
+  --border-strong: #d8d3c7;
+  --shadow-sm: 0 5px 16px #3c30200a;
+  --shadow-focus: 0 0 0 3px #a87d4530;
   --radius: 12px;
   --bronze: #a87d45;
 }
@@ -3265,5 +3271,377 @@ h1 > span {
   }
   .header-actions .admin-link span {
     display: none;
+  }
+}
+
+/* Shared UI polish: keep the heritage palette while giving every surface a
+   predictable hierarchy and interaction state. */
+::selection {
+  background: #7e24242b;
+  color: #38221f;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  opacity: 0.52;
+}
+
+.site-header {
+  background: #fffefa;
+  box-shadow: 0 1px 0 #40321a05;
+}
+
+.main-nav a {
+  padding-inline: 2px;
+}
+
+.main-nav .active:after {
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+}
+
+.icon-button,
+.action-button,
+.choice,
+.search-box,
+.hero-search {
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.search-box,
+.hero-search {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.choice:hover,
+.search-box:hover,
+.hero-search:hover {
+  border-color: #c7bda9;
+}
+
+.choice:focus-within,
+.search-box:focus-within,
+.hero-search:focus-within {
+  box-shadow: var(--shadow-focus);
+}
+
+.stats-grid {
+  align-items: stretch;
+}
+
+.stat {
+  min-height: 52px;
+}
+
+.tree-preview,
+.person-card,
+.calendar-layout,
+.notice,
+.admin-table-wrap {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.anniversary-row,
+.upcoming-event,
+.record-links > a {
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.anniversary-row:hover,
+.upcoming-event:hover,
+.record-links > a:hover {
+  background: #faf8f2;
+}
+
+.anniversary-row:hover > svg,
+.upcoming-event:hover > svg,
+.record-links > a:hover > svg:last-child {
+  color: var(--primary);
+  transform: translateX(2px);
+}
+
+.person-card {
+  background: #fffefa;
+}
+
+.person-card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: #7a8e6d;
+  content: '';
+}
+
+.person-card.branch-0::before {
+  background: #9a7840;
+}
+
+.person-card.branch-2::before {
+  background: #5c8199;
+}
+
+.person-card.branch-3::before {
+  background: #ad8750;
+}
+
+.person-card:hover {
+  border-color: #c7bca7;
+  box-shadow: 0 8px 22px #382f2010;
+  transform: translateY(-2px);
+}
+
+.empty-state {
+  border: 1px dashed #d8d0c2;
+  border-radius: var(--radius-lg);
+  background: #fbf9f4;
+}
+
+.history-index > a:focus-visible,
+.history-index > a:hover {
+  color: var(--primary);
+}
+
+.history-index > a:focus-visible > span,
+.history-index > a:hover > span {
+  color: var(--primary);
+}
+
+.history-location {
+  max-width: 440px;
+  line-height: 1.5;
+}
+
+.tree-page {
+  background: #eef0e9;
+}
+
+.tree-toolbar {
+  background: #fffefa;
+}
+
+.tree-canvas {
+  background: #f7f8f4;
+}
+
+.tree-canvas .react-flow__edge-path {
+  stroke: #aaa69a !important;
+  stroke-opacity: 0.62;
+}
+
+.household,
+.tree-person {
+  height: 160px;
+}
+
+.tree-person {
+  border-color: #cbd1c4;
+  background: #fffefa;
+  box-shadow: 0 4px 13px #3d46310d;
+}
+
+.tree-person:hover {
+  border-color: #917344;
+  box-shadow:
+    0 8px 20px #4a351b1c,
+    0 0 0 2px #b7945830;
+  transform: translateY(-2px);
+}
+
+.tree-person.chosen {
+  border-color: #7e2424;
+  background: #fff9ed;
+  box-shadow:
+    0 9px 22px #5c281b23,
+    0 0 0 3px #7e242426;
+}
+
+.tree-person.dimmed {
+  opacity: 0.42;
+}
+
+.tree-person > strong {
+  font-size: 14px;
+  line-height: 1.42;
+}
+
+.tree-person-gen {
+  color: #807566;
+}
+
+.spouse-connector {
+  border-color: #c4b493;
+}
+
+.collapse-node {
+  border-color: #d6c8ac;
+  color: #7e5a32;
+}
+
+.tree-legend {
+  border-color: #d8d1c4;
+  background: #fffefa;
+  box-shadow: 0 5px 16px #3d46310d;
+}
+
+.tree-controls {
+  border-color: #d8d1c4;
+  background: #fffefa;
+  box-shadow: 0 5px 16px #3d46310d;
+}
+
+.calendar-layout {
+  background: #fffefa;
+}
+
+.calendar-main,
+.lunar-calendar {
+  background: transparent !important;
+}
+
+.day-panel {
+  background: #faf8f2;
+}
+
+.day-events > .muted {
+  border-left: 2px solid #d6c7a9;
+  padding-left: 11px;
+}
+
+.upcoming-event {
+  border-radius: var(--radius-sm);
+}
+
+.upcoming-event:hover {
+  padding-inline: 8px;
+}
+
+@media (min-width: 561px) and (max-width: 720px) {
+  .container {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .tree-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .tree-title {
+    grid-column: 1;
+  }
+
+  .tree-toolbar > .icon-button {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .tree-search {
+    grid-column: 1 / -1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .tree-toolbar .choice {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .calendar-main {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 720px) {
+  .container {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .hero-content {
+    padding-top: 34px;
+  }
+
+  .history-location {
+    max-width: 330px;
+  }
+
+  .stats-grid {
+    gap: 0;
+  }
+
+  .stat {
+    padding-left: 16px;
+  }
+
+  .home-main {
+    gap: 34px;
+  }
+
+  .history-index {
+    gap: 12px 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .main-nav.is-open {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .main-nav a {
+    min-height: 44px;
+  }
+
+  .hero-tree-link {
+    width: 100%;
+  }
+
+  .hero-actions > .text-link {
+    min-height: 40px;
+  }
+
+  .stat {
+    min-height: 46px;
+  }
+
+  .person-card::before {
+    height: 2px;
+  }
+
+  .tree-person {
+    box-shadow: 0 3px 10px #3d46310e;
+  }
+
+  .tree-legend {
+    max-width: calc(100% - 28px);
+  }
+
+  .tree-controls {
+    max-width: calc(100% - 28px);
+  }
+
+  .day-traditional-tabs-list [data-slot='tabs-trigger'] {
+    font-size: 10px;
+  }
+
+  .trad-facts {
+    gap: 8px;
+  }
+
+  .history-location {
+    align-items: flex-start;
   }
 }

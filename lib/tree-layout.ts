@@ -2,6 +2,7 @@ import dagre from '@dagrejs/dagre';
 import type { Member } from './family';
 export const PERSON_WIDTH = 188;
 export const PERSON_GAP = 22;
+export const PERSON_HEIGHT = 160;
 export type Household = {
   id: string;
   people: Member[];
@@ -84,7 +85,9 @@ export function layoutFamily(members: Member[]) {
     marginx: 30,
     marginy: 35,
   });
-  groups.forEach((g) => graph.setNode(g.id, { width: g.width, height: 150 }));
+  groups.forEach((g) =>
+    graph.setNode(g.id, { width: g.width, height: PERSON_HEIGHT }),
+  );
   const links: FamilyLink[] = [];
   for (const p of members) {
     const sources = [
