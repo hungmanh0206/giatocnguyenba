@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { differenceInCalendarDays, isSameMonth } from 'date-fns';
+import { isSameMonth } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
   Calendar as CalendarIcon,
@@ -81,6 +81,17 @@ export function LunarPage() {
             <h1>Lịch âm & ngày giỗ</h1>
             <p>Năm {getLunarYearCanChi(lunarYear)} · Giờ Việt Nam</p>
           </div>
+          <Button
+            variant="outline"
+            className="action-button"
+            onClick={() => {
+              setMonth(today);
+              setSelected(today);
+            }}
+          >
+            <CalendarIcon />
+            Hôm nay
+          </Button>
         </div>
 
         <div className="calendar-layout">
@@ -92,17 +103,6 @@ export function LunarPage() {
                 onChange={setBranch}
                 options={branchOptions}
               />
-              <Button
-                variant="outline"
-                className="calendar-today"
-                onClick={() => {
-                  setMonth(today);
-                  setSelected(today);
-                }}
-              >
-                <CalendarIcon size={17} />
-                Hôm nay
-              </Button>
               <span>
                 <i /> Ngày giỗ dòng họ
               </span>
@@ -201,66 +201,6 @@ export function LunarPage() {
                     <small>Năm {info.canChi.year}</small>
                   </div>
                 </div>
-
-                <section
-                  className={`day-events ${events.length ? 'has-events' : ''}`}
-                >
-                  <h3>
-                    <Flower2 size={18} /> Ngày giỗ trong ngày
-                    {events.length > 0 && ` (${events.length})`}
-                  </h3>
-                  {events.length ? (
-                    events.map(({ event, isApproximate }) =>
-                      event.person ? (
-                        <div className="day-event" key={event.id}>
-                          <Avatar person={event.person} />
-                          <span className="day-event-copy">
-                            <Link
-                              href={`/family-tree?person=${event.person.id}`}
-                            >
-                              <strong>{event.person.name}</strong>
-                            </Link>
-                            <small>
-                              Đời {event.person.generation} ·{' '}
-                              {branchName(event.person.branch)}
-                              {isApproximate ? ' · Điều chỉnh tháng thiếu' : ''}
-                            </small>
-                            <span className="memorial-date">
-                              {info.lunar.day}/{info.lunar.month}
-                              {info.lunar.leapMonth ? ' nhuận' : ''} âm lịch ·{' '}
-                              {selected.getDate()}/{selected.getMonth() + 1}/{selected.getFullYear()} dương lịch
-                            </span>
-                          </span>
-                          <span className="memorial-countdown">
-                            {(() => {
-                              const daysAway = differenceInCalendarDays(
-                                selected,
-                                today,
-                              );
-                              if (daysAway === 0) return 'Hôm nay';
-                              if (daysAway === 1) return 'Ngày mai';
-                              return daysAway > 1
-                                ? `Còn ${daysAway} ngày`
-                                : 'Đã qua';
-                            })()}
-                          </span>
-                          <Link
-                            className="day-event-tree-link"
-                            title="Xem trên cây"
-                            aria-label={`Xem ${event.person.name} trên cây`}
-                            href={`/family-tree?person=${event.person.id}`}
-                          >
-                            <GitFork size={19} />
-                          </Link>
-                        </div>
-                      ) : null,
-                    )
-                  ) : (
-                    <p className="muted">
-                      Không có ngày giỗ được ghi nhận trong ngày này.
-                    </p>
-                  )}
-                </section>
 
                 <section className="day-traditional">
                   <h3>
@@ -401,6 +341,40 @@ export function LunarPage() {
                   </Tabs>
                 </section>
 
+                <section className="day-events">
+                  <h3>
+                    <Flower2 size={18} /> Ngày giỗ{' '}
+                    {events.length > 0 && `(${events.length})`}
+                  </h3>
+                  {events.length ? (
+                    events.map(({ event, isApproximate }) =>
+                      event.person ? (
+                        <div className="day-event" key={event.id}>
+                          <Avatar person={event.person} />
+                          <Link href={`/members/${event.person.id}`}>
+                            <strong>{event.person.name}</strong>
+                            <small>
+                              Đời {event.person.generation} ·{' '}
+                              {branchName(event.person.branch)}
+                              {isApproximate ? ' · Điều chỉnh tháng thiếu' : ''}
+                            </small>
+                          </Link>
+                          <Link
+                            title="Xem trên cây"
+                            aria-label={`Xem ${event.person.name} trên cây`}
+                            href={`/family-tree?person=${event.person.id}`}
+                          >
+                            <GitFork size={19} />
+                          </Link>
+                        </div>
+                      ) : null,
+                    )
+                  ) : (
+                    <p className="muted">
+                      Không có ngày giỗ được ghi nhận trong ngày này.
+                    </p>
+                  )}
+                </section>
               </>
             ) : (
               <div className="calendar-unsupported">{info.reason}</div>

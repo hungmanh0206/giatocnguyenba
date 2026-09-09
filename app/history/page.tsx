@@ -61,8 +61,8 @@ export default function Page() {
               liên hệ ấy để con cháu biết mình thuộc đời nào, gọi đúng tên người
               thân và nhớ về những người đã đi trước.
             </p>
-            <Link className="text-link" href="/family-tree?person=p1">
-              Xem vị khởi tổ trên cây <ArrowRight size={16} />
+            <Link className="text-link" href="/members/p1">
+              Hồ sơ vị khởi tổ <ArrowRight size={16} />
             </Link>
           </section>
           <section id="generations">
@@ -103,14 +103,11 @@ export default function Page() {
               ].map(([generation, date, title, description]) => (
                 <div className="timeline-entry" key={generation}>
                   <span className="timeline-pin" />
-                  <div className="timeline-year">
-                    <strong>{date}</strong>
-                    <small>{generation}</small>
-                  </div>
-                  <div className="timeline-copy">
-                    <h3>{title}</h3>
-                    <p>{description}</p>
-                  </div>
+                  <small>
+                    {generation} <span>· {date}</span>
+                  </small>
+                  <h3>{title}</h3>
+                  <p>{description}</p>
                 </div>
               ))}
             </div>
