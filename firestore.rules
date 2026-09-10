@@ -19,16 +19,15 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/families/$(familyId)/memberships/$(request.auth.uid));
     }
 
-    function canEdit(familyId) {
-      return hasMembership(familyId)
-        && membership(familyId).data.role == 'super_admin';
-    }
-
     function isSuperAdmin(familyId) {
       return hasMembership(familyId)
         && exists(/databases/$(database)/documents/families/$(familyId))
         && familyDocument(familyId).data.superAdminUid == request.auth.uid
         && membership(familyId).data.role == 'super_admin';
+    }
+
+    function canEdit(familyId) {
+      return isSuperAdmin(familyId);
     }
 
     function validAnniversary(value) {

@@ -3,6 +3,7 @@ import {
   arrayUnion,
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -124,6 +125,10 @@ function memberRef(db: Firestore, memberId: string) {
   return doc(db, 'families', firebaseFamilyId, 'members', memberId);
 }
 
+function familyRef(db: Firestore) {
+  return doc(db, 'families', firebaseFamilyId);
+}
+
 function membershipRef(db: Firestore, userId: string) {
   return doc(db, 'families', firebaseFamilyId, 'memberships', userId);
 }
@@ -136,9 +141,22 @@ export function subscribeToFamilyRole(
 ) {
   return onSnapshot(
     membershipRef(db, userId),
-    (snapshot) => {
+    async (snapshot) => {
       const role = snapshot.exists() ? snapshot.data().role : null;
-      onRole(isFamilyRole(role) ? role : null);
+      if (!isFamilyRole(role)) {
+        onRole(null);
+        return;
+      }
+      try {
+        const family = await getDoc(familyRef(db));
+        onRole(
+          family.exists() && family.data().superAdminUid === userId
+            ? role
+            : null,
+        );
+      } catch (error) {
+        onError(error);
+      }
     },
     onError,
   );

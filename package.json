@@ -13,6 +13,7 @@
     "firebase:login": "firebase login",
     "firebase:deploy:rules": "firebase deploy --only firestore",
     "firebase:bootstrap": "node --experimental-strip-types scripts/bootstrap-family.mjs",
+    "firebase:grant-admin": "node --env-file=.env.local scripts/grant-super-admin.mjs",
     "lint": "oxlint",
     "format": "oxfmt"
   },
