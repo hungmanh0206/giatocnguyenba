@@ -144,15 +144,17 @@ export function HeritageIcon({
   className,
   ...props
 }: HeritageIconProps) {
+  const renderedSize = Math.max(18, Math.round(size * 1.25));
+
   return (
     <img
       {...props}
       alt={label || ''}
       aria-hidden={label ? undefined : true}
       className={className ? `heritage-icon ${className}` : 'heritage-icon'}
-      height={size}
+      height={renderedSize}
       src={`/heritage-icons-3d/${heritageIconAssets[name]}.png`}
-      width={size}
+      width={renderedSize}
     />
   );
 }
