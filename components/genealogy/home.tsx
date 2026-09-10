@@ -331,7 +331,6 @@ export function HomePage() {
               <div className="eyebrow">TƯỞNG NHỚ TIỀN NHÂN</div>
               <h2>Ngày giỗ sắp tới</h2>
             </div>
-            <HeritageIcon className="muted-icon" name="memorial" size={21} />
           </div>
           <div className="anniversary-list">
             {upcoming.map(({ person: p, daysAway }) => (

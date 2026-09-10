@@ -1,7 +1,7 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { HeritageIcon } from './heritage-icon';
 
 type FamilyMoment = {
   alt: string;
@@ -96,69 +96,87 @@ export function FamilyMoments() {
             </span>
           </div>
 
-          <div className="family-moments-layout">
-            <figure className="family-moment-stage">
-              <img
-                alt={active.alt}
-                className="family-moment-image"
-                key={active.id}
-                src={active.src}
-              />
-              <figcaption className="family-moment-caption">
-                <strong>{active.caption}</strong>
-                {capturedDate && <span>{capturedDate}</span>}
-              </figcaption>
-              {moments.length > 1 && (
-                <div className="family-moment-controls" aria-label="Điều khiển slideshow">
+          <figure className="family-moment-stage">
+            <img
+              alt={active.alt}
+              className="family-moment-image"
+              key={active.id}
+              src={active.src}
+            />
+            <figcaption className="family-moment-caption">
+              <span>ALBUM GIA ĐÌNH</span>
+              <strong>{active.caption}</strong>
+              {capturedDate && <small>{capturedDate}</small>}
+            </figcaption>
+            {moments.length > 1 && (
+              <>
+                <div
+                  aria-label="Điều khiển slideshow"
+                  className="family-moment-controls"
+                >
                   <button
                     aria-label="Ảnh trước"
                     className="family-moment-control"
-                    onClick={() => selectMoment((activeIndex - 1 + moments.length) % moments.length)}
+                    onClick={() =>
+                      selectMoment(
+                        (activeIndex - 1 + moments.length) % moments.length,
+                      )
+                    }
                     title="Ảnh trước"
                     type="button"
                   >
-                    <ChevronLeft aria-hidden="true" size={20} />
+                    <HeritageIcon name="previous" size={17} />
                   </button>
                   <button
-                    aria-label={isPaused ? 'Tiếp tục slideshow' : 'Tạm dừng slideshow'}
+                    aria-label={
+                      isPaused
+                        ? 'Tiếp tục slideshow'
+                        : 'Tạm dừng slideshow'
+                    }
                     className="family-moment-control"
                     onClick={() => setIsPaused((paused) => !paused)}
-                    title={isPaused ? 'Tiếp tục slideshow' : 'Tạm dừng slideshow'}
+                    title={
+                      isPaused
+                        ? 'Tiếp tục slideshow'
+                        : 'Tạm dừng slideshow'
+                    }
                     type="button"
                   >
-                    {isPaused ? <Play aria-hidden="true" size={17} /> : <Pause aria-hidden="true" size={17} />}
+                    <HeritageIcon
+                      name={isPaused ? 'resume' : 'pause'}
+                      size={17}
+                    />
                   </button>
                   <button
                     aria-label="Ảnh tiếp theo"
                     className="family-moment-control"
-                    onClick={() => selectMoment((activeIndex + 1) % moments.length)}
+                    onClick={() =>
+                      selectMoment((activeIndex + 1) % moments.length)
+                    }
                     title="Ảnh tiếp theo"
                     type="button"
                   >
-                    <ChevronRight aria-hidden="true" size={20} />
+                    <HeritageIcon name="next" size={17} />
                   </button>
                 </div>
-              )}
-            </figure>
-
-            {moments.length > 1 && (
-              <div aria-label="Chọn ảnh trong album" className="family-moment-thumbnails" role="tablist">
-                {moments.map((moment, index) => (
-                  <button
-                    aria-label={`Xem ảnh ${index + 1}: ${moment.caption}`}
-                    aria-selected={index === activeIndex}
-                    className={index === activeIndex ? 'is-active' : ''}
-                    key={moment.id}
-                    onClick={() => selectMoment(index)}
-                    role="tab"
-                    type="button"
-                  >
-                    <img alt="" src={moment.src} />
-                  </button>
-                ))}
-              </div>
+                <div
+                  aria-label="Chọn ảnh trong album"
+                  className="family-moment-pagination"
+                >
+                  {moments.map((moment, index) => (
+                    <button
+                      aria-label={`Xem ảnh ${index + 1}: ${moment.caption}`}
+                      aria-current={index === activeIndex ? 'true' : undefined}
+                      className={index === activeIndex ? 'is-active' : ''}
+                      key={moment.id}
+                      onClick={() => selectMoment(index)}
+                      type="button"
+                    />
+                  ))}
+                </div>
+              </>
             )}
-          </div>
+          </figure>
         </div>
       </div>
     </section>
