@@ -320,7 +320,10 @@ export function HomePage() {
                 </div>
                 {familyPreview.branches.length > 0 && <span className="home-family-connector" />}
                 {familyPreview.branches.length > 0 && (
-                  <div className="home-family-branches">
+                  <div
+                    className="home-family-branches"
+                    data-branch-count={familyPreview.branches.length}
+                  >
                     {familyPreview.branches.map(({ group, descendants, generations }) => (
                       <Link
                         href={`/family-tree?person=${group.clanMember.id}`}

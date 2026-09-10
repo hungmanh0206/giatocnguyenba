@@ -7711,10 +7711,19 @@ main#main .timeline-entry p {
 .home-family-branches::before {
   position: absolute;
   top: 0;
-  right: 12%;
-  left: 12%;
+  right: 16.667%;
+  left: 16.667%;
   border-top: 1px solid #b8a381;
   content: '';
+}
+
+.home-family-branches[data-branch-count='1']::before {
+  display: none;
+}
+
+.home-family-branches[data-branch-count='2']::before {
+  right: 25%;
+  left: 25%;
 }
 
 .home-family-branch {
@@ -7849,7 +7858,18 @@ main#main .timeline-entry p {
   }
 
   .home-family-branches::before {
+    display: block;
+    right: 16.667%;
+    left: 16.667%;
+  }
+
+  .home-family-branches[data-branch-count='1']::before {
     display: none;
+  }
+
+  .home-family-branches[data-branch-count='2']::before {
+    right: 25%;
+    left: 25%;
   }
 
   .home-family-branch::before {
