@@ -65,6 +65,69 @@ export const heritageIconNames = [
 
 export type HeritageIconName = (typeof heritageIconNames)[number];
 
+const heritageIconAssets: Record<HeritageIconName, string> = {
+  'add-member': 'add-member',
+  analytics: 'grid',
+  avatar: 'profile',
+  backup: 'book',
+  branch: 'hierarchy',
+  calendar: 'calendar-traditional',
+  delete: 'delete',
+  descendants: 'hierarchy',
+  document: 'book',
+  edit: 'edit',
+  eye: 'list-detail',
+  'family-record': 'book',
+  favorite: 'memorial',
+  filter: 'filter',
+  'fit-view': 'fit-view',
+  folder: 'book',
+  generations: 'hierarchy',
+  grid: 'grid',
+  help: 'book',
+  history: 'list-detail',
+  hide: 'list-detail',
+  home: 'home',
+  info: 'list-detail',
+  link: 'next',
+  list: 'list',
+  location: 'location',
+  login: 'next',
+  logout: 'previous',
+  members: 'members',
+  memorial: 'memorial',
+  message: 'notification',
+  more: 'grid',
+  next: 'next',
+  notification: 'notification',
+  'open-link': 'next',
+  parents: 'hierarchy',
+  people: 'members',
+  permissions: 'settings',
+  previous: 'previous',
+  print: 'book',
+  profile: 'profile',
+  quote: 'book',
+  reminder: 'notification',
+  reset: 'refresh',
+  restore: 'refresh',
+  search: 'search',
+  security: 'settings',
+  settings: 'settings',
+  share: 'hierarchy',
+  sort: 'list',
+  spouses: 'hierarchy',
+  tag: 'list-detail',
+  time: 'calendar-traditional',
+  timeline: 'list-detail',
+  today: 'calendar-day',
+  'tree-view': 'tree',
+  tree: 'tree',
+  upload: 'book',
+  'zoom-in': 'zoom-in',
+  'zoom-out': 'zoom-out',
+};
+
 type HeritageIconProps = Omit<
   ImgHTMLAttributes<HTMLImageElement>,
   'alt' | 'height' | 'src' | 'width'
@@ -88,7 +151,7 @@ export function HeritageIcon({
       aria-hidden={label ? undefined : true}
       className={className ? `heritage-icon ${className}` : 'heritage-icon'}
       height={size}
-      src={`/heritage-icons/${name}.png`}
+      src={`/heritage-icons-3d/${heritageIconAssets[name]}.png`}
       width={size}
     />
   );
