@@ -12,6 +12,7 @@ import { canEditFamily, type FamilyRole } from '@/lib/access';
 import {
   removeMemberAndLinks,
   seedMembers,
+  upsertMemberAndLinks,
   validateMember,
   type Member,
 } from '@/lib/family';
@@ -200,17 +201,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
     if (firebaseConfigurationError) return firebaseConfigurationError;
     if (!isFirebaseConfigured || connection.mode === 'demo') {
-      setMembers((current) => [
-        ...current
-          .filter((member) => member.id !== person.id)
-          .map((member) => ({
-            ...member,
-            spouses: person.spouses.includes(member.id)
-              ? [...new Set([...member.spouses, person.id])]
-              : member.spouses.filter((id) => id !== person.id),
-          })),
-        person,
-      ]);
+      setMembers((current) => upsertMemberAndLinks(current, person));
       return null;
     }
 

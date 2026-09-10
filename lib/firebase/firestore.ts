@@ -68,22 +68,21 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
       ? integer(anniversary.month)
       : 0;
   const hasClanFamilyName = /^Nguyễn (Bá|Thị)(?:\s|$)/i.test(name);
+  const isClanMember =
+    typeof raw.isClanMember === 'boolean'
+      ? raw.isClanMember
+      : hasClanFamilyName;
 
   return {
     id,
     name,
     gender,
     // Legacy records can be classified in the editor after this migration.
-    isClanMember:
-      typeof raw.isClanMember === 'boolean'
-        ? raw.isClanMember
-        : hasClanFamilyName,
+    isClanMember,
     lineageType:
-      raw.lineageType === 'maternal-terminal'
+      gender === 'female' && isClanMember
         ? 'maternal-terminal'
-        : raw.lineageType === 'direct'
-          ? 'direct'
-          : gender === 'female' && hasClanFamilyName
+        : raw.lineageType === 'maternal-terminal'
             ? 'maternal-terminal'
             : 'direct',
     generation: integer(raw.generation, 1),

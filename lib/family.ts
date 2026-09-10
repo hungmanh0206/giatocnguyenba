@@ -376,6 +376,122 @@ export function removeMemberAndLinks(members: Member[], memberId: string) {
     }));
 }
 
+export function upsertMemberAndLinks(members: Member[], person: Member) {
+  const spouses = [...new Set(person.spouses)];
+  return [
+    ...members
+      .filter((member) => member.id !== person.id)
+      .map((member) => ({
+        ...member,
+        spouses: spouses.includes(member.id)
+          ? [...new Set([...member.spouses, person.id])]
+          : member.spouses.filter((id) => id !== person.id),
+      })),
+    { ...person, parents: [...new Set(person.parents)], spouses },
+  ];
+}
+
+function isDescendantOf(
+  members: Member[],
+  ancestorId: string,
+  personId: string,
+) {
+  const pending = [ancestorId];
+  const visited = new Set<string>();
+
+  while (pending.length) {
+    const current = pending.pop()!;
+    if (current === personId) return true;
+    if (visited.has(current)) continue;
+    visited.add(current);
+    for (const member of members) {
+      if (member.parents.includes(current)) pending.push(member.id);
+    }
+  }
+
+  return false;
+}
+
+export function eligibleParents(
+  person: Member,
+  members: Member[],
+  parentIndex: number,
+) {
+  if (person.generation <= 1 || !person.born) return [];
+  const selectedInSlot = person.parents[parentIndex];
+
+  return members.filter(
+    (candidate) =>
+      candidate.id !== person.id &&
+      (!person.parents.includes(candidate.id) || candidate.id === selectedInSlot) &&
+      !person.spouses.includes(candidate.id) &&
+      candidate.generation === person.generation - 1 &&
+      (candidate.branch === 0 ||
+        person.branch === 0 ||
+        candidate.branch === person.branch) &&
+      candidate.born < person.born &&
+      !isDescendantOf(members, person.id, candidate.id),
+  );
+}
+
+export function eligibleSpouses(person: Member, members: Member[]) {
+  return members.filter(
+    (candidate) =>
+      candidate.id !== person.id &&
+      !person.spouses.includes(candidate.id) &&
+      !person.parents.includes(candidate.id) &&
+      candidate.generation === person.generation &&
+      !isDescendantOf(members, person.id, candidate.id) &&
+      !isDescendantOf(members, candidate.id, person.id),
+  );
+}
+
+export function eligibleGenerations(person: Member, members: Member[]) {
+  const parentGenerations = person.parents
+    .map((id) => members.find((member) => member.id === id)?.generation)
+    .filter((generation): generation is number => Number.isInteger(generation));
+  const minimum = parentGenerations.length
+    ? Math.max(...parentGenerations) + 1
+    : 1;
+
+  return Array.from(
+    { length: Math.max(0, 50 - minimum + 1) },
+    (_, index) => minimum + index,
+  );
+}
+
+export function eligibleBranches(person: Member, members: Member[]) {
+  if (person.generation < 1) return [];
+  if (person.generation === 1) return [0];
+
+  const parentBranches = new Set(
+    person.parents
+      .map((id) => members.find((member) => member.id === id)?.branch)
+      .filter(
+        (branch): branch is number =>
+          typeof branch === 'number' && Number.isInteger(branch) && branch > 0,
+      ),
+  );
+  return parentBranches.size === 1 ? [...parentBranches] : [1, 2, 3];
+}
+
+export function eligibleBirthYears(person: Member, members: Member[]) {
+  const parentYears = person.parents
+    .map((id) => members.find((member) => member.id === id)?.born)
+    .filter((born): born is number => Number.isInteger(born));
+  const childYears = members
+    .filter((member) => member.parents.includes(person.id))
+    .map((member) => member.born);
+
+  return {
+    min: Math.max(1600, ...(parentYears.length ? parentYears.map((born) => born + 1) : [1600])),
+    max: Math.min(
+      new Date().getFullYear(),
+      ...(childYears.length ? childYears.map((born) => born - 1) : [new Date().getFullYear()]),
+    ),
+  };
+}
+
 export function validateMember(
   person: Member,
   members: Member[],
@@ -393,6 +509,17 @@ export function validateMember(
   )
     return 'Vui lòng chọn đời và chi.';
   if (!person.name.trim()) return 'Vui lòng nhập họ và tên.';
+  if (person.isClanMember && person.gender === 'female' && person.lineageType !== 'maternal-terminal') {
+    return 'Con gái trong dòng họ được ghi là nhánh ngoại.';
+  }
+  if (person.isClanMember && person.gender === 'male' && person.lineageType !== 'direct') {
+    return 'Con trai trong dòng họ được ghi là nhánh chính.';
+  }
+  if (!eligibleBranches(person, members).includes(person.branch)) {
+    return person.generation === 1
+      ? 'Đời thứ nhất cần thuộc nhánh Thủy tổ.'
+      : 'Chi cần khớp với đời và cha mẹ đã chọn.';
+  }
   if (
     !Number.isInteger(person.born) ||
     person.born < 1600 ||
@@ -428,6 +555,15 @@ export function validateMember(
     return 'Quan hệ này tạo vòng lặp trong cây gia phả.';
   if ([...person.parents, ...person.spouses].some((id) => !lookup.has(id)))
     return 'Không tìm thấy người thân được chọn.';
+  if (
+    person.parents.some(
+      (id, index) =>
+        !eligibleParents(person, members, index).some(
+          (candidate) => candidate.id === id,
+        ),
+    )
+  )
+    return 'Cha mẹ cần ở đời liền trước và thuộc đúng chi.';
   if (person.parents.some((id) => lookup.get(id)!.born >= person.born))
     return 'Năm sinh của con phải sau năm sinh của cha mẹ.';
   if (
@@ -448,6 +584,9 @@ export function validateMember(
     )
   )
     return 'Năm sinh hoặc đời không phù hợp với hồ sơ con đã có.';
+  const birthYears = eligibleBirthYears(person, members);
+  if (person.born < birthYears.min || person.born > birthYears.max)
+    return 'Năm sinh cần phù hợp với cha mẹ và con đã ghi nhận.';
   if (person.spouses.some((id) => lookup.get(id)!.parents.includes(person.id)))
     return 'Không thể tạo quan hệ vợ chồng với con.';
   if (

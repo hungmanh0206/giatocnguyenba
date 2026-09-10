@@ -30,10 +30,17 @@ import {
   Choice,
   SearchBox,
   EmptyState,
-  branchOptions,
-  generationOptions,
 } from './common';
-import { searchMembers, branchName, type Member } from '@/lib/family';
+import {
+  eligibleBirthYears,
+  eligibleBranches,
+  eligibleGenerations,
+  eligibleParents,
+  eligibleSpouses,
+  searchMembers,
+  branchName,
+  type Member,
+} from '@/lib/family';
 import { canManageFamily } from '@/lib/access';
 const blank = (): Member => ({
   id: crypto.randomUUID(),
@@ -58,6 +65,7 @@ export function AdminPage() {
   const [deletingPending, setDeletingPending] = useState(false);
   const [authPending, setAuthPending] = useState(false);
   const filtered = searchMembers(members, query);
+  const birthYears = editing ? eligibleBirthYears(editing, members) : null;
   function update<K extends keyof Member>(key: K, value: Member[K]) {
     setEditing((p) => (p ? { ...p, [key]: value } : null));
   }
@@ -345,12 +353,22 @@ export function AdminPage() {
                     <Choice
                       label="Giới tính"
                       value={editing.gender || 'unselected'}
-                      onChange={(v) =>
-                        update(
-                          'gender',
-                          (v === 'unselected' ? '' : v) as Member['gender'],
-                        )
-                      }
+                      onChange={(v) => {
+                        const gender = (v === 'unselected' ? '' : v) as Member['gender'];
+                        setEditing((person) =>
+                          person
+                            ? {
+                                ...person,
+                                gender,
+                                lineageType: person.isClanMember
+                                  ? gender === 'female'
+                                    ? 'maternal-terminal'
+                                    : 'direct'
+                                  : person.lineageType,
+                              }
+                            : null,
+                        );
+                      }}
                       options={[
                         { value: 'unselected', label: 'Chọn giới tính' },
                         { value: 'male', label: 'Nam' },
@@ -363,8 +381,8 @@ export function AdminPage() {
                     <Input
                       required
                       type="number"
-                      min={1600}
-                      max={new Date().getFullYear()}
+                      min={birthYears?.min || 1600}
+                      max={birthYears?.max || new Date().getFullYear()}
                       value={editing.born || ''}
                       onChange={(e) =>
                         update('born', e.target.value ? Number(e.target.value) : 0)
@@ -390,12 +408,26 @@ export function AdminPage() {
                           ? String(editing.generation)
                           : 'unselected'
                       }
-                      onChange={(v) =>
-                        update('generation', v === 'unselected' ? 0 : Number(v))
-                      }
+                      onChange={(v) => {
+                        const generation = v === 'unselected' ? 0 : Number(v);
+                        setEditing((person) => {
+                          if (!person) return null;
+                          const next = { ...person, generation };
+                          const branches = eligibleBranches(next, members);
+                          return {
+                            ...next,
+                            branch: branches.includes(next.branch)
+                              ? next.branch
+                              : (branches[0] ?? -1),
+                          };
+                        });
+                      }}
                       options={[
                         { value: 'unselected', label: 'Chọn đời' },
-                        ...generationOptions.filter((o) => o.value !== 'all'),
+                        ...eligibleGenerations(editing, members).map((generation) => ({
+                          value: String(generation),
+                          label: `Đời thứ ${generation}`,
+                        })),
                       ]}
                     />
                   </label>
@@ -411,7 +443,10 @@ export function AdminPage() {
                       }
                       options={[
                         { value: 'unselected', label: 'Chọn chi' },
-                        ...branchOptions.filter((o) => o.value !== 'all'),
+                        ...eligibleBranches(editing, members).map((branch) => ({
+                          value: String(branch),
+                          label: branchName(branch),
+                        })),
                       ]}
                     />
                   </label>
@@ -422,9 +457,22 @@ export function AdminPage() {
                     <Choice
                       label="Vai trò trong gia phả"
                       value={editing.isClanMember ? 'clan' : 'external'}
-                      onChange={(value) =>
-                        update('isClanMember', value === 'clan')
-                      }
+                      onChange={(value) => {
+                        const isClanMember = value === 'clan';
+                        setEditing((person) =>
+                          person
+                            ? {
+                                ...person,
+                                isClanMember,
+                                lineageType: isClanMember
+                                  ? person.gender === 'female'
+                                    ? 'maternal-terminal'
+                                    : 'direct'
+                                  : person.lineageType,
+                              }
+                            : null,
+                        );
+                      }}
                       options={[
                         { value: 'clan', label: 'Thành viên dòng họ' },
                         { value: 'external', label: 'Phối ngẫu / nhánh ngoại' },
@@ -436,20 +484,30 @@ export function AdminPage() {
                       Hướng phát triển nhánh
                       <Choice
                         label="Hướng phát triển nhánh"
-                        value={editing.lineageType}
-                        onChange={(value) =>
-                          update(
-                            'lineageType',
-                            value as Member['lineageType'],
-                          )
-                        }
-                        options={[
-                          { value: 'direct', label: 'Nhánh chính' },
-                          {
-                            value: 'maternal-terminal',
-                            label: 'Nhánh ngoại · dừng ở con trực tiếp',
-                          },
-                        ]}
+                      value={
+                        editing.gender === 'female'
+                          ? 'maternal-terminal'
+                          : 'direct'
+                      }
+                      onChange={() =>
+                        update(
+                          'lineageType',
+                          editing.gender === 'female'
+                            ? 'maternal-terminal'
+                            : 'direct',
+                        )
+                      }
+                      options={[
+                        editing.gender === 'female'
+                          ? {
+                              value: 'maternal-terminal',
+                              label: 'Nhánh ngoại · dừng ở con trực tiếp',
+                            }
+                          : {
+                              value: 'direct',
+                              label: 'Nhánh chính · phát triển qua con trai',
+                            },
+                      ]}
                       />
                     </label>
                   )}
@@ -462,15 +520,24 @@ export function AdminPage() {
                       label={`Cha mẹ ${index + 1}`}
                       value={editing.parents[index] || 'none'}
                       onChange={(v) => {
-                        const parents = [...editing.parents];
-                        if (v === 'none') parents.splice(index, 1);
-                        else parents[index] = v;
-                        update('parents', parents.filter(Boolean));
+                        setEditing((person) => {
+                          if (!person) return null;
+                          const parents = [...person.parents];
+                          if (v === 'none') parents.splice(index, 1);
+                          else parents[index] = v;
+                          const next = { ...person, parents: parents.filter(Boolean) };
+                          const branches = eligibleBranches(next, members);
+                          return {
+                            ...next,
+                            branch: branches.includes(next.branch)
+                              ? next.branch
+                              : (branches[0] ?? -1),
+                          };
+                        });
                       }}
                       options={[
                         { value: 'none', label: 'Chưa ghi nhận' },
-                        ...members
-                          .filter((p) => p.id !== editing.id)
+                        ...eligibleParents(editing, members, index)
                           .map((p) => ({
                             value: p.id,
                             label: `${p.name} (${p.born})`,
@@ -492,12 +559,7 @@ export function AdminPage() {
                     }}
                     options={[
                       { value: 'none', label: 'Chọn để thêm…' },
-                      ...members
-                        .filter(
-                          (p) =>
-                            p.id !== editing.id &&
-                            !editing.spouses.includes(p.id),
-                        )
+                      ...eligibleSpouses(editing, members)
                         .map((p) => ({ value: p.id, label: p.name })),
                     ]}
                   />

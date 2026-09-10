@@ -74,8 +74,9 @@ function clanPeopleForTree(members: Member[]) {
 }
 
 function lineageType(person: Member) {
-  return person.lineageType === 'maternal-terminal' ||
-    (person.gender === 'female' && legacyClanMember(person))
+  return (person.gender === 'female' &&
+    (person.isClanMember || legacyClanMember(person))) ||
+    person.lineageType === 'maternal-terminal'
     ? 'maternal-terminal'
     : 'direct';
 }

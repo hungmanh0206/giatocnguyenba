@@ -6,6 +6,12 @@ import {
   validateMember,
   relatives,
   removeMemberAndLinks,
+  upsertMemberAndLinks,
+  eligibleBirthYears,
+  eligibleBranches,
+  eligibleGenerations,
+  eligibleParents,
+  eligibleSpouses,
 } from '../lib/family.ts';
 import {
   collapsedDescendantGroups,
@@ -67,6 +73,14 @@ test('removing a member also clears parent and spouse links', () => {
     nextMembers.find((member) => member.id === 'p12')?.parents,
     ['p4'],
   );
+  const model = assertRenderableTree(nextMembers);
+  assert.equal(model.groupOf.get('p10'), 'family-p10');
+  assert.equal(
+    model.links.some(
+      (link) => link.source === 'family-p3' || link.target === 'family-p3',
+    ),
+    false,
+  );
 });
 test('validation rejects cycles, self-parenting and inconsistent edits to a parent', () => {
   const root = seedMembers[0];
@@ -83,6 +97,248 @@ test('validation rejects cycles, self-parenting and inconsistent edits to a pare
   assert.ok(validateMember({ ...root, born: 1910 }, seedMembers));
   assert.ok(
     validateMember({ ...seedMembers[18], spouses: ['p10'] }, seedMembers),
+  );
+  assert.equal(
+    validateMember(
+      { ...seedMembers.find((member) => member.id === 'p12'), lineageType: 'direct' },
+      seedMembers,
+    ),
+    'Con gái trong dòng họ được ghi là nhánh ngoại.',
+  );
+});
+
+test('member editor only offers relationships, generations, branches, and years that fit the tree', () => {
+  const newChild = {
+    id: 'editor-child',
+    name: 'Nguyễn Bá Editor',
+    gender: 'male',
+    isClanMember: true,
+    lineageType: 'direct',
+    generation: 4,
+    branch: 1,
+    born: 1962,
+    parents: ['p10'],
+    spouses: [],
+  };
+  assert.deepEqual(
+    eligibleParents(newChild, seedMembers, 0).map((member) => member.id),
+    ['p10', 'p11', 'p12', 'p13'],
+  );
+  assert.equal(eligibleParents({ ...newChild, generation: 1 }, seedMembers, 0).length, 0);
+  assert.deepEqual(eligibleBranches(newChild, seedMembers), [1]);
+  assert.deepEqual(eligibleBranches({ ...newChild, generation: 1 }, seedMembers), [0]);
+  assert.equal(eligibleGenerations(newChild, seedMembers).includes(3), false);
+  assert.equal(eligibleGenerations(newChild, seedMembers).includes(4), true);
+  assert.deepEqual(eligibleBirthYears({ ...seedMembers.find((member) => member.id === 'p10') }, seedMembers), {
+    min: 1904,
+    max: 1954,
+  });
+
+  const p10 = seedMembers.find((member) => member.id === 'p10');
+  const spouseIds = eligibleSpouses(p10, seedMembers).map((member) => member.id);
+  assert.equal(spouseIds.includes('p11'), false);
+  assert.equal(spouseIds.includes('p19'), false);
+  assert.equal(spouseIds.includes('p5'), false);
+  assert.equal(spouseIds.includes('p21'), false);
+  assert.equal(spouseIds.includes('p14'), true);
+  assert.equal(
+    validateMember({ ...newChild, branch: 2 }, seedMembers),
+    'Chi cần khớp với đời và cha mẹ đã chọn.',
+  );
+});
+
+function assertRenderableTree(members) {
+  const model = layoutFamily(members);
+  const groups = new Map(model.groups.map((group) => [group.id, group]));
+
+  for (const link of model.links) {
+    assert.ok(groups.has(link.source), `missing source ${link.source}`);
+    assert.ok(groups.has(link.target), `missing target ${link.target}`);
+  }
+  for (const a of model.groups)
+    for (const b of model.groups)
+      if (a.id !== b.id && a.generation === b.generation)
+        assert.ok(
+          a.x + a.width <= b.x || b.x + b.width <= a.x,
+          `${a.id} overlaps ${b.id}`,
+        );
+
+  return model;
+}
+
+test('tree stays renderable through add, edit, spouse changes, and deletion', () => {
+  let members = seedMembers.map((member) => ({
+    ...member,
+    parents: [...member.parents],
+    spouses: [...member.spouses],
+  }));
+
+  const spouse = {
+    id: 'case-spouse',
+    name: 'Ngô Thị Mai',
+    gender: 'female',
+    isClanMember: false,
+    lineageType: 'direct',
+    generation: 5,
+    branch: 1,
+    born: 1995,
+    parents: [],
+    spouses: ['p33'],
+  };
+  assert.equal(validateMember(spouse, members), null);
+  members = upsertMemberAndLinks(members, spouse);
+  let model = assertRenderableTree(members);
+  assert.deepEqual(
+    model.groups.find((group) => group.id === 'family-p33')?.people.map((person) => person.id),
+    ['p33', 'case-spouse'],
+  );
+
+  const son = {
+    id: 'case-son',
+    name: 'Nguyễn Bá Quốc Bảo',
+    gender: 'male',
+    isClanMember: true,
+    lineageType: 'direct',
+    generation: 6,
+    branch: 1,
+    born: 2006,
+    parents: ['p33', 'case-spouse'],
+    spouses: [],
+  };
+  assert.equal(validateMember(son, members), null);
+  members = upsertMemberAndLinks(members, son);
+  model = assertRenderableTree(members);
+  assert.equal(model.groupOf.get('case-son'), 'family-case-son');
+  assert.equal(
+    model.links.some(
+      (link) => link.source === 'family-p33' && link.target === 'family-case-son',
+    ),
+    true,
+  );
+
+  const daughter = {
+    id: 'case-daughter',
+    name: 'Nguyễn Thị Minh Anh',
+    gender: 'female',
+    isClanMember: true,
+    lineageType: 'maternal-terminal',
+    generation: 6,
+    branch: 1,
+    born: 2008,
+    parents: ['p33', 'case-spouse'],
+    spouses: [],
+  };
+  assert.equal(validateMember(daughter, members), null);
+  members = upsertMemberAndLinks(members, daughter);
+
+  const sonInLaw = {
+    id: 'case-son-in-law',
+    name: 'Trần Quốc Nam',
+    gender: 'male',
+    isClanMember: false,
+    lineageType: 'direct',
+    generation: 6,
+    branch: 1,
+    born: 2005,
+    parents: [],
+    spouses: ['case-daughter'],
+  };
+  assert.equal(validateMember(sonInLaw, members), null);
+  members = upsertMemberAndLinks(members, sonInLaw);
+
+  const maternalChild = {
+    id: 'case-maternal-child',
+    name: 'Trần Gia Hân',
+    gender: 'female',
+    isClanMember: false,
+    lineageType: 'direct',
+    generation: 7,
+    branch: 1,
+    born: 2024,
+    parents: ['case-daughter', 'case-son-in-law'],
+    spouses: [],
+  };
+  assert.equal(validateMember(maternalChild, members), null);
+  members = upsertMemberAndLinks(members, maternalChild);
+
+  const maternalGrandchild = {
+    id: 'case-maternal-grandchild',
+    name: 'Trần Hải Đăng',
+    gender: 'male',
+    isClanMember: false,
+    lineageType: 'direct',
+    generation: 8,
+    branch: 1,
+    born: 2025,
+    parents: ['case-maternal-child'],
+    spouses: [],
+  };
+  assert.equal(validateMember(maternalGrandchild, members), null);
+  members = upsertMemberAndLinks(members, maternalGrandchild);
+
+  model = assertRenderableTree(members);
+  assert.equal(model.groupOf.get('case-daughter'), 'family-case-daughter');
+  assert.equal(model.groupOf.get('case-son-in-law'), 'family-case-daughter');
+  assert.equal(model.groupOf.get('case-maternal-child'), 'terminal-case-maternal-child');
+  assert.equal(model.groupOf.has('case-maternal-grandchild'), false);
+  assert.equal(model.visibleMemberIds.has('case-maternal-grandchild'), false);
+  assert.equal(
+    model.links.some((link) => link.source === 'terminal-case-maternal-child'),
+    false,
+  );
+
+  const editedDaughter = {
+    ...members.find((member) => member.id === 'case-daughter'),
+    name: 'Nguyễn Thị Gia Linh',
+    spouses: [],
+  };
+  assert.equal(validateMember(editedDaughter, members), null);
+  members = upsertMemberAndLinks(members, editedDaughter);
+  model = assertRenderableTree(members);
+  assert.equal(
+    model.groups.find((group) => group.id === 'family-case-daughter')?.clanMember.name,
+    'Nguyễn Thị Gia Linh',
+  );
+  assert.deepEqual(
+    members.find((member) => member.id === 'case-son-in-law')?.spouses,
+    [],
+  );
+
+  const editedSon = {
+    ...members.find((member) => member.id === 'case-son'),
+    name: 'Nguyễn Bá Quốc Khánh',
+  };
+  assert.equal(validateMember(editedSon, members), null);
+  members = upsertMemberAndLinks(members, editedSon);
+  model = assertRenderableTree(members);
+  assert.equal(
+    model.groups.find((group) => group.id === 'family-case-son')?.clanMember.name,
+    'Nguyễn Bá Quốc Khánh',
+  );
+
+  members = removeMemberAndLinks(members, 'case-spouse');
+  model = assertRenderableTree(members);
+  assert.deepEqual(
+    model.groups.find((group) => group.id === 'family-p33')?.people.map((person) => person.id),
+    ['p33'],
+  );
+  assert.deepEqual(
+    members.find((member) => member.id === 'case-daughter')?.parents,
+    ['p33'],
+  );
+
+  members = removeMemberAndLinks(members, 'case-son');
+  model = assertRenderableTree(members);
+  assert.equal(model.groupOf.has('case-son'), false);
+  assert.equal(model.links.some((link) => link.childId === 'case-son'), false);
+
+  members = removeMemberAndLinks(members, 'case-daughter');
+  model = assertRenderableTree(members);
+  assert.equal(model.groupOf.has('case-daughter'), false);
+  assert.equal(model.groupOf.has('case-maternal-child'), false);
+  assert.equal(
+    model.links.some((link) => link.childId === 'case-daughter'),
+    false,
   );
 });
 test('family-unit layout keeps daughters, spouses, and maternal terminal children', () => {
