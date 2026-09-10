@@ -81,6 +81,33 @@ export function AdminPage() {
   function update<K extends keyof Member>(key: K, value: Member[K]) {
     setEditing((p) => (p ? { ...p, [key]: value } : null));
   }
+
+  function updateParent(index: number, value: string) {
+    setEditing((person) => {
+      if (!person) return null;
+
+      const parentSlots = [person.parents[0] || '', person.parents[1] || ''];
+      parentSlots[index] = value === 'none' ? '' : value;
+      let next = { ...person, parents: parentSlots.filter(Boolean) };
+
+      if (
+        next.parents.length === 2 &&
+        !eligibleParents(next, members, index).some(
+          (candidate) => candidate.id === next.parents[index],
+        )
+      ) {
+        next = { ...next, parents: [next.parents[index]] };
+      }
+
+      const branches = eligibleBranches(next, members);
+      return {
+        ...next,
+        branch: branches.includes(next.branch)
+          ? next.branch
+          : (branches[0] ?? -1),
+      };
+    });
+  }
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!editing) return;
@@ -532,22 +559,7 @@ export function AdminPage() {
                     <Choice
                       label={`Cha mẹ ${index + 1}`}
                       value={editing.parents[index] || 'none'}
-                      onChange={(v) => {
-                        setEditing((person) => {
-                          if (!person) return null;
-                          const parents = [...person.parents];
-                          if (v === 'none') parents.splice(index, 1);
-                          else parents[index] = v;
-                          const next = { ...person, parents: parents.filter(Boolean) };
-                          const branches = eligibleBranches(next, members);
-                          return {
-                            ...next,
-                            branch: branches.includes(next.branch)
-                              ? next.branch
-                              : (branches[0] ?? -1),
-                          };
-                        });
-                      }}
+                      onChange={(v) => updateParent(index, v)}
                       options={[
                         { value: 'none', label: 'Chưa ghi nhận' },
                         ...eligibleParents(editing, members, index)
@@ -556,7 +568,9 @@ export function AdminPage() {
                             label: `${p.name} (${p.born})`,
                           })),
                       ]}
-                      disabled={!!positionLock}
+                      disabled={
+                        !!positionLock || (index === 1 && !editing.parents[0])
+                      }
                     />
                   </label>
                 ))}

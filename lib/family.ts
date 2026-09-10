@@ -391,6 +391,15 @@ function linkedSpouseIds(person: Member, members: Member[]) {
   ];
 }
 
+function areRegisteredSpouses(
+  members: Member[],
+  leftId: string,
+  rightId: string,
+) {
+  const left = members.find((member) => member.id === leftId);
+  return !!left && linkedSpouseIds(left, members).includes(rightId);
+}
+
 export function memberDeletionError(person: Member, members: Member[]) {
   const children = members.filter((member) => member.parents.includes(person.id));
   const spouses = linkedSpouseIds(person, members);
@@ -488,6 +497,7 @@ export function eligibleParents(
 ) {
   if (person.generation <= 1 || !person.born) return [];
   const selectedInSlot = person.parents[parentIndex];
+  const coParentId = person.parents[parentIndex === 0 ? 1 : 0];
 
   return members.filter(
     (candidate) =>
@@ -499,28 +509,39 @@ export function eligibleParents(
         person.branch === 0 ||
         candidate.branch === person.branch) &&
       candidate.born < person.born &&
+      (!coParentId ||
+        areRegisteredSpouses(members, candidate.id, coParentId)) &&
       !isDescendantOf(members, person.id, candidate.id),
+  );
+}
+
+function isEligibleSpouse(person: Member, candidate: Member, members: Member[]) {
+  return (
+    candidate.id !== person.id &&
+    !person.parents.includes(candidate.id) &&
+    candidate.generation === person.generation &&
+    candidate.branch === person.branch &&
+    !candidate.parents.some((id) => person.parents.includes(id)) &&
+    !candidate.spouses.some((id) => person.parents.includes(id)) &&
+    !candidate.spouses.some(
+      (id) =>
+        id !== person.id &&
+        members.some(
+          (sibling) =>
+            sibling.id === id &&
+            sibling.parents.some((parentId) => person.parents.includes(parentId)),
+        ),
+    ) &&
+    !isDescendantOf(members, person.id, candidate.id) &&
+    !isDescendantOf(members, candidate.id, person.id)
   );
 }
 
 export function eligibleSpouses(person: Member, members: Member[]) {
   return members.filter(
     (candidate) =>
-      candidate.id !== person.id &&
       !person.spouses.includes(candidate.id) &&
-      !person.parents.includes(candidate.id) &&
-      candidate.generation === person.generation &&
-      candidate.branch === person.branch &&
-      !candidate.parents.some((id) => person.parents.includes(id)) &&
-      !candidate.spouses.some((id) =>
-        members.some(
-          (sibling) =>
-            sibling.id === id &&
-            sibling.parents.some((parentId) => person.parents.includes(parentId)),
-        ),
-      ) &&
-      !isDescendantOf(members, person.id, candidate.id) &&
-      !isDescendantOf(members, candidate.id, person.id),
+      isEligibleSpouse(person, candidate, members),
   );
 }
 
@@ -528,14 +549,14 @@ export function eligibleGenerations(person: Member, members: Member[]) {
   const parentGenerations = person.parents
     .map((id) => members.find((member) => member.id === id)?.generation)
     .filter((generation): generation is number => Number.isInteger(generation));
-  const minimum = parentGenerations.length
-    ? Math.max(...parentGenerations) + 1
-    : 1;
+  if (parentGenerations.length) {
+    const parentGeneration = parentGenerations[0];
+    return parentGenerations.every((generation) => generation === parentGeneration)
+      ? [parentGeneration + 1]
+      : [];
+  }
 
-  return Array.from(
-    { length: Math.max(0, 50 - minimum + 1) },
-    (_, index) => minimum + index,
-  );
+  return Array.from({ length: 50 }, (_, index) => index + 1);
 }
 
 export function eligibleBranches(person: Member, members: Member[]) {
@@ -634,6 +655,11 @@ export function validateMember(
   if ([...person.parents, ...person.spouses].some((id) => !lookup.has(id)))
     return 'Không tìm thấy người thân được chọn.';
   if (
+    person.parents.length === 2 &&
+    !areRegisteredSpouses(members, person.parents[0], person.parents[1])
+  )
+    return 'Hai cha mẹ cần được ghi nhận là vợ chồng trước khi cùng đứng trong một hộ gia đình.';
+  if (
     person.parents.some(
       (id, index) =>
         !eligibleParents(person, members, index).some(
@@ -654,6 +680,12 @@ export function validateMember(
     )
   )
     return 'Vợ chồng cần được ghi nhận cùng đời.';
+  if (
+    person.spouses.some(
+      (id) => !isEligibleSpouse(person, lookup.get(id)!, members),
+    )
+  )
+    return 'Quan hệ vợ chồng không phù hợp với các quan hệ gia đình đã ghi nhận.';
   if (
     members.some(
       (p) =>

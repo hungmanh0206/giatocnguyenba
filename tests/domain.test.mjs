@@ -126,6 +126,14 @@ test('member editor only offers relationships, generations, branches, and years 
     eligibleParents(newChild, seedMembers, 0).map((member) => member.id),
     ['p10', 'p11', 'p12', 'p13'],
   );
+  assert.deepEqual(
+    eligibleParents(newChild, seedMembers, 1).map((member) => member.id),
+    ['p11'],
+  );
+  assert.equal(
+    validateMember({ ...newChild, parents: ['p10', 'p12'] }, seedMembers),
+    'Hai cha mẹ cần được ghi nhận là vợ chồng trước khi cùng đứng trong một hộ gia đình.',
+  );
   assert.equal(eligibleParents({ ...newChild, generation: 1 }, seedMembers, 0).length, 0);
   assert.deepEqual(eligibleBranches(newChild, seedMembers), [1]);
   assert.deepEqual(eligibleBranches({ ...newChild, generation: 1 }, seedMembers), [0]);
