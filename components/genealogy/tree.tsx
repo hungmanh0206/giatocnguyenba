@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
+  BaseEdge,
   Background,
   Handle,
   Position,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  type EdgeProps,
   type Node,
   type NodeProps,
 } from '@xyflow/react';
@@ -39,6 +41,19 @@ type FamilyUnitData = {
 
 type FamilyUnitNode = Node<FamilyUnitData, 'family-unit' | 'root-family'>;
 type GenerationBandNode = Node<{ generation: number }, 'generation-band'>;
+
+function FamilyBranchEdge({
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  ...edge
+}: EdgeProps) {
+  const busY = sourceY + Math.max(32, Math.min(58, (targetY - sourceY) * 0.38));
+  const path = `M ${sourceX},${sourceY} L ${sourceX},${busY} L ${targetX},${busY} L ${targetX},${targetY}`;
+
+  return <BaseEdge path={path} {...edge} />;
+}
 
 function PersonArea({
   person,
@@ -160,6 +175,10 @@ const nodeTypes = {
   'generation-band': GenerationBand,
 };
 
+const edgeTypes = {
+  'family-branch': FamilyBranchEdge,
+};
+
 export function TreePage() {
   return (
     <ReactFlowProvider>
@@ -180,30 +199,42 @@ function TreeCanvas() {
   const [full, setFull] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
+  const initialTreeLayout = useRef(false);
   const flow = useReactFlow();
-  const model = useMemo(() => layoutFamily(members), [members]);
+  const model = useMemo(
+    () => layoutFamily(members, collapsed),
+    [collapsed, members],
+  );
   const treeMembers = useMemo(
     () => members.filter((member) => model.visibleMemberIds.has(member.id)),
     [members, model.visibleMemberIds],
   );
-  const allTreeNodes = useMemo(
-    () => model.groups.map((group) => ({ id: group.id })),
-    [model.groups],
+  const overviewNodes = useMemo(
+    () => {
+      const roots = new Set(
+        model.groups.filter((group) => group.root).map((group) => group.id),
+      );
+      const firstGeneration = new Set(
+        model.links
+          .filter((link) => roots.has(link.source))
+          .map((link) => link.target),
+      );
+      return model.groups
+        .filter((group) => roots.has(group.id) || firstGeneration.has(group.id))
+        .map((group) => ({ id: group.id }));
+    },
+    [model.groups, model.links],
   );
-  const desktopOverviewNodes = useMemo(
-    () =>
-      model.groups
-        .filter((group) => group.generation <= 2)
-        .map((group) => ({ id: group.id })),
-    [model.groups],
-  );
-  const mobileOverviewNodes = useMemo(
-    () =>
-      model.groups
-        .filter((group) => group.root)
-        .map((group) => ({ id: group.id })),
-    [model.groups],
-  );
+  const defaultCollapsedGroups = useMemo(() => {
+    const roots = new Set(
+      model.groups.filter((group) => group.root).map((group) => group.id),
+    );
+    return new Set(
+      model.links
+        .filter((link) => !roots.has(link.source))
+        .map((link) => link.source),
+    );
+  }, [model.groups, model.links]);
   const collapsibleGroupIds = useMemo(
     () => new Set(model.links.map((link) => link.source)),
     [model.links],
@@ -244,23 +275,30 @@ function TreeCanvas() {
   }, [focusPerson, members, model.visibleMemberIds, params, ready]);
 
   useEffect(() => {
-    if (!ready || !allTreeNodes.length) return;
+    if (!ready || initialTreeLayout.current) return;
+    const expected = defaultCollapsedGroups;
+    const isDefaultState =
+      collapsed.size === expected.size &&
+      [...collapsed].every((id) => expected.has(id));
+    if (!isDefaultState) {
+      setCollapsed(new Set(expected));
+      return;
+    }
+    initialTreeLayout.current = true;
     const frame = requestAnimationFrame(() => {
       void flow.fitView({
-        nodes: window.matchMedia('(max-width: 720px)').matches
-          ? mobileOverviewNodes
-          : desktopOverviewNodes,
-        padding: 0.16,
-        maxZoom: 0.9,
+        nodes: overviewNodes,
+        padding: window.matchMedia('(max-width: 720px)').matches ? 0.12 : 0.18,
+        maxZoom: window.matchMedia('(max-width: 720px)').matches ? 0.78 : 0.92,
         duration: 0,
       });
     });
     return () => cancelAnimationFrame(frame);
   }, [
-    allTreeNodes.length,
-    desktopOverviewNodes,
+    collapsed,
+    defaultCollapsedGroups,
     flow,
-    mobileOverviewNodes,
+    overviewNodes,
     ready,
   ]);
 
@@ -310,6 +348,9 @@ function TreeCanvas() {
       position: { x: leftEdge - 146, y: lane.y + 14 },
       draggable: false,
       selectable: false,
+      hidden: model.groups
+        .filter((group) => group.generation === lane.generation)
+        .every((group) => hidden.has(group.id)),
       data: { generation: lane.generation },
     }),
   );
@@ -319,7 +360,7 @@ function TreeCanvas() {
     target: link.target,
     sourceHandle: 'family-out',
     targetHandle: 'family-in',
-    type: 'smoothstep',
+    type: 'family-branch',
     hidden: hidden.has(link.source) || hidden.has(link.target),
     className:
       link.branchType === 'maternal-terminal' ? 'maternal-tree-edge' : '',
@@ -329,28 +370,25 @@ function TreeCanvas() {
         link.branchType === 'maternal-terminal' ? '5 5' : undefined,
       strokeWidth: link.branchType === 'maternal-terminal' ? 1.45 : 1.35,
     },
-    pathOptions: { borderRadius: 8 },
   }));
   const found = searchMembers(treeMembers, query).slice(0, 6);
 
   function resetViewport() {
     return flow.fitView({
-      nodes: window.matchMedia('(max-width: 720px)').matches
-        ? mobileOverviewNodes
-        : desktopOverviewNodes,
-      padding: 0.16,
-      maxZoom: 0.9,
+      nodes: overviewNodes,
+      padding: window.matchMedia('(max-width: 720px)').matches ? 0.12 : 0.18,
+      maxZoom: window.matchMedia('(max-width: 720px)').matches ? 0.78 : 0.92,
       duration: 400,
     });
   }
 
   function reset() {
-    setCollapsed(new Set());
+    setCollapsed(new Set(defaultCollapsedGroups));
     setBranch('all');
     setGeneration('all');
     setQuery('');
     setSelected(null);
-    void resetViewport();
+    requestAnimationFrame(() => void resetViewport());
   }
 
   function collapseAll() {
@@ -442,6 +480,7 @@ function TreeCanvas() {
           nodes={[...familyNodes, ...generationNodes]}
           edges={edges}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           nodesConnectable={false}
           nodesDraggable={false}
           elementsSelectable={false}
@@ -449,16 +488,6 @@ function TreeCanvas() {
           maxZoom={1.8}
           onInit={(instance) => {
             setReady(true);
-            if (window.matchMedia('(max-width: 720px)').matches) {
-              requestAnimationFrame(() => {
-                void instance.fitView({
-                  nodes: mobileOverviewNodes,
-                  padding: 0.16,
-                  maxZoom: 0.9,
-                  duration: 0,
-                });
-              });
-            }
           }}
           onMove={(_, viewport) => setZoom(viewport.zoom)}
         >

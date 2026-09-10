@@ -7462,6 +7462,8 @@ main#main .timeline-entry p {
 
 .tree-canvas .react-flow__edge-path {
   stroke-opacity: 0.82;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .react-flow__edge.maternal-tree-edge .react-flow__edge-path {

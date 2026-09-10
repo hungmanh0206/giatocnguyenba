@@ -120,6 +120,20 @@ test('family-unit layout keeps daughters, spouses, and maternal terminal childre
   assert.equal(model.links.some((link) => link.source === 'terminal-p23'), false);
   assert.equal(model.links.some((link) => link.source === 'terminal-p29'), false);
   assert.equal(model.visibleMemberIds.has('p38'), false);
+  for (const parent of model.groups) {
+    const children = model.links
+      .filter((link) => link.source === parent.id)
+      .map((link) => model.groups.find((group) => group.id === link.target))
+      .filter(Boolean);
+    if (!children.length) continue;
+    const left = Math.min(...children.map((child) => child.x));
+    const right = Math.max(...children.map((child) => child.x + child.width));
+    const parentCenter = parent.x + parent.width / 2;
+    assert.ok(
+      parentCenter >= left && parentCenter <= right,
+      `${parent.id} is centred over its child branch`,
+    );
+  }
   assert.equal(
     new Set(model.groups.flatMap((g) => g.people.map((p) => p.id))).size,
     model.visibleMemberIds.size,

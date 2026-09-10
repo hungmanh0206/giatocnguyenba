@@ -10,6 +10,9 @@ export const TERMINAL_NODE_HEIGHT = 142;
 export const PERSON_WIDTH = FAMILY_UNIT_WIDTH;
 export const PERSON_HEIGHT = FAMILY_UNIT_HEIGHT;
 export const PERSON_GAP = 48;
+const SIBLING_GAP = 76;
+const ROOT_GAP = 168;
+const GENERATION_GAP = 148;
 
 export type Household = {
   id: string;
@@ -83,14 +86,30 @@ function orderedPeople(members: Member[], indexOf: Map<string, number>) {
   });
 }
 
+function compareGroups(
+  a: Household,
+  b: Household,
+  indexOf: Map<string, number>,
+) {
+  return (
+    a.clanMember.born - b.clanMember.born ||
+    a.clanMember.branch - b.clanMember.branch ||
+    indexOf.get(a.clanMember.id)! - indexOf.get(b.clanMember.id)!
+  );
+}
+
 function familyHeight(spouseCount: number, root: boolean) {
   if (root) return ROOT_FAMILY_HEIGHT + Math.max(0, spouseCount - 1) * 52;
   return FAMILY_UNIT_HEIGHT + Math.max(0, spouseCount - 1) * 52;
 }
 
-export function layoutFamily(members: Member[]) {
+export function layoutFamily(
+  members: Member[],
+  collapsed: Iterable<string> = [],
+) {
   const lookup = new Map(members.map((person) => [person.id, person]));
   const indexOf = new Map(members.map((person, index) => [person.id, index]));
+  const collapsedGroups = new Set(collapsed);
   const clanPeople = orderedPeople(clanPeopleForTree(members), indexOf);
   const minimumGeneration = Math.min(
     ...clanPeople.map((person) => person.generation),
@@ -181,6 +200,79 @@ export function layoutFamily(members: Member[]) {
     }
   }
 
+  // Give every descendant branch its own horizontal span. A parent is centred in
+  // that span, so sibling branches remain ordered and their connectors cannot cross.
+  const groupById = new Map(groups.map((group) => [group.id, group]));
+  const childrenByGroup = new Map<string, Household[]>();
+  const parentGroups = new Set<string>();
+  for (const link of links) {
+    const child = groupById.get(link.target);
+    if (!child) continue;
+    const children = childrenByGroup.get(link.source) || [];
+    children.push(child);
+    childrenByGroup.set(link.source, children);
+    parentGroups.add(link.target);
+  }
+  for (const children of childrenByGroup.values()) {
+    children.sort((a, b) => compareGroups(a, b, indexOf));
+  }
+
+  const subtreeWidth = new Map<string, number>();
+  function measureSubtree(group: Household): number {
+    const cached = subtreeWidth.get(group.id);
+    if (cached) return cached;
+    const children = collapsedGroups.has(group.id)
+      ? []
+      : (childrenByGroup.get(group.id) || []);
+    const childrenWidth = children.length
+      ? children.reduce((total, child) => total + measureSubtree(child), 0) +
+        (children.length - 1) * SIBLING_GAP
+      : 0;
+    const width = Math.max(group.width, childrenWidth);
+    subtreeWidth.set(group.id, width);
+    return width;
+  }
+
+  function placeSubtree(group: Household, left: number) {
+    const width = measureSubtree(group);
+    const children = collapsedGroups.has(group.id)
+      ? []
+      : (childrenByGroup.get(group.id) || []);
+    const childrenWidth = children.length
+      ? children.reduce((total, child) => total + measureSubtree(child), 0) +
+        (children.length - 1) * SIBLING_GAP
+      : 0;
+    let childLeft = left + (width - childrenWidth) / 2;
+    for (const child of children) {
+      placeSubtree(child, childLeft);
+      childLeft += measureSubtree(child) + SIBLING_GAP;
+    }
+    group.x = left + (width - group.width) / 2;
+  }
+
+  const roots = groups
+    .filter((group) => !parentGroups.has(group.id))
+    .sort((a, b) =>
+      a.generation - b.generation || compareGroups(a, b, indexOf),
+    );
+  const forestWidth = roots.length
+    ? roots.reduce((total, group) => total + measureSubtree(group), 0) +
+      (roots.length - 1) * ROOT_GAP
+    : 0;
+  let forestLeft = -forestWidth / 2;
+  for (const root of roots) {
+    placeSubtree(root, forestLeft);
+    forestLeft += measureSubtree(root) + ROOT_GAP;
+  }
+
+  // Invalid imported relationships should not hide a person from the canvas.
+  for (const group of groups) {
+    if (!subtreeWidth.has(group.id)) {
+      placeSubtree(group, forestLeft);
+      forestLeft += measureSubtree(group) + ROOT_GAP;
+    }
+  }
+
   const generations = [...new Set(groups.map((group) => group.generation))].sort(
     (a, b) => a - b,
   );
@@ -189,21 +281,12 @@ export function layoutFamily(members: Member[]) {
   for (const generation of generations) {
     const lane = groups
       .filter((group) => group.generation === generation)
-      .sort(
-        (a, b) =>
-          indexOf.get(a.clanMember.id)! - indexOf.get(b.clanMember.id)!,
-      );
-    const laneWidth =
-      lane.reduce((total, group) => total + group.width, 0) +
-      Math.max(0, lane.length - 1) * 56;
-    let left = -laneWidth / 2;
+      .sort((a, b) => a.x - b.x);
     for (const group of lane) {
-      group.x = left;
       group.y = laneY;
-      left += group.width + 56;
     }
     generationLanes.push({ generation, y: laneY });
-    laneY += Math.max(...lane.map((group) => group.height)) + 132;
+    laneY += Math.max(...lane.map((group) => group.height)) + GENERATION_GAP;
   }
 
   return {
