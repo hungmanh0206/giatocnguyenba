@@ -85,22 +85,40 @@ test('validation rejects cycles, self-parenting and inconsistent edits to a pare
     validateMember({ ...seedMembers[18], spouses: ['p10'] }, seedMembers),
   );
 });
-test('patrilineal layout retains daughters but ends their branches', () => {
+test('family-unit layout keeps daughters, spouses, and maternal terminal children', () => {
   const model = layoutFamily(seedMembers);
-  assert.deepEqual(model.links.find((l) => l.childId === 'p16').parentIds, [
-    'p7',
-    'p8',
+  const root = model.groups.find((group) => group.root);
+  const daughterFamily = model.groups.find(
+    (group) => group.id === model.groupOf.get('p12'),
+  );
+  const maternalChild = model.groups.find(
+    (group) => group.id === model.groupOf.get('p23'),
+  );
+
+  assert.equal(root?.id, 'family-p1');
+  assert.ok(root.width > daughterFamily.width);
+  assert.deepEqual(
+    model.groups
+      .filter((group) => group.generation === 2 && group.kind === 'family')
+      .map((group) => group.clanMember.id),
+    ['p3', 'p5', 'p7'],
+  );
+  assert.deepEqual(daughterFamily?.people.map((person) => person.id), [
+    'p12',
+    'p13',
   ]);
-  assert.deepEqual(model.links.find((l) => l.childId === 'p18').parentIds, [
-    'p7',
-    'p9',
-  ]);
+  assert.equal(daughterFamily?.lineageType, 'maternal-terminal');
+  assert.equal(maternalChild?.kind, 'terminal');
   assert.equal(model.visibleMemberIds.has('p12'), true);
-  assert.equal(model.links.some((link) => link.childId === 'p12'), true);
-  assert.equal(model.links.some((link) => link.source === model.groupOf.get('p12')), false);
-  assert.equal(model.visibleMemberIds.has('p13'), false);
-  assert.equal(model.visibleMemberIds.has('p23'), false);
-  assert.equal(model.visibleMemberIds.has('p29'), false);
+  assert.equal(model.visibleMemberIds.has('p13'), true);
+  assert.equal(model.visibleMemberIds.has('p23'), true);
+  assert.equal(model.visibleMemberIds.has('p29'), true);
+  assert.equal(
+    model.links.find((link) => link.childId === 'p23')?.branchType,
+    'maternal-terminal',
+  );
+  assert.equal(model.links.some((link) => link.source === 'terminal-p23'), false);
+  assert.equal(model.links.some((link) => link.source === 'terminal-p29'), false);
   assert.equal(model.visibleMemberIds.has('p38'), false);
   assert.equal(
     new Set(model.groups.flatMap((g) => g.people.map((p) => p.id))).size,

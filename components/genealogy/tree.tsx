@@ -1,126 +1,165 @@
 'use client';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
-  ReactFlow,
-  ReactFlowProvider,
   Background,
   Handle,
   Position,
+  ReactFlow,
+  ReactFlowProvider,
   useReactFlow,
-  type NodeProps,
   type Node,
+  type NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useFamily } from './provider';
+import { branchName, searchMembers, type Member } from '@/lib/family';
+import {
+  collapsedDescendantGroups,
+  layoutFamily,
+  type Household,
+} from '@/lib/tree-layout';
 import { Avatar } from './home';
 import { HeritageIcon } from './heritage-icon';
 import { QuickView } from './members';
 import { Choice, branchOptions, generationOptions, SearchBox } from './common';
-import {
-  branchName,
-  relatives,
-  searchMembers,
-  type Member,
-} from '@/lib/family';
-import {
-  collapsedDescendantGroups,
-  layoutFamily,
-  PERSON_HEIGHT,
-  PERSON_WIDTH,
-  PERSON_GAP,
-  type Household,
-} from '@/lib/tree-layout';
-type FamilyNode = Node<
-  {
-    group: Household;
-    selected: string | null;
-    dimmed: string[];
-    collapsed: boolean;
-    hasChildren: boolean;
-    select: (p: Member) => void;
-    collapse: (id: string) => void;
-  },
-  'household'
->;
-function HouseholdNode({ data }: NodeProps<FamilyNode>) {
-  const { group } = data;
+import { useFamily } from './provider';
+
+type FamilyUnitData = {
+  group: Household;
+  selected: string | null;
+  dimmed: string[];
+  collapsed: boolean;
+  hasChildren: boolean;
+  select: (person: Member) => void;
+  collapse: (id: string) => void;
+};
+
+type FamilyUnitNode = Node<FamilyUnitData, 'family-unit' | 'root-family'>;
+type GenerationBandNode = Node<{ generation: number }, 'generation-band'>;
+
+function PersonArea({
+  person,
+  role,
+  selected,
+  dimmed,
+  onSelect,
+}: {
+  person: Member;
+  role: string;
+  selected: boolean;
+  dimmed: boolean;
+  onSelect: (person: Member) => void;
+}) {
   return (
-    <div className="household" style={{ width: group.width }}>
-      {group.people.map((p, index) => (
-        <div
-          className="tree-person-wrap"
-          style={{ width: PERSON_WIDTH }}
-          key={p.id}
-        >
-          <Handle
-            type="target"
-            position={Position.Top}
-            id={`child-${p.id}`}
-            style={{
-              left: index * (PERSON_WIDTH + PERSON_GAP) + PERSON_WIDTH / 2,
-            }}
-          />
-          <button
-            className={`tree-person nodrag nopan branch-${p.branch} ${data.selected === p.id ? 'chosen' : ''} ${data.dimmed.includes(p.id) ? 'dimmed' : ''}`}
-            data-tree-person-id={p.id}
+    <button
+      className={`family-member-area nodrag nopan ${selected ? 'is-selected' : ''} ${dimmed ? 'is-dimmed' : ''}`}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect(person);
+      }}
+      aria-label={`${person.name}, ${role}, đời ${person.generation}`}
+    >
+      <Avatar person={person} />
+      <span className="family-member-copy">
+        <span className="family-member-role">{role}</span>
+        <strong>{person.name}</strong>
+        <span className="family-member-years">
+          {person.born} – {person.died || 'nay'}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
+  const { group } = data;
+  const terminal = group.kind === 'terminal';
+  const root = group.root;
+
+  return (
+    <article
+      className={`family-unit ${root ? 'root-family-unit' : ''} ${terminal ? 'terminal-family-unit' : ''} ${group.lineageType === 'maternal-terminal' ? 'maternal-family-unit' : ''}`}
+      style={{ width: group.width, minHeight: group.height }}
+    >
+      {!root && <Handle type="target" position={Position.Top} id="family-in" />}
+      <div className="family-unit-heading">
+        <span>
+          {root
+            ? 'KHỞI NGUỒN DÒNG HỌ'
+            : terminal
+              ? 'NHÁNH NGOẠI'
+              : `ĐỜI THỨ ${group.generation}`}
+        </span>
+        {!terminal && !root && (
+          <small>{branchName(group.clanMember.branch)}</small>
+        )}
+      </div>
+      <PersonArea
+        person={group.clanMember}
+        role={terminal ? 'Con trực tiếp · điểm dừng' : 'Thành viên dòng họ'}
+        selected={data.selected === group.clanMember.id}
+        dimmed={data.dimmed.includes(group.clanMember.id)}
+        onSelect={data.select}
+      />
+      {group.spouses.length > 0 && (
+        <div className="family-spouse-list">
+          {group.spouses.map((spouse, index) => (
+            <div className="family-spouse-entry" key={spouse.id}>
+              {index === 0 && <span className="family-unit-divider" />}
+              <PersonArea
+                person={spouse}
+                role={spouse.gender === 'female' ? 'Vợ · phối ngẫu' : 'Chồng · phối ngẫu'}
+                selected={data.selected === spouse.id}
+                dimmed={data.dimmed.includes(spouse.id)}
+                onSelect={data.select}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+      {group.lineageType === 'maternal-terminal' && !terminal && (
+        <span className="maternal-branch-badge">Nhánh ngoại</span>
+      )}
+      {data.hasChildren && (
+        <>
+          <Handle type="source" position={Position.Bottom} id="family-out" />
+          <Button
+            variant="outline"
+            className="collapse-node nodrag nopan"
+            title={data.collapsed ? 'Mở hậu duệ' : 'Thu gọn hậu duệ'}
+            aria-label={data.collapsed ? 'Mở hậu duệ' : 'Thu gọn hậu duệ'}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
-              data.select(p);
+              data.collapse(group.id);
             }}
-            aria-label={`${p.name}, đời ${p.generation}, ${branchName(p.branch)}`}
           >
-            <div className="tree-person-top">
-              <Avatar person={p} />
-              <span className="branch-badge">{branchName(p.branch)}</span>
-            </div>
-            <div className="tree-person-content">
-              <strong>{p.name}</strong>
-              <span className="tree-person-years">
-                {p.born} – {p.died || 'nay'}
-              </span>
-              <span className="tree-person-gen">Đời thứ {p.generation}</span>
-            </div>
-          </button>
-          {index < group.people.length - 1 &&
-            p.spouses.includes(group.people[index + 1].id) && (
-              <span className="spouse-connector" title="Quan hệ vợ chồng" />
-            )}
-        </div>
-      ))}
-      {group.people.map((p, index) => (
-        <Handle
-          type="source"
-          key={p.id}
-          position={Position.Bottom}
-          id={`parent-${p.id}`}
-          style={{
-            left: index * (PERSON_WIDTH + PERSON_GAP) + PERSON_WIDTH / 2,
-          }}
-        />
-      ))}
-      {data.hasChildren && (
-        <Button
-          variant="outline"
-          className="collapse-node nodrag nopan"
-          title={data.collapsed ? 'Mở hậu duệ' : 'Thu gọn hậu duệ'}
-          aria-label={data.collapsed ? 'Mở hậu duệ' : 'Thu gọn hậu duệ'}
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => {
-            event.stopPropagation();
-            data.collapse(group.id);
-          }}
-        >
-          {data.collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-        </Button>
+            {data.collapsed ? <Plus size={16} /> : <Minus size={16} />}
+          </Button>
+        </>
       )}
-    </div>
+    </article>
   );
 }
-const nodeTypes = { household: HouseholdNode };
+
+function RootFamilyNode({ data }: NodeProps<FamilyUnitNode>) {
+  return <FamilyUnitNodeCard data={data} />;
+}
+
+function GenerationBand({ data }: NodeProps<GenerationBandNode>) {
+  return <div className="generation-band">ĐỜI THỨ {data.generation}</div>;
+}
+
+const nodeTypes = {
+  'family-unit': FamilyUnitNodeCard,
+  'root-family': RootFamilyNode,
+  'generation-band': GenerationBand,
+};
+
 export function TreePage() {
   return (
     <ReactFlowProvider>
@@ -128,9 +167,9 @@ export function TreePage() {
     </ReactFlowProvider>
   );
 }
+
 function TreeCanvas() {
   const { members } = useFamily();
-  const router = useRouter();
   const params = useSearchParams();
   const [query, setQuery] = useState('');
   const [branch, setBranch] = useState('all');
@@ -161,7 +200,7 @@ function TreeCanvas() {
   const mobileOverviewNodes = useMemo(
     () =>
       model.groups
-        .filter((group) => group.generation === 1)
+        .filter((group) => group.root)
         .map((group) => ({ id: group.id })),
     [model.groups],
   );
@@ -173,55 +212,37 @@ function TreeCanvas() {
     1,
     ...treeMembers.map((member) => member.generation),
   );
-  const hidden = useMemo(() => {
-    return collapsedDescendantGroups(model.links, collapsed);
-  }, [collapsed, model]);
-  const relatedIds = useMemo(() => {
-    if (!selected) return null;
-    const family = relatives(members, selected);
-    return new Set([
-      selected.id,
-      ...family.parents.map((person) => person.id),
-      ...family.spouses.map((person) => person.id),
-      ...family.children.map((person) => person.id),
-      ...family.siblings.map((person) => person.id),
-    ]);
-  }, [members, selected]);
+  const hidden = useMemo(
+    () => collapsedDescendantGroups(model.links, collapsed),
+    [collapsed, model.links],
+  );
+
   const focusPerson = useCallback(
-    (p: Member) => {
+    (person: Member) => {
       setCollapsed(new Set());
-      setSelected(p);
+      setSelected(person);
       setQuery('');
-      const g = model.groups.find((g) => g.id === model.groupOf.get(p.id));
-      if (g) {
-        const i = g.people.findIndex((m) => m.id === p.id);
-        void flow.setCenter(
-          g.x + i * (PERSON_WIDTH + PERSON_GAP) + PERSON_WIDTH / 2,
-          g.y + PERSON_HEIGHT / 2,
-          { zoom: 0.95, duration: 450 },
-        );
-      }
+      const group = model.groups.find(
+        (candidate) => candidate.id === model.groupOf.get(person.id),
+      );
+      if (!group) return;
+      void flow.setCenter(group.x + group.width / 2, group.y + group.height / 2, {
+        zoom: group.root ? 0.82 : 0.98,
+        duration: 450,
+      });
     },
     [flow, model],
   );
-  const openPerson = useCallback(
-    (p: Member) => {
-      if (window.matchMedia('(max-width: 767px)').matches) {
-        router.push(`/members/${p.id}`);
-        return;
-      }
-      focusPerson(p);
-    },
-    [focusPerson, router],
-  );
+
   useEffect(() => {
     if (!ready) return;
     const id = params.get('person');
-    const p = members.find((m) => m.id === id);
-    if (!p) return;
-    const frame = requestAnimationFrame(() => focusPerson(p));
+    const person = members.find((member) => member.id === id);
+    if (!person || !model.visibleMemberIds.has(person.id)) return;
+    const frame = requestAnimationFrame(() => focusPerson(person));
     return () => cancelAnimationFrame(frame);
-  }, [focusPerson, members, params, ready]);
+  }, [focusPerson, members, model.visibleMemberIds, params, ready]);
+
   useEffect(() => {
     if (!ready || !allTreeNodes.length) return;
     const frame = requestAnimationFrame(() => {
@@ -242,6 +263,7 @@ function TreeCanvas() {
     mobileOverviewNodes,
     ready,
   ]);
+
   useEffect(() => {
     const changed = () => setFull(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', changed);
@@ -251,9 +273,10 @@ function TreeCanvas() {
         void document.exitFullscreen().catch(() => {});
     };
   }, []);
-  const nodes: FamilyNode[] = model.groups.map((group) => ({
+
+  const familyNodes: FamilyUnitNode[] = model.groups.map((group) => ({
     id: group.id,
-    type: 'household',
+    type: group.root ? 'root-family' : 'family-unit',
     position: { x: group.x, y: group.y },
     hidden: hidden.has(group.id),
     draggable: false,
@@ -262,15 +285,14 @@ function TreeCanvas() {
       selected: selected?.id || null,
       dimmed: group.people
         .filter(
-          (p) =>
-            (branch !== 'all' && p.branch !== Number(branch)) ||
-            (generation !== 'all' && p.generation !== Number(generation)) ||
-            (!!relatedIds && !relatedIds.has(p.id)),
+          (person) =>
+            (branch !== 'all' && person.branch !== Number(branch)) ||
+            (generation !== 'all' && person.generation !== Number(generation)),
         )
-        .map((p) => p.id),
+        .map((person) => person.id),
       collapsed: collapsed.has(group.id),
-      hasChildren: model.links.some((l) => l.source === group.id),
-      select: openPerson,
+      hasChildren: model.links.some((link) => link.source === group.id),
+      select: focusPerson,
       collapse: (id) =>
         setCollapsed((current) => {
           const next = new Set(current);
@@ -280,20 +302,37 @@ function TreeCanvas() {
         }),
     },
   }));
-  const edges = model.links.flatMap((link) =>
-    link.parentIds.map((parentId) => ({
-      id: `${link.id}-${parentId}`,
-      source: link.source,
-      target: link.target,
-      sourceHandle: `parent-${parentId}`,
-      targetHandle: `child-${link.childId}`,
-      type: 'smoothstep',
-      hidden: hidden.has(link.source) || hidden.has(link.target),
-      style: { stroke: '#aaa69a', strokeWidth: 1.15 },
-      pathOptions: { borderRadius: 3 },
-    })),
+  const leftEdge = Math.min(...model.groups.map((group) => group.x), 0);
+  const generationNodes: GenerationBandNode[] = model.generationLanes.map(
+    (lane) => ({
+      id: `generation-${lane.generation}`,
+      type: 'generation-band',
+      position: { x: leftEdge - 146, y: lane.y + 14 },
+      draggable: false,
+      selectable: false,
+      data: { generation: lane.generation },
+    }),
   );
+  const edges = model.links.map((link) => ({
+    id: link.id,
+    source: link.source,
+    target: link.target,
+    sourceHandle: 'family-out',
+    targetHandle: 'family-in',
+    type: 'smoothstep',
+    hidden: hidden.has(link.source) || hidden.has(link.target),
+    className:
+      link.branchType === 'maternal-terminal' ? 'maternal-tree-edge' : '',
+    style: {
+      stroke: link.branchType === 'maternal-terminal' ? '#a47b51' : '#958d7d',
+      strokeDasharray:
+        link.branchType === 'maternal-terminal' ? '5 5' : undefined,
+      strokeWidth: link.branchType === 'maternal-terminal' ? 1.45 : 1.35,
+    },
+    pathOptions: { borderRadius: 8 },
+  }));
   const found = searchMembers(treeMembers, query).slice(0, 6);
+
   function resetViewport() {
     return flow.fitView({
       nodes: window.matchMedia('(max-width: 720px)').matches
@@ -304,6 +343,7 @@ function TreeCanvas() {
       duration: 400,
     });
   }
+
   function reset() {
     setCollapsed(new Set());
     setBranch('all');
@@ -312,9 +352,11 @@ function TreeCanvas() {
     setSelected(null);
     void resetViewport();
   }
+
   function collapseAll() {
     setCollapsed(new Set(collapsibleGroupIds));
   }
+
   return (
     <main
       id="main"
@@ -326,7 +368,7 @@ function TreeCanvas() {
           <HeritageIcon name="tree" size={22} />
           <div>
             <h1>Cây gia phả</h1>
-            <small>Họ Nguyễn Bá · {treeMembers.length} người trong cây</small>
+            <small>Họ Nguyễn Bá · {treeMembers.length} người được ghi nhận</small>
           </div>
         </div>
         <div className="tree-search">
@@ -338,17 +380,17 @@ function TreeCanvas() {
           {query && (
             <div className="search-results">
               {found.length ? (
-                found.map((p) => (
+                found.map((person) => (
                   <button
                     className="relative-button"
-                    onClick={() => openPerson(p)}
-                    key={p.id}
+                    onClick={() => focusPerson(person)}
+                    key={person.id}
                   >
-                    <Avatar person={p} />
+                    <Avatar person={person} />
                     <span>
-                      <strong>{p.name}</strong>
+                      <strong>{person.name}</strong>
                       <small>
-                        Đời {p.generation} · {branchName(p.branch)}
+                        Đời {person.generation} · {branchName(person.branch)}
                       </small>
                     </span>
                   </button>
@@ -370,7 +412,8 @@ function TreeCanvas() {
           value={generation}
           onChange={setGeneration}
           options={generationOptions.filter(
-            (o) => o.value === 'all' || Number(o.value) <= maxGeneration,
+            (option) =>
+              option.value === 'all' || Number(option.value) <= maxGeneration,
           )}
         />
         <Button
@@ -384,28 +427,19 @@ function TreeCanvas() {
         </Button>
       </div>
       <div className="tree-canvas">
-        <div
-          className="tree-legend"
-          aria-label="Chú thích các chi trong gia phả"
-        >
-          <strong>Chú thích</strong>
+        <div className="tree-legend" aria-label="Cách đọc cây gia phả">
+          <strong>Cách đọc cây</strong>
           <div>
             <span>
-              <i className="branch-dot b1" />
-              Chi trưởng
+              <i className="tree-legend-line" /> Thành viên dòng họ ở trên
             </span>
             <span>
-              <i className="branch-dot b2" />
-              Chi hai
-            </span>
-            <span>
-              <i className="branch-dot b3" />
-              Chi ba
+              <i className="tree-legend-line is-dashed" /> Nhánh ngoại dừng ở con trực tiếp
             </span>
           </div>
         </div>
         <ReactFlow
-          nodes={nodes}
+          nodes={[...familyNodes, ...generationNodes]}
           edges={edges}
           nodeTypes={nodeTypes}
           nodesConnectable={false}
@@ -426,9 +460,9 @@ function TreeCanvas() {
               });
             }
           }}
-          onMove={(_, v) => setZoom(v.zoom)}
+          onMove={(_, viewport) => setZoom(viewport.zoom)}
         >
-          <Background color="#dfe2d8" gap={28} size={1} />
+          <Background color="#d8d1c3" gap={28} size={1} />
         </ReactFlow>
         <div className="tree-controls">
           <Button
@@ -472,7 +506,7 @@ function TreeCanvas() {
             title="Thu gọn toàn bộ hậu duệ"
             aria-label="Thu gọn toàn bộ hậu duệ"
           >
-            <ChevronUp />
+            <ChevronUp size={19} />
           </Button>
           <Button
             variant="ghost"
@@ -482,7 +516,7 @@ function TreeCanvas() {
             title="Mở toàn bộ hậu duệ"
             aria-label="Mở toàn bộ hậu duệ"
           >
-            <ChevronDown />
+            <ChevronDown size={19} />
           </Button>
           <Button
             variant="ghost"
@@ -523,7 +557,7 @@ function TreeCanvas() {
       <QuickView
         person={selected}
         onClose={() => setSelected(null)}
-        onSelect={openPerson}
+        onSelect={focusPerson}
       />
     </main>
   );

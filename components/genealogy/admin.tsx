@@ -39,6 +39,8 @@ const blank = (): Member => ({
   id: crypto.randomUUID(),
   name: '',
   gender: '' as Member['gender'],
+  isClanMember: true,
+  lineageType: 'direct',
   generation: 0,
   branch: -1,
   born: 0,
@@ -413,6 +415,44 @@ export function AdminPage() {
                       ]}
                     />
                   </label>
+                </div>
+                <div className="form-columns">
+                  <label>
+                    Vai trò trong gia phả
+                    <Choice
+                      label="Vai trò trong gia phả"
+                      value={editing.isClanMember ? 'clan' : 'external'}
+                      onChange={(value) =>
+                        update('isClanMember', value === 'clan')
+                      }
+                      options={[
+                        { value: 'clan', label: 'Thành viên dòng họ' },
+                        { value: 'external', label: 'Phối ngẫu / nhánh ngoại' },
+                      ]}
+                    />
+                  </label>
+                  {editing.isClanMember && (
+                    <label>
+                      Hướng phát triển nhánh
+                      <Choice
+                        label="Hướng phát triển nhánh"
+                        value={editing.lineageType}
+                        onChange={(value) =>
+                          update(
+                            'lineageType',
+                            value as Member['lineageType'],
+                          )
+                        }
+                        options={[
+                          { value: 'direct', label: 'Nhánh chính' },
+                          {
+                            value: 'maternal-terminal',
+                            label: 'Nhánh ngoại · dừng ở con trực tiếp',
+                          },
+                        ]}
+                      />
+                    </label>
+                  )}
                 </div>
                 <h3>Quan hệ gia đình</h3>
                 {[0, 1].map((index) => (

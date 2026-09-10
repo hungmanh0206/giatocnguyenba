@@ -1,22 +1,42 @@
-import dagre from '@dagrejs/dagre';
 import type { Member } from './family';
-export const PERSON_WIDTH = 260;
-export const PERSON_GAP = 26;
-export const PERSON_HEIGHT = 160;
+
+export const FAMILY_UNIT_WIDTH = 280;
+export const FAMILY_UNIT_HEIGHT = 196;
+export const ROOT_FAMILY_WIDTH = 360;
+export const ROOT_FAMILY_HEIGHT = 258;
+export const TERMINAL_NODE_WIDTH = 236;
+export const TERMINAL_NODE_HEIGHT = 142;
+// Kept for consumers that only need a typical tree-card measurement.
+export const PERSON_WIDTH = FAMILY_UNIT_WIDTH;
+export const PERSON_HEIGHT = FAMILY_UNIT_HEIGHT;
+export const PERSON_GAP = 48;
+
 export type Household = {
   id: string;
+  clanMember: Member;
+  spouses: Member[];
   people: Member[];
   generation: number;
+  lineageType: 'direct' | 'maternal-terminal';
+  kind: 'family' | 'terminal';
+  root: boolean;
   width: number;
+  height: number;
   x: number;
   y: number;
 };
+
 export type FamilyLink = {
   id: string;
   source: string;
   target: string;
   childId: string;
-  parentIds: string[];
+  branchType: 'direct' | 'maternal-terminal';
+};
+
+export type GenerationLane = {
+  generation: number;
+  y: number;
 };
 
 export function collapsedDescendantGroups(
@@ -39,145 +59,160 @@ export function collapsedDescendantGroups(
   return hidden;
 }
 
-function patrilinealTreeMemberIds(
-  members: Member[],
-  lookup: Map<string, Member>,
-) {
-  const men = members.filter((person) => person.gender === 'male');
-  if (!men.length) return new Set(members.map((person) => person.id));
+function legacyClanMember(person: Member) {
+  return /^Nguyễn (Bá|Thị)(?:\s|$)/i.test(person.name);
+}
 
-  const foundingGeneration = Math.min(
-    ...men.map((person) => person.generation),
-  );
-  const founders = men.filter(
-    (person) =>
-      person.generation === foundingGeneration && person.parents.length === 0,
-  );
-  const roots = founders.length
-    ? founders
-    : men.filter((person) => person.generation === foundingGeneration);
-  const childrenByParent = new Map<string, Member[]>();
+function clanPeopleForTree(members: Member[]) {
+  const marked = members.filter((person) => person.isClanMember);
+  const legacy = members.filter(legacyClanMember);
+  // Some existing Firestore records were created before membership was modelled.
+  return marked.length ? marked : legacy.length ? legacy : members;
+}
 
-  for (const person of members) {
-    for (const parentId of person.parents) {
-      const children = childrenByParent.get(parentId) || [];
-      children.push(person);
-      childrenByParent.set(parentId, children);
-    }
-  }
+function lineageType(person: Member) {
+  return person.lineageType === 'maternal-terminal'
+    ? 'maternal-terminal'
+    : 'direct';
+}
 
-  const lineageMen = new Set(roots.map((person) => person.id));
-  const visible = new Set(lineageMen);
-  const queue = [...lineageMen];
+function orderedPeople(members: Member[], indexOf: Map<string, number>) {
+  return [...members].sort((a, b) => {
+    const sourceOrder = indexOf.get(a.id)! - indexOf.get(b.id)!;
+    return a.generation - b.generation || sourceOrder;
+  });
+}
 
-  while (queue.length) {
-    const fatherId = queue.shift()!;
-    for (const child of childrenByParent.get(fatherId) || []) {
-      visible.add(child.id);
-      if (child.gender === 'male' && !lineageMen.has(child.id)) {
-        lineageMen.add(child.id);
-        queue.push(child.id);
-      }
-    }
-  }
-
-  for (const manId of lineageMen) {
-    for (const spouseId of lookup.get(manId)?.spouses || []) {
-      if (lookup.has(spouseId)) visible.add(spouseId);
-    }
-  }
-
-  return visible;
+function familyHeight(spouseCount: number, root: boolean) {
+  if (root) return ROOT_FAMILY_HEIGHT + Math.max(0, spouseCount - 1) * 52;
+  return FAMILY_UNIT_HEIGHT + Math.max(0, spouseCount - 1) * 52;
 }
 
 export function layoutFamily(members: Member[]) {
-  const lookup = new Map(members.map((p) => [p.id, p]));
-  const visibleMemberIds = patrilinealTreeMemberIds(members, lookup);
-  const visibleMembers = members.filter((person) =>
-    visibleMemberIds.has(person.id),
+  const lookup = new Map(members.map((person) => [person.id, person]));
+  const indexOf = new Map(members.map((person, index) => [person.id, index]));
+  const clanPeople = orderedPeople(clanPeopleForTree(members), indexOf);
+  const minimumGeneration = Math.min(
+    ...clanPeople.map((person) => person.generation),
+    1,
   );
-  const visited = new Set<string>();
   const groups: Household[] = [];
   const groupOf = new Map<string, string>();
-  for (const p of visibleMembers) {
-    if (visited.has(p.id)) continue;
-    const queue = [p.id];
-    const people: Member[] = [];
-    while (queue.length) {
-      const id = queue.shift()!;
-      if (visited.has(id)) continue;
-      const person = lookup.get(id);
-      if (!person || !visibleMemberIds.has(id)) continue;
-      visited.add(id);
-      people.push(person);
-      queue.push(
-        ...person.spouses.filter((spouseId) => visibleMemberIds.has(spouseId)),
-      );
-    }
-    people.sort(
-      (a, b) => b.parents.length - a.parents.length || a.born - b.born,
-    );
-    if (people.length === 3 && people[0].spouses.length === 2) {
-      [people[0], people[1]] = [people[1], people[0]];
-    }
-    const id = people
-      .map((p) => p.id)
-      .sort()
-      .join('-');
-    people.forEach((p) => groupOf.set(p.id, id));
-    groups.push({
+
+  for (const clanMember of clanPeople) {
+    if (groupOf.has(clanMember.id)) continue;
+
+    const spouses = clanMember.spouses
+      .map((id) => lookup.get(id))
+      .filter((person): person is Member => !!person)
+      .filter((person) => !groupOf.has(person.id));
+    const root =
+      clanMember.generation === minimumGeneration &&
+      clanMember.parents.length === 0;
+    const id = `family-${clanMember.id}`;
+    const group: Household = {
       id,
-      people,
-      generation: Math.min(...people.map((p) => p.generation)),
-      width: people.length * PERSON_WIDTH + (people.length - 1) * PERSON_GAP,
+      clanMember,
+      spouses,
+      people: [clanMember, ...spouses],
+      generation: clanMember.generation,
+      lineageType: lineageType(clanMember),
+      kind: 'family',
+      root,
+      width: root ? ROOT_FAMILY_WIDTH : FAMILY_UNIT_WIDTH,
+      height: familyHeight(spouses.length, root),
       x: 0,
       y: 0,
-    });
+    };
+    groups.push(group);
+    groupOf.set(clanMember.id, id);
+    spouses.forEach((spouse) => groupOf.set(spouse.id, id));
   }
-  const graph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-  graph.setGraph({
-    rankdir: 'TB',
-    nodesep: 55,
-    ranksep: 95,
-    marginx: 30,
-    marginy: 35,
-  });
-  groups.forEach((g) =>
-    graph.setNode(g.id, { width: g.width, height: PERSON_HEIGHT }),
-  );
-  const links: FamilyLink[] = [];
-  for (const p of visibleMembers) {
-    const sources = [
-      ...new Set(p.parents.map((id) => groupOf.get(id)).filter(Boolean)),
-    ] as string[];
-    for (const source of sources) {
-      const target = groupOf.get(p.id)!;
-      if (source === target) continue;
-      links.push({
-        id: `${source}-${p.id}`,
-        source,
-        target,
-        childId: p.id,
-        parentIds: p.parents.filter((id) => groupOf.get(id) === source),
+
+  function childrenOf(group: Household) {
+    const parentIds = new Set(group.people.map((person) => person.id));
+    return members.filter((person) =>
+      person.parents.some((parentId) => parentIds.has(parentId)),
+    );
+  }
+
+  // Direct children outside the clan remain visible, but never become a new family unit.
+  for (const family of groups.filter((group) => group.kind === 'family')) {
+    for (const child of childrenOf(family)) {
+      if (groupOf.has(child.id)) continue;
+      const id = `terminal-${child.id}`;
+      groups.push({
+        id,
+        clanMember: child,
+        spouses: [],
+        people: [child],
+        generation: child.generation,
+        lineageType: 'maternal-terminal',
+        kind: 'terminal',
+        root: false,
+        width: TERMINAL_NODE_WIDTH,
+        height: TERMINAL_NODE_HEIGHT,
+        x: 0,
+        y: 0,
       });
-      graph.setEdge(source, target);
+      groupOf.set(child.id, id);
     }
   }
-  dagre.layout(graph);
-  for (const g of groups) {
-    const pos = graph.node(g.id);
-    g.x = pos.x - g.width / 2;
-    g.y = (g.generation - 1) * 255 + 35;
-  }
-  // Keep incomplete and disconnected records from overlapping generation lanes.
-  for (const generation of new Set(groups.map((g) => g.generation))) {
-    let right = -Infinity;
-    for (const group of groups
-      .filter((g) => g.generation === generation)
-      .sort((a, b) => a.x - b.x)) {
-      group.x = Math.max(group.x, right + 55);
-      right = group.x + group.width;
+
+  const links: FamilyLink[] = [];
+  const linkIds = new Set<string>();
+  for (const family of groups.filter((group) => group.kind === 'family')) {
+    for (const child of childrenOf(family)) {
+      const target = groupOf.get(child.id);
+      if (!target || target === family.id) continue;
+      const id = `${family.id}-${target}`;
+      if (linkIds.has(id)) continue;
+      linkIds.add(id);
+      links.push({
+        id,
+        source: family.id,
+        target,
+        childId: child.id,
+        branchType:
+          family.lineageType === 'maternal-terminal'
+            ? 'maternal-terminal'
+            : 'direct',
+      });
     }
   }
-  return { groups, links, groupOf, visibleMemberIds };
+
+  const generations = [...new Set(groups.map((group) => group.generation))].sort(
+    (a, b) => a - b,
+  );
+  const generationLanes: GenerationLane[] = [];
+  let laneY = 42;
+  for (const generation of generations) {
+    const lane = groups
+      .filter((group) => group.generation === generation)
+      .sort(
+        (a, b) =>
+          indexOf.get(a.clanMember.id)! - indexOf.get(b.clanMember.id)!,
+      );
+    const laneWidth =
+      lane.reduce((total, group) => total + group.width, 0) +
+      Math.max(0, lane.length - 1) * 56;
+    let left = -laneWidth / 2;
+    for (const group of lane) {
+      group.x = left;
+      group.y = laneY;
+      left += group.width + 56;
+    }
+    generationLanes.push({ generation, y: laneY });
+    laneY += Math.max(...lane.map((group) => group.height)) + 132;
+  }
+
+  return {
+    groups,
+    links,
+    groupOf,
+    generationLanes,
+    visibleMemberIds: new Set(
+      groups.flatMap((group) => group.people.map((person) => person.id)),
+    ),
+  };
 }

@@ -2,6 +2,8 @@ export type Member = {
   id: string;
   name: string;
   gender: 'male' | 'female';
+  isClanMember: boolean;
+  lineageType: 'direct' | 'maternal-terminal';
   generation: number;
   branch: number;
   born: number;
@@ -254,6 +256,37 @@ const rows: [
   ],
   ['p38', 'Nguyễn Bá Đức Anh', 'male', 5, 3, 2001, undefined, ['p29'], []],
 ];
+const clanMemberIds = new Set([
+  'p1',
+  'p3',
+  'p5',
+  'p7',
+  'p10',
+  'p12',
+  'p14',
+  'p16',
+  'p18',
+  'p19',
+  'p21',
+  'p24',
+  'p26',
+  'p27',
+  'p30',
+  'p32',
+  'p33',
+  'p34',
+  'p35',
+  'p36',
+  'p37',
+]);
+const maternalTerminalIds = new Set([
+  'p12',
+  'p18',
+  'p26',
+  'p32',
+  'p35',
+  'p37',
+]);
 export const seedMembers: Member[] = rows.map(
   ([
     id,
@@ -271,6 +304,10 @@ export const seedMembers: Member[] = rows.map(
     id,
     name,
     gender,
+    isClanMember: clanMemberIds.has(id),
+    lineageType: maternalTerminalIds.has(id)
+      ? 'maternal-terminal'
+      : 'direct',
     generation,
     branch,
     born,
