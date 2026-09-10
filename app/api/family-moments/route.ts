@@ -77,7 +77,9 @@ export async function GET() {
   const quotedFolder = quoteExpression(folder);
   const expressions = [
     `resource_type:image AND asset_folder="${quotedFolder}"`,
+    `resource_type:image AND asset_folder:${quotedFolder}/*`,
     `resource_type:image AND folder="${quotedFolder}"`,
+    `resource_type:image AND public_id:${quotedFolder}/*`,
   ];
 
   try {
