@@ -10,6 +10,8 @@ import {
 } from 'react';
 import { canEditFamily, type FamilyRole } from '@/lib/access';
 import {
+  memberChangeError,
+  memberDeletionError,
   removeMemberAndLinks,
   seedMembers,
   upsertMemberAndLinks,
@@ -196,6 +198,8 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   };
 
   async function save(person: Member) {
+    const changeError = memberChangeError(person, members);
+    if (changeError) return changeError;
     const error = validateMember(person, members);
     if (error) return error;
 
@@ -223,9 +227,12 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   }
 
   async function remove(memberId: string) {
-    if (!members.some((member) => member.id === memberId)) {
+    const person = members.find((member) => member.id === memberId);
+    if (!person) {
       return 'Hồ sơ này không còn tồn tại.';
     }
+    const deletionError = memberDeletionError(person, members);
+    if (deletionError) return deletionError;
     if (firebaseConfigurationError) return firebaseConfigurationError;
     if (!isFirebaseConfigured || connection.mode === 'demo') {
       setMembers((current) => removeMemberAndLinks(current, memberId));

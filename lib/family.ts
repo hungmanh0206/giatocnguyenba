@@ -376,6 +376,75 @@ export function removeMemberAndLinks(members: Member[], memberId: string) {
     }));
 }
 
+function sameIds(left: string[], right: string[]) {
+  return left.length === right.length && left.every((id) => right.includes(id));
+}
+
+function linkedSpouseIds(person: Member, members: Member[]) {
+  return [
+    ...new Set([
+      ...person.spouses,
+      ...members
+        .filter((member) => member.spouses.includes(person.id))
+        .map((member) => member.id),
+    ]),
+  ];
+}
+
+export function memberDeletionError(person: Member, members: Member[]) {
+  const children = members.filter((member) => member.parents.includes(person.id));
+  const spouses = linkedSpouseIds(person, members);
+
+  if (person.generation === 1 && person.isClanMember && person.gender === 'male') {
+    return 'Không thể xóa hồ sơ Thủy tổ. Gia phả cần giữ lại người khởi nguồn.';
+  }
+  if (children.length) {
+    return `Không thể xóa vì hồ sơ này đang là cha/mẹ của ${children.length} người. Hãy điều chỉnh các quan hệ con trước.`;
+  }
+  if (spouses.length) {
+    return 'Không thể xóa khi vẫn còn quan hệ vợ/chồng. Hãy gỡ quan hệ này trong hồ sơ trước.';
+  }
+  return null;
+}
+
+export function memberPositionLockMessage(person: Member, members: Member[]) {
+  const children = members.filter((member) => member.parents.includes(person.id));
+
+  if (person.generation === 1 && person.isClanMember && person.gender === 'male') {
+    return 'Hồ sơ Thủy tổ giữ cố định vị trí khởi nguồn của gia phả.';
+  }
+  if (children.length) {
+    return 'Hồ sơ đã có con nên không thể đổi giới tính, vai trò, đời, chi hoặc cha mẹ.';
+  }
+  if (linkedSpouseIds(person, members).length) {
+    return 'Hồ sơ đang có quan hệ vợ/chồng nên không thể đổi vị trí trong cây. Hãy gỡ quan hệ trước nếu cần điều chỉnh.';
+  }
+  return null;
+}
+
+export function memberChangeError(person: Member, members: Member[]) {
+  const current = members.find((member) => member.id === person.id);
+  if (!current) return null;
+
+  const positionChanged =
+    current.gender !== person.gender ||
+    current.isClanMember !== person.isClanMember ||
+    current.lineageType !== person.lineageType ||
+    current.generation !== person.generation ||
+    current.branch !== person.branch ||
+    !sameIds(current.parents, person.parents);
+  const positionLock = memberPositionLockMessage(current, members);
+
+  if (positionChanged && positionLock) return positionLock;
+  if (
+    !sameIds(current.spouses, person.spouses) &&
+    members.some((member) => member.parents.includes(person.id))
+  ) {
+    return 'Không thể thay đổi quan hệ vợ/chồng của người đã có con. Hãy điều chỉnh quan hệ cha mẹ của các con trước.';
+  }
+  return null;
+}
+
 export function upsertMemberAndLinks(members: Member[], person: Member) {
   const spouses = [...new Set(person.spouses)];
   return [
@@ -441,6 +510,15 @@ export function eligibleSpouses(person: Member, members: Member[]) {
       !person.spouses.includes(candidate.id) &&
       !person.parents.includes(candidate.id) &&
       candidate.generation === person.generation &&
+      candidate.branch === person.branch &&
+      !candidate.parents.some((id) => person.parents.includes(id)) &&
+      !candidate.spouses.some((id) =>
+        members.some(
+          (sibling) =>
+            sibling.id === id &&
+            sibling.parents.some((parentId) => person.parents.includes(parentId)),
+        ),
+      ) &&
       !isDescendantOf(members, person.id, candidate.id) &&
       !isDescendantOf(members, candidate.id, person.id),
   );
@@ -589,6 +667,8 @@ export function validateMember(
     return 'Năm sinh cần phù hợp với cha mẹ và con đã ghi nhận.';
   if (person.spouses.some((id) => lookup.get(id)!.parents.includes(person.id)))
     return 'Không thể tạo quan hệ vợ chồng với con.';
+  if (person.spouses.some((id) => lookup.get(id)!.branch !== person.branch))
+    return 'Vợ chồng cần được ghi nhận trong cùng chi.';
   if (
     person.anniversary &&
     (!person.died ||

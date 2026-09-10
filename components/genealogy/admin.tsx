@@ -37,6 +37,8 @@ import {
   eligibleGenerations,
   eligibleParents,
   eligibleSpouses,
+  memberDeletionError,
+  memberPositionLockMessage,
   searchMembers,
   branchName,
   type Member,
@@ -66,6 +68,16 @@ export function AdminPage() {
   const [authPending, setAuthPending] = useState(false);
   const filtered = searchMembers(members, query);
   const birthYears = editing ? eligibleBirthYears(editing, members) : null;
+  const existingEditing = editing
+    ? members.find((member) => member.id === editing.id)
+    : undefined;
+  const positionLock = existingEditing
+    ? memberPositionLockMessage(existingEditing, members)
+    : null;
+  const spouseLock = existingEditing && members.some((member) => member.parents.includes(existingEditing.id));
+  const deletionError = existingEditing
+    ? memberDeletionError(existingEditing, members)
+    : null;
   function update<K extends keyof Member>(key: K, value: Member[K]) {
     setEditing((p) => (p ? { ...p, [key]: value } : null));
   }
@@ -106,17 +118,7 @@ export function AdminPage() {
       return;
     }
 
-    const relatedCount = members.filter(
-      (member) =>
-        member.id !== deleting.id &&
-        (member.parents.includes(deleting.id) ||
-          member.spouses.includes(deleting.id)),
-    ).length;
-    setSuccess(
-      relatedCount
-        ? `Đã xóa hồ sơ ${deleting.name} và gỡ ${relatedCount} liên kết gia đình.`
-        : `Đã xóa hồ sơ ${deleting.name}.`,
-    );
+    setSuccess(`Đã xóa hồ sơ ${deleting.name}.`);
     setEditing((current) => (current?.id === deleting.id ? null : current));
     setDeleting(null);
     setError('');
@@ -294,8 +296,9 @@ export function AdminPage() {
                     <Button
                       variant="ghost"
                       className="icon-button delete-member-button"
-                      title={`Xóa ${p.name}`}
-                      aria-label={`Xóa ${p.name}`}
+                      title={memberDeletionError(p, members) || `Xóa ${p.name}`}
+                      aria-label={memberDeletionError(p, members) || `Xóa ${p.name}`}
+                      disabled={!!memberDeletionError(p, members)}
                       onClick={() => {
                         setDeleting(p);
                         setError('');
@@ -337,6 +340,11 @@ export function AdminPage() {
           {editing && (
             <form className="member-form" onSubmit={submit}>
               <div className="form-scroll">
+                {positionLock && (
+                  <p className="muted">
+                    {positionLock}
+                  </p>
+                )}
                 <h3>Thông tin cơ bản</h3>
                 <label>
                   Họ và tên <span>*</span>
@@ -374,6 +382,7 @@ export function AdminPage() {
                         { value: 'male', label: 'Nam' },
                         { value: 'female', label: 'Nữ' },
                       ]}
+                      disabled={!!positionLock}
                     />
                   </label>
                   <label>
@@ -429,6 +438,7 @@ export function AdminPage() {
                           label: `Đời thứ ${generation}`,
                         })),
                       ]}
+                      disabled={!!positionLock}
                     />
                   </label>
                   <label>
@@ -448,6 +458,7 @@ export function AdminPage() {
                           label: branchName(branch),
                         })),
                       ]}
+                      disabled={!!positionLock}
                     />
                   </label>
                 </div>
@@ -477,6 +488,7 @@ export function AdminPage() {
                         { value: 'clan', label: 'Thành viên dòng họ' },
                         { value: 'external', label: 'Phối ngẫu / nhánh ngoại' },
                       ]}
+                      disabled={!!positionLock}
                     />
                   </label>
                   {editing.isClanMember && (
@@ -506,8 +518,9 @@ export function AdminPage() {
                           : {
                               value: 'direct',
                               label: 'Nhánh chính · phát triển qua con trai',
-                            },
+                        },
                       ]}
+                      disabled={!!positionLock}
                       />
                     </label>
                   )}
@@ -543,6 +556,7 @@ export function AdminPage() {
                             label: `${p.name} (${p.born})`,
                           })),
                       ]}
+                      disabled={!!positionLock}
                     />
                   </label>
                 ))}
@@ -562,6 +576,7 @@ export function AdminPage() {
                       ...eligibleSpouses(editing, members)
                         .map((p) => ({ value: p.id, label: p.name })),
                     ]}
+                    disabled={!!spouseLock}
                   />
                 </label>
                 <div className="spouse-chips">
@@ -577,6 +592,7 @@ export function AdminPage() {
                         )
                       }
                       title="Bỏ quan hệ vợ chồng"
+                      disabled={!!spouseLock}
                     >
                       {members.find((p) => p.id === id)?.name} ×
                     </Button>
@@ -674,6 +690,8 @@ export function AdminPage() {
                     variant="ghost"
                     type="button"
                     className="action-button delete-profile-button"
+                    title={deletionError || 'Xóa hồ sơ'}
+                    disabled={!!deletionError}
                     onClick={() => {
                       setDeleting(editing);
                       setError('');
@@ -721,8 +739,8 @@ export function AdminPage() {
                 Xóa hồ sơ {deleting?.name}?
               </AlertDialogTitle>
               <AlertDialogDescription>
-                Hồ sơ và các dữ liệu ghi chú sẽ bị xóa. Những liên kết cha mẹ,
-                vợ/chồng liên quan cũng được gỡ khỏi gia phả.
+                Hồ sơ và các dữ liệu ghi chú sẽ bị xóa vĩnh viễn. Chỉ hồ sơ
+                không có quan hệ cha mẹ hoặc vợ/chồng mới được phép xóa.
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>

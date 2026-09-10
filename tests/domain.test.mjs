@@ -12,6 +12,8 @@ import {
   eligibleGenerations,
   eligibleParents,
   eligibleSpouses,
+  memberChangeError,
+  memberDeletionError,
 } from '../lib/family.ts';
 import {
   collapsedDescendantGroups,
@@ -140,10 +142,53 @@ test('member editor only offers relationships, generations, branches, and years 
   assert.equal(spouseIds.includes('p19'), false);
   assert.equal(spouseIds.includes('p5'), false);
   assert.equal(spouseIds.includes('p21'), false);
-  assert.equal(spouseIds.includes('p14'), true);
+  assert.equal(spouseIds.includes('p14'), false);
+  assert.deepEqual(spouseIds, []);
+  const eligiblePartner = {
+    id: 'eligible-partner',
+    name: 'Đinh Thị An',
+    gender: 'female',
+    isClanMember: false,
+    lineageType: 'direct',
+    generation: 3,
+    branch: 1,
+    born: 1931,
+    parents: [],
+    spouses: [],
+  };
+  assert.equal(
+    eligibleSpouses(p10, [...seedMembers, eligiblePartner]).some(
+      (member) => member.id === eligiblePartner.id,
+    ),
+    true,
+  );
   assert.equal(
     validateMember({ ...newChild, branch: 2 }, seedMembers),
     'Chi cần khớp với đời và cha mẹ đã chọn.',
+  );
+});
+
+test('destructive member operations preserve the recorded genealogy', () => {
+  const p1 = seedMembers.find((member) => member.id === 'p1');
+  const p10 = seedMembers.find((member) => member.id === 'p10');
+  const p29 = seedMembers.find((member) => member.id === 'p29');
+  const p31 = seedMembers.find((member) => member.id === 'p31');
+
+  assert.match(memberDeletionError(p1, seedMembers), /Thủy tổ/);
+  assert.match(memberDeletionError(p10, seedMembers), /cha\/mẹ của 2 người/);
+  assert.match(memberDeletionError(p31, seedMembers), /vợ\/chồng/);
+  assert.equal(memberDeletionError(p29, seedMembers), null);
+  assert.match(
+    memberChangeError({ ...p10, branch: 2 }, seedMembers),
+    /đã có con/,
+  );
+  assert.match(
+    memberChangeError({ ...p31, generation: 4 }, seedMembers),
+    /vợ\/chồng/,
+  );
+  assert.equal(
+    memberChangeError({ ...p29, hometown: 'Hà Nội' }, seedMembers),
+    null,
   );
 });
 
