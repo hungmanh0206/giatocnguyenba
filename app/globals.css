@@ -130,12 +130,12 @@ a:focus-visible {
   outline-offset: 3px;
 }
 .route-transition {
-  animation: route-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: route-enter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes route-enter {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -5952,5 +5952,117 @@ main#main:not(.tree-page) {
   .home-stats-band,
   .home-anniversary-band {
     background-size: auto, 560px 560px;
+  }
+}
+
+/* Motion is intentionally quiet: it marks hierarchy and feedback without distracting from family records. */
+@media (prefers-reduced-motion: no-preference) {
+  html.motion-ready [data-motion-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 460ms ease-out var(--motion-delay, 0ms),
+      transform 520ms cubic-bezier(0.22, 1, 0.36, 1) var(--motion-delay, 0ms);
+  }
+
+  html.motion-ready [data-motion-reveal].is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .home-hero .heritage-art {
+    animation: heritage-art-drift 14s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  .tree-person-wrap {
+    animation: tree-node-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .tree-person.chosen {
+    animation: tree-node-selected 460ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .search-results {
+    animation: search-results-enter 180ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform-origin: top center;
+  }
+
+  .main-nav.is-open {
+    animation: mobile-nav-enter 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform-origin: top center;
+  }
+
+  .action-button:hover .heritage-icon:last-child,
+  .text-link:hover .heritage-icon:last-child,
+  .calendar-link:hover .heritage-icon:last-child,
+  .member-tile:hover .heritage-icon:last-child,
+  .relative-button:hover .heritage-icon:last-child,
+  .anniversary-row:hover > .heritage-icon:last-child,
+  .record-links > a:hover > .heritage-icon:last-child {
+    transform: translateX(3px);
+  }
+
+  .action-button:hover .heritage-icon:first-child,
+  .icon-button:hover .heritage-icon {
+    transform: scale(1.06);
+  }
+}
+
+.heritage-icon {
+  transition: transform 180ms ease-out;
+}
+
+@keyframes heritage-art-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-8px, 5px, 0);
+  }
+}
+
+@keyframes tree-node-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes tree-node-selected {
+  0% {
+    box-shadow: 0 0 0 0 #9a343400;
+  }
+  55% {
+    box-shadow: 0 0 0 7px #9a343421;
+  }
+  100% {
+    box-shadow: 0 0 0 3px #9a343414, 0 10px 28px #3e2b1812;
+  }
+}
+
+@keyframes search-results-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mobile-nav-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

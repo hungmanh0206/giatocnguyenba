@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { FamilyProvider } from '@/components/genealogy/provider';
 import { Header } from '@/components/genealogy/header';
+import { MotionProvider } from '@/components/genealogy/motion-provider';
 import { GenealogyTools } from '@/components/genealogy/webmcp';
 import './globals.css';
 
@@ -20,9 +21,11 @@ export default function RootLayout({
     <html lang="vi">
       <body>
         <FamilyProvider>
-          <GenealogyTools />
-          <Header />
-          {children}
+          <MotionProvider>
+            <GenealogyTools />
+            <Header />
+            {children}
+          </MotionProvider>
         </FamilyProvider>
       </body>
     </html>
