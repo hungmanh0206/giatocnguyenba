@@ -7837,15 +7837,15 @@ main#main .timeline-entry p {
   }
 
   .home-family-branches {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
     padding-top: 18px;
   }
 
   .home-family-branch:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-    width: calc((100% - 10px) / 2);
-    justify-self: center;
+    grid-column: auto;
+    width: auto;
+    justify-self: stretch;
   }
 
   .home-family-branches::before {
@@ -7858,14 +7858,16 @@ main#main .timeline-entry p {
   }
 
   .home-family-branch .home-family-card {
-    min-height: 94px;
-    padding: 8px;
+    min-height: 100px;
+    padding: 7px;
   }
 
-  .home-family-branch .home-family-heading,
-  .home-family-branch .home-family-heading > em {
-    gap: 4px;
+  .home-family-branch .home-family-heading {
     font-size: 9px;
+  }
+
+  .home-family-branch .home-family-heading > em {
+    display: none;
   }
 
   .home-family-branch .home-family-person {
@@ -7874,9 +7876,9 @@ main#main .timeline-entry p {
   }
 
   .home-family-branch .home-family-person .avatar {
-    width: 28px;
-    height: 28px;
-    flex-basis: 28px;
+    width: 25px;
+    height: 25px;
+    flex-basis: 25px;
   }
 
   .home-family-branch .home-family-person strong {
@@ -7884,12 +7886,13 @@ main#main .timeline-entry p {
     overflow: hidden;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-    font-size: 13px;
+    font-size: 12px;
     white-space: normal;
   }
 
   .home-family-branch .home-family-person small {
     font-size: 10px;
+    white-space: normal;
   }
 
   .home-family-branch .heritage-icon {
