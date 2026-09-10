@@ -108,13 +108,9 @@ export async function GET() {
         alt:
           resource.context?.custom?.alt ||
           resource.context?.custom?.caption ||
-          resource.display_name ||
-          resource.original_filename ||
-          'Khoảnh khắc gia đình',
+          `Khoảnh khắc gia đình ${index + 1}`,
         caption:
           resource.context?.custom?.caption ||
-          resource.display_name ||
-          resource.original_filename ||
           'Khoảnh khắc gia đình',
         createdAt: resource.created_at || null,
         width: resource.width || null,
