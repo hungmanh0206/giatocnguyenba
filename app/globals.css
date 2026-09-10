@@ -1193,7 +1193,7 @@ h1 > span {
     width: 20px;
   }
   .tree-preview {
-    padding: 28px 10px 0;
+    padding: 28px 10px 16px;
   }
   .root-couple {
     gap: 18px;
@@ -5409,7 +5409,7 @@ main#main:not(.tree-page) {
 
 @media (max-width: 767px) {
   .tree-preview {
-    padding: 28px 10px 0;
+    padding: 28px 10px 16px;
   }
 
   .couple-line {
@@ -5934,5 +5934,23 @@ main#main:not(.tree-page) {
 
   .home-quick-stat span {
     font-size: 11px;
+  }
+}
+
+/* Keep the cultural pattern continuous between the homepage sections. */
+.home-stats-band,
+.home-anniversary-band {
+  background-color: #f7f3e9;
+  background-image:
+    linear-gradient(#f7f3e9d9, #f7f3e9d9),
+    url('/vietnamese-heritage-pattern.png');
+  background-repeat: repeat;
+  background-size: auto, 760px 760px;
+}
+
+@media (max-width: 767px) {
+  .home-stats-band,
+  .home-anniversary-band {
+    background-size: auto, 560px 560px;
   }
 }

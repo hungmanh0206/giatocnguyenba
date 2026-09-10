@@ -66,7 +66,6 @@ export function MembersPage() {
             <p>{members.length} thành viên · 5 thế hệ · 3 chi</p>
           </div>
           <Button
-            variant="outline"
             className="action-button"
             render={<Link href="/family-tree" />}
             nativeButton={false}
