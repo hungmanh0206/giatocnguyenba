@@ -7426,74 +7426,101 @@ main#main .timeline-entry p {
 }
 
 .root-family-unit {
-  border: 1px solid #b98a49;
-  border-radius: 13px;
-  padding: 14px 15px 12px;
-  background:
-    linear-gradient(135deg, #fffdf6e8, #fff5e2ed),
-    url('/vietnamese-heritage-pattern.png') center / 240px 240px,
-    #fffaf0;
-  box-shadow:
-    0 12px 26px #4b2c1917,
-    inset 0 0 0 4px #fff9ed,
-    inset 0 0 0 5px #d8b97b,
-    inset 0 0 0 9px #fff8ed;
+  border: 0;
+  border-radius: 0;
+  padding: 29px 43px 20px;
+  background: transparent;
+  box-shadow: 0 12px 26px #4b2c1920;
 }
 
 .root-family-unit::before {
   position: absolute;
-  inset: 9px;
-  border: 1px solid #d8b97b80;
-  border-radius: 10px;
-  background:
-    repeating-radial-gradient(
-      circle at 50% 50%,
-      transparent 0 13px,
-      #bb8e4b0c 14px 15px,
-      transparent 16px 27px
-    );
+  inset: 0;
+  border: 0;
+  border-radius: 0;
+  background: url('/root-family-ornament.png') center / 106% 112% no-repeat;
   content: '';
-  opacity: 0.75;
+  opacity: 1;
   pointer-events: none;
 }
 
 .root-family-unit::after {
-  right: 21px;
-  left: 21px;
-  height: 3px;
-  background: #8e3030;
+  display: none;
 }
 
 .root-family-unit .family-unit-heading {
+  width: max-content;
+  min-height: 20px;
+  align-self: center;
   justify-content: center;
-  padding-right: 0;
-  color: #8e3030;
-  font-size: 10px;
-  letter-spacing: 0.09em;
+  margin: 0 auto 2px;
+  border: 1px solid #e4b76d;
+  border-radius: 5px;
+  padding: 1px 11px;
+  background: linear-gradient(180deg, #a74032, #7d241d);
+  box-shadow: 0 2px 5px #3e160d45;
+  color: #fff3da;
+  font-size: 8px;
+  letter-spacing: 0.07em;
+  text-shadow: 0 1px #48140e;
 }
 
 .root-family-unit .family-unit-heading::before,
 .root-family-unit .family-unit-heading::after {
-  width: 21px;
-  height: 1px;
-  margin: 0 8px;
-  background: linear-gradient(90deg, transparent, #ad793a, transparent);
-  content: '';
+  display: none;
 }
 
 .root-family-unit .family-member-area {
-  min-height: 53px;
-  padding-inline: 6px;
+  min-height: 45px;
+  padding: 4px 0;
 }
 
 .root-family-unit .family-member-area .avatar {
-  width: 36px;
-  height: 36px;
-  flex-basis: 36px;
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+  border: 1px solid #c89448;
+  background: #fff6e6;
+  box-shadow: 0 1px 4px #4b2c1930;
 }
 
 .root-family-unit .family-member-copy > strong {
-  font-size: 16px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.root-family-unit .family-member-years {
+  color: #7f552a;
+  font-size: 11px;
+}
+
+.root-family-unit .family-member-role {
+  margin-top: 0;
+  color: #9c6e37;
+  font-size: 9px;
+}
+
+.root-family-unit .family-unit-divider {
+  margin: 1px 0 0;
+  background: transparent;
+}
+
+.tree-fullscreen-icon,
+.member-save-icon {
+  display: block;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  object-fit: contain;
+  transition: transform 160ms ease;
+}
+
+@media (hover: hover) {
+  .icon-button:hover .tree-fullscreen-icon,
+  .action-button:hover .member-save-icon {
+    transform: scale(1.06);
+  }
 }
 
 .family-unit .react-flow__handle {
@@ -7562,31 +7589,21 @@ main#main .timeline-entry p {
   isolation: isolate;
   overflow: hidden;
   width: 340px;
-  min-height: 178px;
-  border-color: #b98a49;
-  border-top-color: #8e3030;
-  background:
-    linear-gradient(130deg, #fffdf7ee, #fff7e8f5),
-    url('/vietnamese-heritage-pattern.png') center / 250px 250px;
-  box-shadow:
-    inset 0 0 0 3px #fffaf0,
-    inset 0 0 0 4px #d8b97b,
-    0 10px 22px #3d2e1712;
+  min-height: 212px;
+  border: 0;
+  border-radius: 0;
+  padding: 30px 49px 20px;
+  background: transparent;
+  box-shadow: 0 12px 26px #3d2e1720;
 }
 
 .home-family-card.is-root::before {
   position: absolute;
-  inset: 8px;
+  inset: 0;
   z-index: 0;
-  border: 1px solid #b9894f88;
-  border-radius: 7px;
-  background:
-    repeating-radial-gradient(
-      circle at 50% 52%,
-      transparent 0 13px,
-      #a7743310 14px 15px,
-      transparent 16px 28px
-    );
+  border: 0;
+  border-radius: 0;
+  background: url('/root-family-ornament.png') center / 106% 112% no-repeat;
   content: '';
   pointer-events: none;
 }
@@ -7621,18 +7638,59 @@ main#main .timeline-entry p {
 }
 
 .home-family-card.is-root .home-family-heading {
+  width: max-content;
+  min-height: 20px;
+  align-self: center;
   justify-content: center;
-  color: #8e3030;
-  font-size: 10px;
+  margin: 0 auto 2px;
+  border: 1px solid #e4b76d;
+  border-radius: 5px;
+  padding: 1px 11px;
+  background: linear-gradient(180deg, #a74032, #7d241d);
+  box-shadow: 0 2px 5px #3e160d45;
+  color: #fff3da;
+  font-size: 8px;
+  letter-spacing: 0.07em;
+  text-shadow: 0 1px #48140e;
 }
 
 .home-family-card.is-root .home-family-heading::before,
 .home-family-card.is-root .home-family-heading::after {
-  width: 18px;
-  height: 1px;
-  margin: 0 8px;
-  background: linear-gradient(90deg, transparent, #b4854c, transparent);
-  content: '';
+  display: none;
+}
+
+.home-family-card.is-root .home-family-person {
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.home-family-card.is-root .home-family-person .avatar {
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+  border: 1px solid #c89448;
+  background: #fff6e6;
+  box-shadow: 0 1px 4px #4b2c1930;
+}
+
+.home-family-card.is-root .home-family-person strong {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.home-family-card.is-root .home-family-person small {
+  color: #7f552a;
+  font-size: 11px;
+}
+
+.home-family-card.is-root .home-family-person em {
+  color: #9c6e37;
+  font-size: 9px;
+}
+
+.home-family-card.is-root .home-family-spouse {
+  border-top-color: transparent;
 }
 
 .home-family-person {

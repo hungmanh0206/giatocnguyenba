@@ -728,7 +728,11 @@ export function AdminPage() {
                   className="action-button"
                   disabled={saving}
                 >
-                  <HeritageIcon name="backup" size={19} />
+                  <img
+                    className="member-save-icon"
+                    src="/app-icons/member-save.png"
+                    alt=""
+                  />
                   {saving ? 'Đang lưu...' : 'Lưu hồ sơ'}
                 </Button>
               </div>

@@ -542,7 +542,11 @@ function TreeCanvas() {
             title="Toàn màn hình"
             aria-label="Toàn màn hình"
           >
-            <HeritageIcon name="open-link" size={19} />
+            <img
+              className="tree-fullscreen-icon"
+              src="/app-icons/tree-fullscreen.png"
+              alt=""
+            />
           </Button>
         </div>
         {(branch !== 'all' || generation !== 'all') && (
