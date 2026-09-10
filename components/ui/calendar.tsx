@@ -10,11 +10,8 @@ import {
 
 import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronDownIcon,
-} from 'lucide-react';
+import { ChevronDownIcon } from 'lucide-react';
+import { HeritageIcon } from '@/components/genealogy/heritage-icon';
 
 function Calendar({
   className,
@@ -151,8 +148,10 @@ function Calendar({
         Chevron: ({ className, orientation, ...props }) => {
           if (orientation === 'left') {
             return (
-              <ChevronLeftIcon
-                className={cn('cn-rtl-flip size-4', className)}
+              <HeritageIcon
+                className={cn('calendar-nav-icon cn-rtl-flip', className)}
+                name="previous"
+                size={21}
                 {...props}
               />
             );
@@ -160,8 +159,10 @@ function Calendar({
 
           if (orientation === 'right') {
             return (
-              <ChevronRightIcon
-                className={cn('cn-rtl-flip size-4', className)}
+              <HeritageIcon
+                className={cn('calendar-nav-icon cn-rtl-flip', className)}
+                name="next"
+                size={21}
                 {...props}
               />
             );

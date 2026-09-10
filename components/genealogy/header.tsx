@@ -2,8 +2,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { BrandIcon } from './brand-icon';
 import { HeritageIcon } from './heritage-icon';
 import { useFamily } from './provider';
 const navigation = [
@@ -26,7 +26,7 @@ export function Header() {
         <div className="header-inner">
           <Link href="/" className="brand" onClick={() => setOpen(false)}>
             <span className="brand-mark">
-              <HeritageIcon name="tree" size={25} />
+              <BrandIcon size={43} />
             </span>
             <span>
               <small>GIA PHẢ DÒNG HỌ</small>
@@ -81,7 +81,7 @@ export function Header() {
               aria-label={open ? 'Đóng menu' : 'Mở menu'}
               aria-expanded={open}
             >
-              {open ? <X /> : <HeritageIcon name="list" size={21} />}
+              {open ? <HeritageIcon name="close" size={21} /> : <HeritageIcon name="list" size={21} />}
             </Button>
           </div>
         </div>
@@ -94,7 +94,7 @@ export function Footer() {
     <footer className="site-footer">
       <div className="container footer-inner">
         <div className="brand">
-          <HeritageIcon name="tree" size={23} />
+          <BrandIcon size={26} />
           <strong>Họ Nguyễn Bá</strong>
         </div>
         <span>Gìn giữ cội nguồn · Kết nối thế hệ</span>

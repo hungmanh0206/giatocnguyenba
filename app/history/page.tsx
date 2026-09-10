@@ -18,8 +18,8 @@ export default function Page() {
         </div>
       </section>
       <div className="container history-body">
-        <aside className="history-index">
-          <span>NỘI DUNG</span>
+        <aside className="history-index" aria-label="Mục lục lịch sử dòng họ">
+          <span className="history-index-title">NỘI DUNG</span>
           <a href="#origin">
             01 <span>Cội nguồn</span>
           </a>

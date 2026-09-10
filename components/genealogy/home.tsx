@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { HeritageIcon, type HeritageIconName } from './heritage-icon';
 import { useFamily } from './provider';
 import { Footer } from './header';
-import { branchName, initials, searchMembers, type Member } from '@/lib/family';
+import { branchName, searchMembers, type Member } from '@/lib/family';
 import {
   getYearCanChi,
   lunarOf,
@@ -21,12 +21,17 @@ export function Avatar({
   person: Member;
   large?: boolean;
 }) {
+  const avatarSource =
+    person.gender === 'female'
+      ? '/avatar-female-3d.png'
+      : '/avatar-male-3d.png';
+
   return (
     <span
       aria-hidden="true"
       className={`avatar ${person.gender} ${large ? 'large' : ''}`}
     >
-      {initials(person.name)}
+      <img className="avatar-art" src={avatarSource} alt="" />
     </span>
   );
 }
@@ -86,12 +91,12 @@ function VietnamClock() {
 
   return (
     <div className="hero-utility" aria-live="polite">
-      <span className="hero-utility-item">
-        <HeritageIcon name="calendar" size={16} />
+      <span className="hero-utility-item hero-utility-date">
+        <HeritageIcon name="solar-calendar" size={16} />
         <span>{solarDate}</span>
       </span>
       <span className="hero-utility-divider" aria-hidden="true" />
-      <span className="hero-utility-item">
+      <span className="hero-utility-item hero-utility-lunar">
         <HeritageIcon name="time" size={16} />
         <span>
           {lunar
@@ -101,7 +106,7 @@ function VietnamClock() {
       </span>
       <span className="hero-utility-divider" aria-hidden="true" />
       <time className="hero-utility-item hero-utility-time" dateTime={now?.toISOString()}>
-        <HeritageIcon name="timeline" size={16} />
+        <HeritageIcon name="clock" size={16} />
         <span>{displayTime}</span>
       </time>
     </div>
@@ -183,7 +188,7 @@ export function HomePage() {
     ] satisfies { icon: HeritageIconName; label: string; value: number }[];
   }, [members]);
   return (
-    <main id="main">
+    <main id="main" className="home-page">
       <section className="home-hero">
         <Image
           className="heritage-art"
@@ -207,7 +212,7 @@ export function HomePage() {
           </p>
           <div className="hero-actions">
             <Link className="action-button hero-tree-link" href="/family-tree">
-              <HeritageIcon name="tree" size={20} />
+              <HeritageIcon name="tree-cta" size={20} />
               Khám phá cây gia phả
               <HeritageIcon name="next" size={18} />
             </Link>

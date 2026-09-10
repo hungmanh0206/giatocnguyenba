@@ -1,5 +1,4 @@
 'use client';
-import { X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -79,7 +78,7 @@ export function SearchBox({
           aria-label="Xóa tìm kiếm"
           onClick={() => setQuery('')}
         >
-          <X size={16} />
+          <HeritageIcon name="close" size={16} />
         </Button>
       )}
     </div>

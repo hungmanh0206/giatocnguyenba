@@ -70,7 +70,7 @@ export function MembersPage() {
             render={<Link href="/family-tree" />}
             nativeButton={false}
           >
-            <HeritageIcon name="tree" size={19} />
+            <HeritageIcon name="tree-cta" size={19} />
             Xem cây gia phả
           </Button>
         </div>

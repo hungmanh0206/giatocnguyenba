@@ -12,11 +12,7 @@ import {
   type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import {
-  ChevronDown,
-  ChevronUp,
-  X,
-} from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFamily } from './provider';
 import { Avatar } from './home';
@@ -515,7 +511,7 @@ function TreeCanvas() {
                 setGeneration('all');
               }}
             >
-              <X />
+              <HeritageIcon name="close" size={18} />
             </Button>
           </div>
         )}

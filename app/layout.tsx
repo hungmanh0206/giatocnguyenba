@@ -7,7 +7,6 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Gia phả họ Nguyễn Bá',
-  icons: { icon: '/favicon.svg' },
   description:
     'Gia phả họ Nguyễn Bá: tìm về cội nguồn, kết nối các thế hệ và ghi nhớ ngày giỗ tổ tiên.',
 };
