@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { FamilyMoments } from './family-moments';
 import { HeritageIcon, type HeritageIconName } from './heritage-icon';
 import { useFamily } from './provider';
 import { Footer } from './header';
@@ -93,14 +94,14 @@ function VietnamClock() {
     <div className="hero-utility" aria-live="polite">
       <div className="hero-utility-primary">
         <span className="hero-utility-item hero-utility-date">
-          <HeritageIcon name="solar-calendar" size={16} />
+          <HeritageIcon className="hero-calendar-icon" name="solar-calendar" size={16} />
           <span>{solarDate}</span>
         </span>
         <span className="hero-utility-divider" aria-hidden="true">
           ·
         </span>
         <span className="hero-utility-item hero-utility-lunar">
-          <HeritageIcon name="time" size={16} />
+          <HeritageIcon className="hero-calendar-icon" name="time" size={16} />
           <span>
             {lunar
               ? `${lunar.day}/${lunar.month}${lunar.leap ? ' nhuận' : ''} ${getYearCanChi(lunar.year)}`
@@ -370,6 +371,7 @@ export function HomePage() {
           </section>
         </div>
       </section>
+      <FamilyMoments />
       <section className="history-band">
         <div className="container history-teaser">
           <div className="history-number">
