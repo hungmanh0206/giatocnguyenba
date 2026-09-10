@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Footer } from '@/components/genealogy/header';
 import { HeritageIcon } from '@/components/genealogy/heritage-icon';
+import { HistoryIndex } from '@/components/genealogy/history-index';
 export default function Page() {
   return (
     <main id="main">
@@ -13,34 +14,24 @@ export default function Page() {
           </h1>
           <p>Những thế hệ nối tiếp. Những giá trị còn mãi.</p>
           <span className="history-location">
-            <HeritageIcon name="location" size={17} /> Thôn Quảng Trường, xã Quảng Chính, tỉnh Thanh Hóa
+            <HeritageIcon name="location" size={17} /> Thôn Quảng Trường, xã
+            Quảng Chính, tỉnh Thanh Hóa
           </span>
         </div>
       </section>
       <div className="container history-body">
-        <aside className="history-index" aria-label="Mục lục lịch sử dòng họ">
-          <span className="history-index-title">NỘI DUNG</span>
-          <a href="#origin">
-            01 <span>Cội nguồn</span>
-          </a>
-          <a href="#generations">
-            02 <span>Các thế hệ</span>
-          </a>
-          <a href="#values">
-            03 <span>Nếp nhà truyền lại</span>
-          </a>
-          <a href="#records">
-            04 <span>Tư liệu gia phả</span>
-          </a>
-        </aside>
+        <HistoryIndex />
         <article className="history-article">
-          <div className="notice">
-            <HeritageIcon name="history" size={20} />
+          <aside className="history-note" aria-label="Lưu ý về tư liệu">
+            <span className="history-note-mark" aria-hidden="true">
+              i
+            </span>
             <p>
-              Đây là câu chuyện minh họa cho website. Tên người, niên đại và quê
-              quán cần được thay bằng tư liệu đã xác minh của dòng họ.
+              <strong>Lưu ý tư liệu.</strong> Đây là câu chuyện minh họa cho
+              website. Tên người, niên đại và quê quán cần được thay bằng tư
+              liệu đã xác minh của dòng họ.
             </p>
-          </div>
+          </aside>
           <section id="origin">
             <div className="eyebrow">01 · CỘI NGUỒN</div>
             <h2>Một mái nhà, nhiều thế hệ</h2>
@@ -97,9 +88,9 @@ export default function Page() {
               ].map(([generation, date, title, description]) => (
                 <div className="timeline-entry" key={generation}>
                   <span className="timeline-pin" />
-                  <small>
+                  <span className="timeline-label">
                     {generation} <span>· {date}</span>
-                  </small>
+                  </span>
                   <h3>{title}</h3>
                   <p>{description}</p>
                 </div>
