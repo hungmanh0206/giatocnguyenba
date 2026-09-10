@@ -66,7 +66,7 @@ export function LunarPage() {
   return (
     <main id="main">
       <div className="container page-space">
-        <div className="page-heading">
+        <div className="page-heading lunar-page-heading">
           <div>
             <div className="eyebrow">GHI NHỚ NGÀY GIỖ TỔ TIÊN</div>
             <h1>Lịch âm & ngày giỗ</h1>
@@ -88,15 +88,15 @@ export function LunarPage() {
         <div className="calendar-layout">
           <section className="calendar-main">
             <div className="calendar-filter">
+              <span className="calendar-memorial-key">
+                <i /> Ngày giỗ
+              </span>
               <Choice
                 label="Lọc ngày giỗ theo chi"
                 value={branch}
                 onChange={setBranch}
                 options={branchOptions}
               />
-              <span>
-                <i /> Ngày giỗ dòng họ
-              </span>
             </div>
             <Calendar
               mode="single"
@@ -120,12 +120,11 @@ export function LunarPage() {
                     filtered,
                     props.day.date,
                   );
-                  const hasTradition = dayInfo.traditional.festivals.length > 0;
                   return (
                     <CalendarDayButton
                       {...props}
                       className="lunar-day"
-                      data-has-tradition={hasTradition || undefined}
+                      data-has-memorial={dayEvents.length > 0 || undefined}
                       aria-label={`${dateLabel(props.day.date)}, âm lịch ${dayInfo.lunar.day}/${dayInfo.lunar.month}${dayInfo.lunar.leapMonth ? ' nhuận' : ''}${dayEvents.length ? `, ${dayEvents.length} ngày giỗ` : ''}`}
                     >
                       <strong>{props.day.date.getDate()}</strong>
@@ -141,15 +140,7 @@ export function LunarPage() {
                           : dayInfo.lunar.day}
                         {dayInfo.lunar.leapMonth ? 'n' : ''}
                       </span>
-                      {(dayEvents.length > 0 || hasTradition) && (
-                        <i
-                          className={
-                            hasTradition && !dayEvents.length
-                              ? 'event-dot traditional-dot'
-                              : 'event-dot'
-                          }
-                        />
-                      )}
+                      {dayEvents.length > 0 && <i className="event-dot" />}
                     </CalendarDayButton>
                   );
                 },
@@ -192,6 +183,45 @@ export function LunarPage() {
                     <small>Năm {info.canChi.year}</small>
                   </div>
                 </div>
+
+                <section className="day-events">
+                  <h3>
+                    <HeritageIcon name="memorial" size={18} /> Ngày giỗ{' '}
+                    {events.length > 0 && `(${events.length})`}
+                  </h3>
+                  {events.length ? (
+                    events.map(({ event, isApproximate }) =>
+                      event.person ? (
+                        <div className="day-event" key={event.id}>
+                          <Avatar person={event.person} />
+                          <div className="day-event-copy">
+                            <strong>{event.person.name}</strong>
+                            <small>
+                              Đời {event.person.generation} ·{' '}
+                              {branchName(event.person.branch)}
+                            </small>
+                            <small className="day-event-lunar">
+                              {info.lunar.day} tháng {info.lunar.month} ÂL
+                              {info.lunar.leapMonth ? ' nhuận' : ''}
+                              {isApproximate ? ' · Điều chỉnh tháng thiếu' : ''}
+                            </small>
+                          </div>
+                          <Link
+                            className="day-event-link"
+                            href={`/members/${event.person.id}`}
+                          >
+                            Xem hồ sơ
+                            <HeritageIcon name="next" size={15} />
+                          </Link>
+                        </div>
+                      ) : null,
+                    )
+                  ) : (
+                    <p className="muted">
+                      Không có ngày giỗ được ghi nhận trong ngày này.
+                    </p>
+                  )}
+                </section>
 
                 <section className="day-traditional">
                   <h3>
@@ -332,40 +362,6 @@ export function LunarPage() {
                   </Tabs>
                 </section>
 
-                <section className="day-events">
-                  <h3>
-                    <HeritageIcon name="memorial" size={18} /> Ngày giỗ{' '}
-                    {events.length > 0 && `(${events.length})`}
-                  </h3>
-                  {events.length ? (
-                    events.map(({ event, isApproximate }) =>
-                      event.person ? (
-                        <div className="day-event" key={event.id}>
-                          <Avatar person={event.person} />
-                          <Link href={`/members/${event.person.id}`}>
-                            <strong>{event.person.name}</strong>
-                            <small>
-                              Đời {event.person.generation} ·{' '}
-                              {branchName(event.person.branch)}
-                              {isApproximate ? ' · Điều chỉnh tháng thiếu' : ''}
-                            </small>
-                          </Link>
-                          <Link
-                            title="Xem trên cây"
-                            aria-label={`Xem ${event.person.name} trên cây`}
-                            href={`/family-tree?person=${event.person.id}`}
-                          >
-                            <HeritageIcon name="tree" size={19} />
-                          </Link>
-                        </div>
-                      ) : null,
-                    )
-                  ) : (
-                    <p className="muted">
-                      Không có ngày giỗ được ghi nhận trong ngày này.
-                    </p>
-                  )}
-                </section>
               </>
             ) : (
               <div className="calendar-unsupported">{info.reason}</div>
@@ -424,8 +420,14 @@ export function LunarPage() {
               )}
           </div>
           <p className="calendar-policy">
-            Ngày giỗ lặp theo ngày âm không nhuận. Nếu ngày 30 gặp tháng thiếu,
-            lịch sẽ ghi rõ là điều chỉnh sang ngày 29 thay vì tự đổi ngày âm.
+            <span className="calendar-policy-info" aria-hidden="true">
+              i
+            </span>
+            <span>
+              <strong>Cách tính ngày giỗ:</strong> Ngày giỗ lặp theo ngày âm
+              không nhuận. Nếu ngày 30 gặp tháng thiếu, lịch sẽ ghi rõ là điều
+              chỉnh sang ngày 29 thay vì tự đổi ngày âm.
+            </span>
           </p>
         </section>
       </div>

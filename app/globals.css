@@ -1293,6 +1293,9 @@ h1 > span {
   gap: 24px;
   margin-bottom: 28px;
 }
+.lunar-page-heading {
+  margin-bottom: 18px;
+}
 .page-heading h1 {
   font-size: 32px;
   margin: 8px 0 10px;
@@ -2031,16 +2034,20 @@ h1 > span {
 .calendar-filter {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 15px;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-bottom: 10px;
 }
 .calendar-filter > span {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 12px;
-  color: #9b8060;
+  font-weight: 600;
+  color: #8c704a;
+}
+.calendar-filter .choice {
+  min-width: 158px;
 }
 .calendar-filter i,
 .event-dot {
@@ -2060,7 +2067,7 @@ h1 > span {
   gap: 8px;
 }
 .lunar-calendar .rdp-month_caption {
-  height: 52px;
+  height: 46px;
 }
 .lunar-calendar .rdp-caption_label {
   font-size: 20px;
@@ -2130,12 +2137,6 @@ h1 > span {
 .lunar-day .event-dot {
   position: absolute;
   bottom: 6px;
-}
-.lunar-day[data-has-tradition='true'] {
-  box-shadow: inset 0 -2px 0 #b58a3b;
-}
-.lunar-day .traditional-dot {
-  background: #8c7142;
 }
 .lunar-calendar .rdp-today {
   background: #f7f1e6;
@@ -2215,7 +2216,7 @@ h1 > span {
   margin-top: 5px;
 }
 .day-traditional {
-  padding: 20px 22px 22px;
+  padding: 18px 22px 20px;
   border-bottom: 1px solid var(--border);
 }
 .day-traditional h3,
@@ -2226,11 +2227,11 @@ h1 > span {
   color: #72582f;
 }
 .day-traditional h3 {
-  font-size: 15px;
-  margin-bottom: 12px;
+  font-size: 14px;
+  margin-bottom: 10px;
 }
 .day-traditional-tabs {
-  gap: 14px;
+  gap: 11px;
 }
 .day-traditional-tabs-list {
   display: grid;
@@ -2258,11 +2259,11 @@ h1 > span {
 .trad-facts {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 7px 12px;
 }
 .trad-facts > div {
   min-width: 0;
-  padding: 8px 0 9px;
+  padding: 7px 0 8px;
   border-bottom: 1px solid #e7e3d9;
 }
 .trad-facts span,
@@ -2284,21 +2285,21 @@ h1 > span {
   white-space: nowrap;
 }
 .truc-note {
-  margin-top: 11px;
-  color: #847561;
-  font-size: 12px;
-  line-height: 1.55;
+  margin-top: 9px;
+  color: #756956;
+  font-size: 11px;
+  line-height: 1.5;
 }
 .hour-groups {
   display: grid;
-  gap: 14px;
-  margin-top: 16px;
+  gap: 12px;
+  margin-top: 13px;
 }
 .hour-groups h4 {
   margin-bottom: 8px;
 }
 .trad-subsection {
-  padding-top: 15px;
+  padding-top: 13px;
 }
 .trad-subsection h4 {
   margin-bottom: 8px;
@@ -2377,39 +2378,55 @@ h1 > span {
   line-height: 1.6;
 }
 .day-events {
-  padding: 24px 20px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
 }
 .day-events h3 {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
-  margin-bottom: 18px;
+  font-size: 15px;
+  margin-bottom: 12px;
   color: #8e7047;
 }
 .day-events > .muted {
-  font-size: 13px;
-  line-height: 1.9;
+  font-size: 12px;
+  line-height: 1.7;
 }
 .day-event {
   display: flex;
   gap: 10px;
   align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 4px 0;
+}
+.day-event-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
 }
 .day-event strong {
   display: block;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
 }
 .day-event small {
+  display: block;
   font-size: 11px;
   color: #968876;
 }
-.day-event > a:last-child {
+.day-event-lunar {
+  color: #8a2929 !important;
+  font-weight: 600;
+}
+.day-event-link {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   color: #927954;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 .upcoming-section {
   margin-top: 34px;
@@ -2463,9 +2480,31 @@ h1 > span {
   border-radius: var(--radius-lg);
 }
 .calendar-policy {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   font-size: 12px;
-  color: #9b9283;
+  color: #756657;
+  line-height: 1.65;
   margin-top: 25px;
+}
+.calendar-policy strong {
+  color: #5d4130;
+  font-weight: 700;
+}
+.calendar-policy-info {
+  display: inline-grid;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  place-items: center;
+  border: 1px solid #b28b56;
+  border-radius: 50%;
+  color: #8f6538;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 2px;
 }
 .history-hero {
   position: relative;
