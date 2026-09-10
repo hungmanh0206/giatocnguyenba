@@ -286,30 +286,45 @@ export function HomePage() {
               <HeritageIcon name="tree" size={15} /> Sơ đồ khởi tổ
             </span>
             {familyPreview && (
-              <>
-                <div className="root-couple">
-                  {familyPreview.founders.map((person) => (
-                    <Link className="ancestor" href={`/members/${person.id}`} key={person.id}>
-                      <Avatar person={person} />
-                      <strong>{person.name}</strong>
-                      <small>
-                        {person.born} – {person.died || 'nay'}
-                      </small>
-                      <span className="generation-tag">
-                        {person.gender === 'male' ? 'Thủy tổ' : 'Phu nhân'}
-                      </span>
-                    </Link>
-                  ))}
-                  {familyPreview.founders.length > 1 && (
-                    <span className="couple-line" aria-hidden="true" />
-                  )}
+              <div className="home-family-preview">
+                <div className="home-family-card is-root">
+                  <div className="home-family-heading">
+                    <span>KHỞI NGUỒN DÒNG HỌ</span>
+                  </div>
+                  {familyPreview.founders.map((person, index) => {
+                    const founder = (
+                      <Link
+                        className="home-family-person"
+                        href={`/members/${person.id}`}
+                        key={person.id}
+                      >
+                        <Avatar person={person} />
+                        <span>
+                          <strong>{person.name}</strong>
+                          <small>
+                            {person.born} – {person.died || 'nay'}
+                          </small>
+                          <em>{person.gender === 'male' ? 'Thủy tổ' : 'Phu nhân'}</em>
+                        </span>
+                      </Link>
+                    );
+
+                    return index === 0 ? (
+                      founder
+                    ) : (
+                      <div className="home-family-spouse" key={person.id}>
+                        {founder}
+                      </div>
+                    );
+                  })}
                 </div>
+                {familyPreview.branches.length > 0 && <span className="home-family-connector" />}
                 {familyPreview.branches.length > 0 && (
-                  <div className="preview-branches">
+                  <div className="home-family-branches">
                     {familyPreview.branches.map(({ group, descendants, generations }) => (
                       <Link
                         href={`/family-tree?person=${group.clanMember.id}`}
-                        className={`branch-preview branch-${group.clanMember.branch}`}
+                        className={`home-family-branch branch-${group.clanMember.branch}`}
                         key={group.id}
                         onClick={(event) => {
                           if (
@@ -326,22 +341,29 @@ export function HomePage() {
                           router.push(`/members/${group.clanMember.id}`);
                         }}
                       >
-                        <small>
-                          {group.lineageType === 'maternal-terminal'
-                            ? 'Nhánh ngoại'
-                            : branchName(group.clanMember.branch)}
-                        </small>
-                        <strong>{group.clanMember.name}</strong>
-                        <span className="branch-preview-era">Đời thứ {group.generation}</span>
-                        <span className="branch-preview-meta">
-                          {descendants} hậu duệ · {generations} thế hệ
+                        <article className="home-family-card">
+                          <div className="home-family-heading">
+                            <span>
+                              {group.lineageType === 'maternal-terminal'
+                                ? 'Nhánh ngoại'
+                                : branchName(group.clanMember.branch)}
+                            </span>
+                            <em>Đời thứ {group.generation}</em>
+                          </div>
+                          <div className="home-family-person">
+                            <Avatar person={group.clanMember} />
+                            <span>
+                              <strong>{group.clanMember.name}</strong>
+                              <small>{descendants} hậu duệ · {generations} thế hệ</small>
+                            </span>
+                          </div>
                           <HeritageIcon name="next" size={16} />
-                        </span>
+                        </article>
                       </Link>
                     ))}
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
           </section>

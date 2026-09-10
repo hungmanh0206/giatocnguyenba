@@ -935,8 +935,10 @@ h1 > span {
   font-size: 12px;
   color: #8b857b;
 }
+.member-tile > .heritage-icon,
 .member-tile > svg {
   margin-left: auto;
+  flex: 0 0 auto;
   color: #928777;
 }
 @media (min-width: 1500px) {
@@ -1413,10 +1415,33 @@ h1 > span {
   font-size: 14px;
 }
 .view-toggle {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
   gap: 2px;
-  padding-left: 10px;
-  border-left: 1px solid var(--border);
+  padding: 3px;
+  border: 1px solid #dfd3c2;
+  border-radius: 7px;
+  background: #fffdf8;
+}
+.view-toggle-label {
+  padding: 0 5px 0 7px;
+  color: #86735d;
+  font-size: 12px;
+  font-weight: 650;
+}
+.view-toggle .view-toggle-button {
+  width: 34px;
+  height: 34px !important;
+  padding: 0;
+  border-radius: 5px;
+  color: #87503b;
+  background: transparent;
+  box-shadow: none;
+}
+.view-toggle .view-toggle-button[data-active='true'] {
+  color: #852f27;
+  background: #f1e4d3;
+  box-shadow: inset 0 -2px 0 #9a3429;
 }
 .results-summary {
   display: flex;
@@ -1716,8 +1741,10 @@ h1 > span {
   font-size: 11px;
   color: #8e8678;
 }
+.relative-button > .heritage-icon,
 .relative-button > svg {
   margin-left: auto;
+  flex: 0 0 auto;
   color: #9e8e73;
 }
 .quick-sheet {
@@ -3027,6 +3054,9 @@ h1 > span {
     font-size: 13px;
   }
   .view-toggle {
+    margin-left: auto;
+  }
+  .view-toggle-label {
     display: none;
   }
   .member-results {
@@ -6423,7 +6453,7 @@ main#main .branch-preview > .branch-preview-meta {
 .member-directory-heading,
 .member-list-row {
   display: grid;
-  grid-template-columns: minmax(260px, 1.8fr) minmax(90px, 0.7fr) minmax(120px, 0.9fr) minmax(90px, 0.6fr) 28px;
+  grid-template-columns: minmax(260px, 1.8fr) minmax(90px, 0.7fr) minmax(120px, 0.9fr) minmax(90px, 0.6fr) minmax(100px, 0.7fr);
   align-items: center;
   column-gap: 20px;
 }
@@ -6455,9 +6485,7 @@ main#main .branch-preview > .branch-preview-meta {
   background: #faf7f0;
 }
 
-.member-list-row > .heritage-icon {
-  width: 18px;
-  height: 18px;
+.member-directory-heading > span:last-child {
   justify-self: end;
 }
 
@@ -6515,6 +6543,42 @@ main#main .branch-preview > .branch-preview-meta {
   color: #956d39;
 }
 
+.member-list-open {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  gap: 7px;
+  color: #8b4b33;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.member-list-open .heritage-icon {
+  width: 17px;
+  height: 17px;
+}
+
+@media (hover: hover) {
+  .view-toggle .view-toggle-button:not([data-active='true']):hover {
+    color: #6e3929;
+    background: #f7eee3;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .view-toggle .view-toggle-button[data-active='true']:hover {
+    color: #7a2925;
+    background: #ead8c5;
+    box-shadow: inset 0 -2px 0 #9a3429;
+    transform: none;
+  }
+
+  .member-list-row:hover .member-list-open {
+    color: #7e2424;
+  }
+}
+
 @media (max-width: 767px) {
   .hero-utility {
     display: flex;
@@ -6550,6 +6614,10 @@ main#main .branch-preview > .branch-preview-meta {
   .member-list-generation,
   .member-list-branch,
   .member-list-born {
+    display: none;
+  }
+
+  .member-list-open > span {
     display: none;
   }
 }
@@ -7362,12 +7430,14 @@ main#main .timeline-entry p {
   border-radius: 13px;
   padding: 14px 15px 12px;
   background:
-    radial-gradient(circle at 50% 100%, #f3dfb61f 0 34%, transparent 35%),
+    linear-gradient(135deg, #fffdf6e8, #fff5e2ed),
+    url('/vietnamese-heritage-pattern.png') center / 240px 240px,
     #fffaf0;
   box-shadow:
     0 12px 26px #4b2c1917,
     inset 0 0 0 4px #fff9ed,
-    inset 0 0 0 5px #d8b97b;
+    inset 0 0 0 5px #d8b97b,
+    inset 0 0 0 9px #fff8ed;
 }
 
 .root-family-unit::before {
@@ -7400,6 +7470,15 @@ main#main .timeline-entry p {
   color: #8e3030;
   font-size: 10px;
   letter-spacing: 0.09em;
+}
+
+.root-family-unit .family-unit-heading::before,
+.root-family-unit .family-unit-heading::after {
+  width: 21px;
+  height: 1px;
+  margin: 0 8px;
+  background: linear-gradient(90deg, transparent, #ad793a, transparent);
+  content: '';
 }
 
 .root-family-unit .family-member-area {
@@ -7480,12 +7559,41 @@ main#main .timeline-entry p {
 }
 
 .home-family-card.is-root {
+  isolation: isolate;
+  overflow: hidden;
   width: 340px;
   min-height: 178px;
-  border-color: #c79a58;
+  border-color: #b98a49;
   border-top-color: #8e3030;
-  background: #fffaf0;
-  box-shadow: inset 0 0 0 3px #fff8ea, 0 8px 18px #3d2e1710;
+  background:
+    linear-gradient(130deg, #fffdf7ee, #fff7e8f5),
+    url('/vietnamese-heritage-pattern.png') center / 250px 250px;
+  box-shadow:
+    inset 0 0 0 3px #fffaf0,
+    inset 0 0 0 4px #d8b97b,
+    0 10px 22px #3d2e1712;
+}
+
+.home-family-card.is-root::before {
+  position: absolute;
+  inset: 8px;
+  z-index: 0;
+  border: 1px solid #b9894f88;
+  border-radius: 7px;
+  background:
+    repeating-radial-gradient(
+      circle at 50% 52%,
+      transparent 0 13px,
+      #a7743310 14px 15px,
+      transparent 16px 28px
+    );
+  content: '';
+  pointer-events: none;
+}
+
+.home-family-card.is-root > * {
+  position: relative;
+  z-index: 1;
 }
 
 .home-family-card.is-maternal {
@@ -7510,6 +7618,21 @@ main#main .timeline-entry p {
   font-size: 10px;
   font-style: normal;
   letter-spacing: 0;
+}
+
+.home-family-card.is-root .home-family-heading {
+  justify-content: center;
+  color: #8e3030;
+  font-size: 10px;
+}
+
+.home-family-card.is-root .home-family-heading::before,
+.home-family-card.is-root .home-family-heading::after {
+  width: 18px;
+  height: 1px;
+  margin: 0 8px;
+  background: linear-gradient(90deg, transparent, #b4854c, transparent);
+  content: '';
 }
 
 .home-family-person {
@@ -7609,11 +7732,20 @@ main#main .timeline-entry p {
   content: '';
 }
 
+.home-family-branch .heritage-icon,
 .home-family-branch > svg {
   position: absolute;
   right: 13px;
   bottom: 13px;
-  color: #a3483c;
+}
+
+.home-family-branch .home-family-card {
+  min-height: 106px;
+  padding: 10px 12px;
+}
+
+.home-family-branch .home-family-person {
+  padding: 7px 1px 0;
 }
 
 .home-family-branch:hover .home-family-card {

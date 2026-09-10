@@ -71,13 +71,9 @@ service cloud.firestore {
 
       match /members/{memberId} {
         allow read: if true;
-        allow create: if canEdit(familyId) && validMember(memberId)
-          && request.resource.data.createdAt == request.time
-          && request.resource.data.updatedAt == request.time;
+        allow create: if canEdit(familyId) && validMember(memberId);
         allow update: if canEdit(familyId) && validMember(memberId)
-          && request.resource.data.id == resource.data.id
-          && request.resource.data.createdAt == resource.data.createdAt
-          && request.resource.data.updatedAt == request.time;
+          && request.resource.data.id == resource.data.id;
         allow delete: if isSuperAdmin(familyId);
       }
 

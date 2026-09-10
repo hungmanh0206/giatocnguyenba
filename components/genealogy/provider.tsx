@@ -70,13 +70,15 @@ const FamilyContext = createContext<FamilyContextValue>({
   signOut: async () => {},
 });
 
-function messageFor(error: unknown) {
+function messageFor(error: unknown, context: 'connection' | 'write' = 'connection') {
   const code =
     typeof error === 'object' && error && 'code' in error
       ? String(error.code)
       : '';
   if (code.includes('permission-denied')) {
-    return 'Tài khoản này chưa được cấp quyền quản trị gia phả.';
+    return context === 'write'
+      ? 'Firestore từ chối dữ liệu cần ghi. Hãy tải lại trang để đồng bộ quyền và thử lại.'
+      : 'Tài khoản này chưa được cấp quyền quản trị gia phả.';
   }
   if (code.includes('popup-closed-by-user')) {
     return 'Đăng nhập đã được đóng trước khi hoàn tất.';
@@ -222,7 +224,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       await saveFirestoreMember(db, person);
       return null;
     } catch (error) {
-      return messageFor(error);
+      return messageFor(error, 'write');
     }
   }
 
@@ -251,7 +253,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       await deleteFirestoreMember(db, memberId);
       return null;
     } catch (error) {
-      return messageFor(error);
+      return messageFor(error, 'write');
     }
   }
 

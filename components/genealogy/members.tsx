@@ -91,10 +91,12 @@ export function MembersPage() {
               (o) => o.value === 'all' || Number(o.value) <= 5,
             )}
           />
-          <div className="view-toggle">
+          <div className="view-toggle" role="group" aria-label="Kiểu hiển thị">
+            <span className="view-toggle-label">Hiển thị</span>
             <Button
-              variant={view === 'grid' ? 'secondary' : 'ghost'}
-              className="icon-button"
+              variant="ghost"
+              className="view-toggle-button"
+              data-active={view === 'grid'}
               aria-label="Dạng thẻ"
               aria-pressed={view === 'grid'}
               title="Dạng thẻ"
@@ -103,8 +105,9 @@ export function MembersPage() {
               <HeritageIcon name="grid" size={18} />
             </Button>
             <Button
-              variant={view === 'list' ? 'secondary' : 'ghost'}
-              className="icon-button"
+              variant="ghost"
+              className="view-toggle-button"
+              data-active={view === 'list'}
               aria-label="Danh sách"
               aria-pressed={view === 'list'}
               title="Danh sách"
@@ -143,7 +146,7 @@ export function MembersPage() {
                 <span>Đời</span>
                 <span>Chi họ</span>
                 <span>Năm sinh</span>
-                <span />
+                <span>Hồ sơ</span>
               </div>
               {pageMembers.map((p) => (
                 <Link
@@ -165,7 +168,10 @@ export function MembersPage() {
                   <span className="member-list-generation">Đời thứ {p.generation}</span>
                   <span className="member-list-branch">{branchName(p.branch)}</span>
                   <span className="member-list-born">{p.born}</span>
-                  <HeritageIcon name="next" size={16} />
+                  <span className="member-list-open">
+                    <span>Xem hồ sơ</span>
+                    <HeritageIcon name="next" size={16} />
+                  </span>
                 </Link>
               ))}
             </div>

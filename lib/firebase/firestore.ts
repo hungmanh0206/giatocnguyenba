@@ -196,26 +196,50 @@ export async function saveFirestoreMember(db: Firestore, person: Member) {
     for (const spouseId of oldSpouses.filter(
       (id) => !nextSpouses.includes(id),
     )) {
-      transaction.update(memberRef(db, spouseId), {
-        spouses: arrayRemove(person.id),
-        updatedAt: serverTimestamp(),
-      });
+      const spouse = await transaction.get(memberRef(db, spouseId));
+      if (!spouse.exists()) continue;
+      const spouseData = spouse.data();
+      const normalized = firestoreMember(spouseId, spouseData);
+      if (!normalized) continue;
+      transaction.set(
+        spouse.ref,
+        {
+          ...memberData({
+            ...normalized,
+            spouses: normalized.spouses.filter((id) => id !== person.id),
+          }),
+          createdAt: spouseData.createdAt ?? serverTimestamp(),
+        },
+        { merge: true },
+      );
     }
 
     for (const spouseId of nextSpouses.filter(
       (id) => !oldSpouses.includes(id),
     )) {
-      transaction.update(memberRef(db, spouseId), {
-        spouses: arrayUnion(person.id),
-        updatedAt: serverTimestamp(),
-      });
+      const spouse = await transaction.get(memberRef(db, spouseId));
+      if (!spouse.exists()) continue;
+      const spouseData = spouse.data();
+      const normalized = firestoreMember(spouseId, spouseData);
+      if (!normalized) continue;
+      transaction.set(
+        spouse.ref,
+        {
+          ...memberData({
+            ...normalized,
+            spouses: [...new Set([...normalized.spouses, person.id])],
+          }),
+          createdAt: spouseData.createdAt ?? serverTimestamp(),
+        },
+        { merge: true },
+      );
     }
 
     transaction.set(
       target,
       {
         ...memberData(person),
-        createdAt: current.exists()
+        createdAt: current.exists() && current.data().createdAt
           ? current.data().createdAt
           : serverTimestamp(),
       },
