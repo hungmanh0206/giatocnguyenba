@@ -22,16 +22,6 @@ export default function Page() {
       <div className="container history-body">
         <HistoryIndex />
         <article className="history-article">
-          <aside className="history-note" aria-label="Lưu ý về tư liệu">
-            <span className="history-note-mark" aria-hidden="true">
-              i
-            </span>
-            <p>
-              <strong>Lưu ý tư liệu.</strong> Đây là câu chuyện minh họa cho
-              website. Tên người, niên đại và quê quán cần được thay bằng tư
-              liệu đã xác minh của dòng họ.
-            </p>
-          </aside>
           <section id="origin">
             <div className="eyebrow">01 · CỘI NGUỒN</div>
             <h2>Một mái nhà, nhiều thế hệ</h2>

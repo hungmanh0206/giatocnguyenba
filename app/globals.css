@@ -6968,45 +6968,9 @@ main#main .history-article p {
 
 .history-article .eyebrow {
   color: #8a6746;
-  font-size: 11px;
-  letter-spacing: 0.055em;
-}
-
-.history-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  margin: 0;
-  padding: 13px 0 13px 16px;
-  border-left: 2px solid #ad7a45;
-  background: linear-gradient(90deg, #f8eee0b8, transparent 78%);
-}
-
-.history-note-mark {
-  display: grid;
-  width: 17px;
-  height: 17px;
-  flex: 0 0 17px;
-  place-items: center;
-  border: 1px solid #af8050;
-  border-radius: 50%;
-  color: #895c32;
-  font-family: 'Be Vietnam Pro', sans-serif;
-  font-size: 12px;
-  font-style: italic;
-  font-weight: 700;
-  line-height: 1;
-}
-
-main#main .history-note p {
-  margin: 0;
-  color: #655143;
-  font: 14px/1.6 'Open Sans', sans-serif;
-}
-
-.history-note strong {
-  color: #553a2b;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.045em;
 }
 
 .history-timeline {
@@ -7170,6 +7134,10 @@ main#main .timeline-entry p {
 }
 
 @media (max-width: 720px) {
+  .history-index {
+    display: none;
+  }
+
   .history-hero {
     padding: 40px 0 34px;
   }
@@ -7213,10 +7181,6 @@ main#main .timeline-entry p {
 
   .history-article h2 {
     font-size: 26px;
-  }
-
-  .history-note {
-    padding-left: 13px;
   }
 
   .history-timeline {
