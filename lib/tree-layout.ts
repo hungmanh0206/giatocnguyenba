@@ -74,7 +74,8 @@ function clanPeopleForTree(members: Member[]) {
 }
 
 function lineageType(person: Member) {
-  return person.lineageType === 'maternal-terminal'
+  return person.lineageType === 'maternal-terminal' ||
+    (person.gender === 'female' && legacyClanMember(person))
     ? 'maternal-terminal'
     : 'direct';
 }
@@ -111,14 +112,44 @@ export function layoutFamily(
   const indexOf = new Map(members.map((person, index) => [person.id, index]));
   const collapsedGroups = new Set(collapsed);
   const clanPeople = orderedPeople(clanPeopleForTree(members), indexOf);
+  const childrenByParent = new Map<string, Member[]>();
+  for (const person of members) {
+    for (const parentId of person.parents) {
+      const children = childrenByParent.get(parentId) || [];
+      children.push(person);
+      childrenByParent.set(parentId, children);
+    }
+  }
+  const maternalChildIds = new Set<string>();
+  const maternalDescendantIds = new Set<string>();
+  for (const daughter of clanPeople.filter(
+    (person) => lineageType(person) === 'maternal-terminal',
+  )) {
+    const directChildren = childrenByParent.get(daughter.id) || [];
+    for (const child of directChildren) {
+      maternalChildIds.add(child.id);
+      const descendants = [...(childrenByParent.get(child.id) || [])];
+      while (descendants.length) {
+        const descendant = descendants.pop()!;
+        if (maternalDescendantIds.has(descendant.id)) continue;
+        maternalDescendantIds.add(descendant.id);
+        descendants.push(...(childrenByParent.get(descendant.id) || []));
+      }
+    }
+  }
+  const treeClanPeople = clanPeople.filter(
+    (person) =>
+      !maternalChildIds.has(person.id) &&
+      !maternalDescendantIds.has(person.id),
+  );
   const minimumGeneration = Math.min(
-    ...clanPeople.map((person) => person.generation),
+    ...treeClanPeople.map((person) => person.generation),
     1,
   );
   const groups: Household[] = [];
   const groupOf = new Map<string, string>();
 
-  for (const clanMember of clanPeople) {
+  for (const clanMember of treeClanPeople) {
     if (groupOf.has(clanMember.id)) continue;
 
     const spouses = clanMember.spouses

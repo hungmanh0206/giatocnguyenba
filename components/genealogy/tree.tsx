@@ -136,6 +136,11 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
           ))}
         </div>
       )}
+      {group.lineageType === 'maternal-terminal' &&
+        !terminal &&
+        group.spouses.length === 0 && (
+          <div className="family-spouse-missing">Chưa ghi nhận con rể</div>
+        )}
       {group.lineageType === 'maternal-terminal' && !terminal && (
         <span className="maternal-branch-badge">Nhánh ngoại</span>
       )}
@@ -209,32 +214,10 @@ function TreeCanvas() {
     () => members.filter((member) => model.visibleMemberIds.has(member.id)),
     [members, model.visibleMemberIds],
   );
-  const overviewNodes = useMemo(
-    () => {
-      const roots = new Set(
-        model.groups.filter((group) => group.root).map((group) => group.id),
-      );
-      const firstGeneration = new Set(
-        model.links
-          .filter((link) => roots.has(link.source))
-          .map((link) => link.target),
-      );
-      return model.groups
-        .filter((group) => roots.has(group.id) || firstGeneration.has(group.id))
-        .map((group) => ({ id: group.id }));
-    },
-    [model.groups, model.links],
+  const allTreeNodes = useMemo(
+    () => model.groups.map((group) => ({ id: group.id })),
+    [model.groups],
   );
-  const defaultCollapsedGroups = useMemo(() => {
-    const roots = new Set(
-      model.groups.filter((group) => group.root).map((group) => group.id),
-    );
-    return new Set(
-      model.links
-        .filter((link) => !roots.has(link.source))
-        .map((link) => link.source),
-    );
-  }, [model.groups, model.links]);
   const collapsibleGroupIds = useMemo(
     () => new Set(model.links.map((link) => link.source)),
     [model.links],
@@ -276,18 +259,10 @@ function TreeCanvas() {
 
   useEffect(() => {
     if (!ready || initialTreeLayout.current) return;
-    const expected = defaultCollapsedGroups;
-    const isDefaultState =
-      collapsed.size === expected.size &&
-      [...collapsed].every((id) => expected.has(id));
-    if (!isDefaultState) {
-      setCollapsed(new Set(expected));
-      return;
-    }
     initialTreeLayout.current = true;
     const frame = requestAnimationFrame(() => {
       void flow.fitView({
-        nodes: overviewNodes,
+        nodes: allTreeNodes,
         padding: window.matchMedia('(max-width: 720px)').matches ? 0.12 : 0.18,
         maxZoom: window.matchMedia('(max-width: 720px)').matches ? 0.78 : 0.92,
         duration: 0,
@@ -295,10 +270,8 @@ function TreeCanvas() {
     });
     return () => cancelAnimationFrame(frame);
   }, [
-    collapsed,
-    defaultCollapsedGroups,
+    allTreeNodes,
     flow,
-    overviewNodes,
     ready,
   ]);
 
@@ -375,7 +348,7 @@ function TreeCanvas() {
 
   function resetViewport() {
     return flow.fitView({
-      nodes: overviewNodes,
+      nodes: allTreeNodes,
       padding: window.matchMedia('(max-width: 720px)').matches ? 0.12 : 0.18,
       maxZoom: window.matchMedia('(max-width: 720px)').matches ? 0.78 : 0.92,
       duration: 400,
@@ -383,7 +356,7 @@ function TreeCanvas() {
   }
 
   function reset() {
-    setCollapsed(new Set(defaultCollapsedGroups));
+    setCollapsed(new Set());
     setBranch('all');
     setGeneration('all');
     setQuery('');

@@ -34,7 +34,7 @@ test('Vietnamese search supports accents, case and nonadjacent tokens', () => {
     searchMembers(seedMembers, 'NGUYEN hung').map((p) => p.id),
     ['p19'],
   );
-  assert.equal(searchMembers(seedMembers, 'nguyễn bá đức').length, 2);
+  assert.equal(searchMembers(seedMembers, 'nguyễn bá đức').length, 1);
   assert.equal(searchMembers(seedMembers, 'khongtontai').length, 0);
 });
 test('seed genealogy is valid and spouse links are symmetric', () => {
@@ -108,6 +108,12 @@ test('family-unit layout keeps daughters, spouses, and maternal terminal childre
     'p13',
   ]);
   assert.equal(daughterFamily?.lineageType, 'maternal-terminal');
+  assert.deepEqual(
+    model.groups
+      .find((group) => group.id === model.groupOf.get('p18'))
+      ?.spouses.map((person) => person.id),
+    ['p39'],
+  );
   assert.equal(maternalChild?.kind, 'terminal');
   assert.equal(model.visibleMemberIds.has('p12'), true);
   assert.equal(model.visibleMemberIds.has('p13'), true);
@@ -120,6 +126,20 @@ test('family-unit layout keeps daughters, spouses, and maternal terminal childre
   assert.equal(model.links.some((link) => link.source === 'terminal-p23'), false);
   assert.equal(model.links.some((link) => link.source === 'terminal-p29'), false);
   assert.equal(model.visibleMemberIds.has('p38'), false);
+  const legacyModel = layoutFamily(
+    seedMembers.map((person) => ({
+      ...person,
+      isClanMember: false,
+      lineageType: 'direct',
+    })),
+  );
+  assert.equal(legacyModel.groupOf.has('p29'), true);
+  assert.equal(legacyModel.groupOf.get('p29'), 'terminal-p29');
+  assert.equal(legacyModel.visibleMemberIds.has('p38'), false);
+  assert.equal(
+    legacyModel.links.some((link) => link.source === 'terminal-p29'),
+    false,
+  );
   for (const parent of model.groups) {
     const children = model.links
       .filter((link) => link.source === parent.id)

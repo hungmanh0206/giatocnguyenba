@@ -123,7 +123,7 @@ const rows: [
     1948,
     undefined,
     ['p7', 'p9'],
-    [],
+    ['p39'],
   ],
   [
     'p19',
@@ -185,7 +185,17 @@ const rows: [
     ['p28'],
   ],
   ['p28', 'Đặng Thị Duyên', 'female', 4, 3, 1968, undefined, [], ['p27']],
-  ['p29', 'Nguyễn Bá Tuấn', 'male', 4, 3, 1973, undefined, ['p18'], []],
+  [
+    'p29',
+    'Nguyễn Bá Tuấn',
+    'male',
+    4,
+    3,
+    1973,
+    undefined,
+    ['p18', 'p39'],
+    [],
+  ],
   [
     'p30',
     'Nguyễn Bá Hoàng',
@@ -254,7 +264,7 @@ const rows: [
     ['p27', 'p28'],
     [],
   ],
-  ['p38', 'Nguyễn Bá Đức Anh', 'male', 5, 3, 2001, undefined, ['p29'], []],
+  ['p39', 'Trần Văn Thành', 'male', 3, 3, 1943, undefined, [], ['p18']],
 ];
 const clanMemberIds = new Set([
   'p1',

@@ -67,6 +67,7 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
     anniversary && typeof anniversary === 'object'
       ? integer(anniversary.month)
       : 0;
+  const hasClanFamilyName = /^Nguyễn (Bá|Thị)(?:\s|$)/i.test(name);
 
   return {
     id,
@@ -76,11 +77,15 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
     isClanMember:
       typeof raw.isClanMember === 'boolean'
         ? raw.isClanMember
-        : /^Nguyễn (Bá|Thị)(?:\s|$)/i.test(name),
+        : hasClanFamilyName,
     lineageType:
       raw.lineageType === 'maternal-terminal'
         ? 'maternal-terminal'
-        : 'direct',
+        : raw.lineageType === 'direct'
+          ? 'direct'
+          : gender === 'female' && hasClanFamilyName
+            ? 'maternal-terminal'
+            : 'direct',
     generation: integer(raw.generation, 1),
     branch: integer(raw.branch),
     born,
