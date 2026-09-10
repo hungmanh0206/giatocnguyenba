@@ -7203,6 +7203,7 @@ main#main .timeline-entry p {
 }
 
 .family-unit-heading {
+  display: flex;
   min-height: 16px;
   align-items: center;
   justify-content: space-between;
@@ -7220,6 +7221,12 @@ main#main .timeline-entry p {
   font-size: 10px;
   font-weight: 650;
   letter-spacing: 0;
+}
+
+.family-branch-label::before {
+  margin-right: 5px;
+  color: #b29a78;
+  content: '·';
 }
 
 .family-member-area {

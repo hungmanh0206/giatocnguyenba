@@ -102,7 +102,7 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
     >
       {!root && <Handle type="target" position={Position.Top} id="family-in" />}
       <div className="family-unit-heading">
-        <span>
+        <span className="family-generation-label">
           {root
             ? 'KHỞI NGUỒN DÒNG HỌ'
             : terminal
@@ -110,12 +110,12 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
               : `ĐỜI THỨ ${group.generation}`}
         </span>
         {!terminal && !root && (
-          <small>{branchName(group.clanMember.branch)}</small>
+          <small className="family-branch-label">{branchName(group.clanMember.branch)}</small>
         )}
       </div>
       <PersonArea
         person={group.clanMember}
-        role={terminal ? 'Con trực tiếp · điểm dừng' : 'Thành viên dòng họ'}
+        role={terminal ? 'Con trực tiếp' : 'Thành viên dòng họ'}
         selected={data.selected === group.clanMember.id}
         dimmed={data.dimmed.includes(group.clanMember.id)}
         onSelect={data.select}

@@ -120,61 +120,32 @@ function VietnamClock() {
   );
 }
 
-function HomeFamilyPerson({
-  person,
-  role,
-}: {
-  person: Member;
-  role: string;
-}) {
-  return (
-    <span className="home-family-person">
-      <Avatar person={person} />
-      <span>
-        <strong>{person.name}</strong>
-        <small>
-          {person.born} – {person.died || 'nay'}
-        </small>
-        <em>{role}</em>
-      </span>
-    </span>
-  );
-}
+function getBranchSummary(person: Member, members: Member[]) {
+  const descendantIds = new Set<string>();
+  const pending = [person.id];
 
-function HomeFamilyCard({
-  group,
-  root = false,
-}: {
-  group: Household;
-  root?: boolean;
-}) {
-  const maternal = group.lineageType === 'maternal-terminal';
+  while (pending.length) {
+    const parentId = pending.shift();
+    if (!parentId) continue;
 
-  return (
-    <span
-      className={`home-family-card ${root ? 'is-root' : ''} ${maternal ? 'is-maternal' : ''}`}
-    >
-      <span className="home-family-heading">
-        {root ? 'KHỞI NGUỒN DÒNG HỌ' : branchName(group.clanMember.branch)}
-        {maternal && <em>Nhánh ngoại</em>}
-      </span>
-      <HomeFamilyPerson
-        person={group.clanMember}
-        role={root ? 'Thủy tổ' : 'Thành viên dòng họ'}
-      />
-      {group.spouses.map((spouse) => (
-        <span className="home-family-spouse" key={spouse.id}>
-          <HomeFamilyPerson
-            person={spouse}
-            role={spouse.gender === 'female' ? 'Phu nhân' : 'Con rể'}
-          />
-        </span>
-      ))}
-      {maternal && group.spouses.length === 0 && (
-        <span className="home-family-missing">Chưa ghi nhận con rể</span>
-      )}
-    </span>
+    for (const child of members) {
+      if (!child.parents.includes(parentId) || descendantIds.has(child.id)) continue;
+      descendantIds.add(child.id);
+      pending.push(child.id);
+    }
+  }
+
+  const farthestGeneration = Math.max(
+    person.generation,
+    ...members
+      .filter((member) => descendantIds.has(member.id))
+      .map((member) => member.generation),
   );
+
+  return {
+    descendants: descendantIds.size,
+    generations: farthestGeneration - person.generation + 1,
+  };
 }
 
 export function HomePage() {
@@ -191,12 +162,18 @@ export function HomePage() {
     const model = layoutFamily(members);
     const root = model.groups.find((group) => group.root);
     if (!root) return null;
-    const branches = model.links
+    const branchGroups = model.links
       .filter((link) => link.source === root.id)
       .map((link) => model.groups.find((group) => group.id === link.target))
       .filter((group): group is Household => !!group)
       .sort((a, b) => a.clanMember.born - b.clanMember.born);
-    return { root, branches };
+    return {
+      founders: [root.clanMember, ...root.spouses],
+      branches: branchGroups.map((group) => ({
+        group,
+        ...getBranchSummary(group.clanMember, members),
+      })),
+    };
   }, [members]);
   const stats = useMemo(() => {
     const generations = members.length
@@ -304,48 +281,65 @@ export function HomePage() {
               Toàn bộ gia phả <HeritageIcon name="next" size={17} />
             </Link>
           </div>
-          <div className="tree-preview home-family-preview">
+          <div className="tree-preview">
             <span className="preview-label">
-              <HeritageIcon name="tree" size={15} /> Cội nguồn và các con trực tiếp
+              <HeritageIcon name="tree" size={15} /> Sơ đồ khởi tổ
             </span>
             {familyPreview && (
               <>
-                <Link
-                  className="home-family-root-link"
-                  href={`/members/${familyPreview.root.clanMember.id}`}
-                >
-                  <HomeFamilyCard group={familyPreview.root} root />
-                </Link>
+                <div className="root-couple">
+                  {familyPreview.founders.map((person) => (
+                    <Link className="ancestor" href={`/members/${person.id}`} key={person.id}>
+                      <Avatar person={person} />
+                      <strong>{person.name}</strong>
+                      <small>
+                        {person.born} – {person.died || 'nay'}
+                      </small>
+                      <span className="generation-tag">
+                        {person.gender === 'male' ? 'Thủy tổ' : 'Phu nhân'}
+                      </span>
+                    </Link>
+                  ))}
+                  {familyPreview.founders.length > 1 && (
+                    <span className="couple-line" aria-hidden="true" />
+                  )}
+                </div>
                 {familyPreview.branches.length > 0 && (
-                  <>
-                    <span className="home-family-connector" aria-hidden="true" />
-                    <div className="home-family-branches">
-                      {familyPreview.branches.map((group) => (
-                  <Link
-                    href={`/family-tree?person=${group.clanMember.id}`}
-                    className="home-family-branch"
-                    key={group.id}
-                    onClick={(event) => {
-                      if (
-                        !window.matchMedia('(max-width: 767px)').matches ||
-                        event.metaKey ||
-                        event.ctrlKey ||
-                        event.shiftKey ||
-                        event.altKey
-                      ) {
-                        return;
-                      }
+                  <div className="preview-branches">
+                    {familyPreview.branches.map(({ group, descendants, generations }) => (
+                      <Link
+                        href={`/family-tree?person=${group.clanMember.id}`}
+                        className={`branch-preview branch-${group.clanMember.branch}`}
+                        key={group.id}
+                        onClick={(event) => {
+                          if (
+                            !window.matchMedia('(max-width: 767px)').matches ||
+                            event.metaKey ||
+                            event.ctrlKey ||
+                            event.shiftKey ||
+                            event.altKey
+                          ) {
+                            return;
+                          }
 
-                      event.preventDefault();
-                      router.push(`/members/${group.clanMember.id}`);
-                    }}
-                  >
-                    <HomeFamilyCard group={group} />
-                    <HeritageIcon name="next" size={16} />
-                  </Link>
-                      ))}
-                    </div>
-                  </>
+                          event.preventDefault();
+                          router.push(`/members/${group.clanMember.id}`);
+                        }}
+                      >
+                        <small>
+                          {group.lineageType === 'maternal-terminal'
+                            ? 'Nhánh ngoại'
+                            : branchName(group.clanMember.branch)}
+                        </small>
+                        <strong>{group.clanMember.name}</strong>
+                        <span className="branch-preview-era">Đời thứ {group.generation}</span>
+                        <span className="branch-preview-meta">
+                          {descendants} hậu duệ · {generations} thế hệ
+                          <HeritageIcon name="next" size={16} />
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
                 )}
               </>
             )}
