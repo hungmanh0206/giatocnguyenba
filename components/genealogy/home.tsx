@@ -1,6 +1,7 @@
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { FamilyMoments } from './family-moments';
@@ -149,6 +150,7 @@ function getBranchSummary(person: Member, members: Member[]) {
 
 export function HomePage() {
   const { members } = useFamily();
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const found = searchMembers(members, query).slice(0, 4);
   const [today] = useState(vietnamToday);
@@ -308,6 +310,20 @@ export function HomePage() {
                     href={`/family-tree?person=${person.id}`}
                     className={`branch-preview branch-${person.branch}`}
                     key={person.id}
+                    onClick={(event) => {
+                      if (
+                        !window.matchMedia('(max-width: 767px)').matches ||
+                        event.metaKey ||
+                        event.ctrlKey ||
+                        event.shiftKey ||
+                        event.altKey
+                      ) {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      router.push(`/members/${person.id}`);
+                    }}
                   >
                     <small>{branchName(person.branch)}</small>
                     <strong>{person.name}</strong>
