@@ -7837,9 +7837,15 @@ main#main .timeline-entry p {
   }
 
   .home-family-branches {
-    grid-template-columns: 1fr;
-    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
     padding-top: 18px;
+  }
+
+  .home-family-branch:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: calc((100% - 10px) / 2);
+    justify-self: center;
   }
 
   .home-family-branches::before {
@@ -7849,5 +7855,47 @@ main#main .timeline-entry p {
   .home-family-branch::before {
     top: -18px;
     height: 18px;
+  }
+
+  .home-family-branch .home-family-card {
+    min-height: 94px;
+    padding: 8px;
+  }
+
+  .home-family-branch .home-family-heading,
+  .home-family-branch .home-family-heading > em {
+    gap: 4px;
+    font-size: 9px;
+  }
+
+  .home-family-branch .home-family-person {
+    gap: 6px;
+    padding-top: 5px;
+  }
+
+  .home-family-branch .home-family-person .avatar {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+  }
+
+  .home-family-branch .home-family-person strong {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 13px;
+    white-space: normal;
+  }
+
+  .home-family-branch .home-family-person small {
+    font-size: 10px;
+  }
+
+  .home-family-branch .heritage-icon {
+    right: 7px;
+    bottom: 7px;
+    width: 16px;
+    height: 16px;
   }
 }
