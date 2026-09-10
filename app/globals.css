@@ -6991,7 +6991,7 @@ main#main .history-article p {
   border: 1px solid #af8050;
   border-radius: 50%;
   color: #895c32;
-  font-family: Georgia, serif;
+  font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 12px;
   font-style: italic;
   font-weight: 700;
@@ -7062,11 +7062,11 @@ main#main .timeline-entry p {
   border-left: 3px solid #9a4a36;
   background: #f7ecdcad;
   color: #71392e;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 31px;
   font-style: italic;
-  font-weight: 400;
-  line-height: 1.35;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .record-links {
@@ -7438,7 +7438,7 @@ main#main .timeline-entry p {
   inset: 0;
   border: 0;
   border-radius: 0;
-  background: url('/root-family-ornament.png') center / 106% 112% no-repeat;
+  background: url('/root-family-ornament.png') center / 100% 100% no-repeat;
   content: '';
   opacity: 1;
   pointer-events: none;
@@ -7485,7 +7485,7 @@ main#main .timeline-entry p {
 }
 
 .root-family-unit .family-member-copy > strong {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 14px;
   font-weight: 700;
 }
@@ -7506,14 +7506,27 @@ main#main .timeline-entry p {
   background: transparent;
 }
 
+.root-family-unit .family-spouse-entry:first-child {
+  margin-top: 18px;
+}
+
 .tree-fullscreen-icon,
 .member-save-icon {
   display: block;
+  object-fit: contain;
+  transition: transform 160ms ease;
+}
+
+.tree-fullscreen-icon {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 21px;
+}
+
+.member-save-icon {
   width: 19px;
   height: 19px;
   flex: 0 0 19px;
-  object-fit: contain;
-  transition: transform 160ms ease;
 }
 
 @media (hover: hover) {
@@ -7603,7 +7616,7 @@ main#main .timeline-entry p {
   z-index: 0;
   border: 0;
   border-radius: 0;
-  background: url('/root-family-ornament.png') center / 106% 112% no-repeat;
+  background: url('/root-family-ornament.png') center / 100% 100% no-repeat;
   content: '';
   pointer-events: none;
 }
@@ -7674,7 +7687,7 @@ main#main .timeline-entry p {
 }
 
 .home-family-card.is-root .home-family-person strong {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 14px;
   font-weight: 700;
 }
@@ -7690,6 +7703,7 @@ main#main .timeline-entry p {
 }
 
 .home-family-card.is-root .home-family-spouse {
+  margin-top: 18px;
   border-top-color: transparent;
 }
 
