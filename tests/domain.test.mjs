@@ -85,7 +85,7 @@ test('validation rejects cycles, self-parenting and inconsistent edits to a pare
     validateMember({ ...seedMembers[18], spouses: ['p10'] }, seedMembers),
   );
 });
-test('multiple marriages retain exact parent pairs and groups never overlap', () => {
+test('patrilineal layout retains daughters but ends their branches', () => {
   const model = layoutFamily(seedMembers);
   assert.deepEqual(model.links.find((l) => l.childId === 'p16').parentIds, [
     'p7',
@@ -95,9 +95,16 @@ test('multiple marriages retain exact parent pairs and groups never overlap', ()
     'p7',
     'p9',
   ]);
+  assert.equal(model.visibleMemberIds.has('p12'), true);
+  assert.equal(model.links.some((link) => link.childId === 'p12'), true);
+  assert.equal(model.links.some((link) => link.source === model.groupOf.get('p12')), false);
+  assert.equal(model.visibleMemberIds.has('p13'), false);
+  assert.equal(model.visibleMemberIds.has('p23'), false);
+  assert.equal(model.visibleMemberIds.has('p29'), false);
+  assert.equal(model.visibleMemberIds.has('p38'), false);
   assert.equal(
     new Set(model.groups.flatMap((g) => g.people.map((p) => p.id))).size,
-    seedMembers.length,
+    model.visibleMemberIds.size,
   );
   for (const a of model.groups)
     for (const b of model.groups)

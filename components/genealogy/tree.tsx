@@ -143,6 +143,10 @@ function TreeCanvas() {
   const [ready, setReady] = useState(false);
   const flow = useReactFlow();
   const model = useMemo(() => layoutFamily(members), [members]);
+  const treeMembers = useMemo(
+    () => members.filter((member) => model.visibleMemberIds.has(member.id)),
+    [members, model.visibleMemberIds],
+  );
   const allTreeNodes = useMemo(
     () => model.groups.map((group) => ({ id: group.id })),
     [model.groups],
@@ -167,7 +171,7 @@ function TreeCanvas() {
   );
   const maxGeneration = Math.max(
     1,
-    ...members.map((member) => member.generation),
+    ...treeMembers.map((member) => member.generation),
   );
   const hidden = useMemo(() => {
     return collapsedDescendantGroups(model.links, collapsed);
@@ -289,7 +293,7 @@ function TreeCanvas() {
       pathOptions: { borderRadius: 3 },
     })),
   );
-  const found = searchMembers(members, query).slice(0, 6);
+  const found = searchMembers(treeMembers, query).slice(0, 6);
   function resetViewport() {
     return flow.fitView({
       nodes: window.matchMedia('(max-width: 720px)').matches
@@ -322,7 +326,7 @@ function TreeCanvas() {
           <HeritageIcon name="tree" size={22} />
           <div>
             <h1>Cây gia phả</h1>
-            <small>Họ Nguyễn Bá · {members.length} thành viên</small>
+            <small>Họ Nguyễn Bá · {treeMembers.length} người trong cây</small>
           </div>
         </div>
         <div className="tree-search">

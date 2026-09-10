@@ -39,12 +39,67 @@ export function collapsedDescendantGroups(
   return hidden;
 }
 
+function patrilinealTreeMemberIds(
+  members: Member[],
+  lookup: Map<string, Member>,
+) {
+  const men = members.filter((person) => person.gender === 'male');
+  if (!men.length) return new Set(members.map((person) => person.id));
+
+  const foundingGeneration = Math.min(
+    ...men.map((person) => person.generation),
+  );
+  const founders = men.filter(
+    (person) =>
+      person.generation === foundingGeneration && person.parents.length === 0,
+  );
+  const roots = founders.length
+    ? founders
+    : men.filter((person) => person.generation === foundingGeneration);
+  const childrenByParent = new Map<string, Member[]>();
+
+  for (const person of members) {
+    for (const parentId of person.parents) {
+      const children = childrenByParent.get(parentId) || [];
+      children.push(person);
+      childrenByParent.set(parentId, children);
+    }
+  }
+
+  const lineageMen = new Set(roots.map((person) => person.id));
+  const visible = new Set(lineageMen);
+  const queue = [...lineageMen];
+
+  while (queue.length) {
+    const fatherId = queue.shift()!;
+    for (const child of childrenByParent.get(fatherId) || []) {
+      visible.add(child.id);
+      if (child.gender === 'male' && !lineageMen.has(child.id)) {
+        lineageMen.add(child.id);
+        queue.push(child.id);
+      }
+    }
+  }
+
+  for (const manId of lineageMen) {
+    for (const spouseId of lookup.get(manId)?.spouses || []) {
+      if (lookup.has(spouseId)) visible.add(spouseId);
+    }
+  }
+
+  return visible;
+}
+
 export function layoutFamily(members: Member[]) {
   const lookup = new Map(members.map((p) => [p.id, p]));
+  const visibleMemberIds = patrilinealTreeMemberIds(members, lookup);
+  const visibleMembers = members.filter((person) =>
+    visibleMemberIds.has(person.id),
+  );
   const visited = new Set<string>();
   const groups: Household[] = [];
   const groupOf = new Map<string, string>();
-  for (const p of members) {
+  for (const p of visibleMembers) {
     if (visited.has(p.id)) continue;
     const queue = [p.id];
     const people: Member[] = [];
@@ -52,10 +107,12 @@ export function layoutFamily(members: Member[]) {
       const id = queue.shift()!;
       if (visited.has(id)) continue;
       const person = lookup.get(id);
-      if (!person) continue;
+      if (!person || !visibleMemberIds.has(id)) continue;
       visited.add(id);
       people.push(person);
-      queue.push(...person.spouses);
+      queue.push(
+        ...person.spouses.filter((spouseId) => visibleMemberIds.has(spouseId)),
+      );
     }
     people.sort(
       (a, b) => b.parents.length - a.parents.length || a.born - b.born,
@@ -89,7 +146,7 @@ export function layoutFamily(members: Member[]) {
     graph.setNode(g.id, { width: g.width, height: PERSON_HEIGHT }),
   );
   const links: FamilyLink[] = [];
-  for (const p of members) {
+  for (const p of visibleMembers) {
     const sources = [
       ...new Set(p.parents.map((id) => groupOf.get(id)).filter(Boolean)),
     ] as string[];
@@ -122,5 +179,5 @@ export function layoutFamily(members: Member[]) {
       right = group.x + group.width;
     }
   }
-  return { groups, links, groupOf };
+  return { groups, links, groupOf, visibleMemberIds };
 }
