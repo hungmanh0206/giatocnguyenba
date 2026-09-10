@@ -85,9 +85,7 @@ function messageFor(error: unknown) {
 }
 
 export function FamilyProvider({ children }: { children: ReactNode }) {
-  const [members, setMembers] = useState<Member[]>(() =>
-    isFirebaseConfigured ? [] : seedMembers,
-  );
+  const [members, setMembers] = useState<Member[]>(seedMembers);
   const [user, setUser] = useState<FamilyConnection['user']>(null);
   const [role, setRole] = useState<FamilyRole | null>(null);
   const [roleLoading, setRoleLoading] = useState(false);
@@ -132,12 +130,24 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       return subscribeToFamilyMembers(
         db,
         (nextMembers) => {
-          setMembers(nextMembers);
-          setDataStatus({ mode: 'connected' });
+          if (nextMembers.length) {
+            setMembers(nextMembers);
+            setDataStatus({ mode: 'connected' });
+            return;
+          }
+
+          setMembers(seedMembers);
+          setDataStatus({
+            mode: 'demo',
+            message: 'Firestore chưa có hồ sơ hợp lệ, đang hiển thị dữ liệu mẫu.',
+          });
         },
         (error) => {
-          setMembers([]);
-          setDataStatus({ mode: 'error', message: messageFor(error) });
+          setMembers(seedMembers);
+          setDataStatus({
+            mode: 'demo',
+            message: `Không thể tải Firestore (${messageFor(error)}). Đang hiển thị dữ liệu mẫu.`,
+          });
         },
       );
     } catch (error) {
@@ -189,7 +199,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     if (error) return error;
 
     if (firebaseConfigurationError) return firebaseConfigurationError;
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || connection.mode === 'demo') {
       setMembers((current) => [
         ...current
           .filter((member) => member.id !== person.id)
@@ -226,7 +236,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       return 'Hồ sơ này không còn tồn tại.';
     }
     if (firebaseConfigurationError) return firebaseConfigurationError;
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || connection.mode === 'demo') {
       setMembers((current) => removeMemberAndLinks(current, memberId));
       return null;
     }

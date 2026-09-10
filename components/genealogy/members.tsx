@@ -38,7 +38,7 @@ import {
   type Member,
 } from '@/lib/family';
 export function MembersPage() {
-  const { members } = useFamily();
+  const { members, connection } = useFamily();
   const params = useSearchParams();
   const [query, setQuery] = useState(params.get('q') || '');
   const [branch, setBranch] = useState('all');
@@ -56,6 +56,7 @@ export function MembersPage() {
     )
     .sort((a, b) => a.generation - b.generation || a.born - b.born);
   const total = Math.ceil(filtered.length / 12);
+  const pageMembers = filtered.slice((page - 1) * 12, page * 12);
   return (
     <main id="main">
       <div className="container page-space">
@@ -117,7 +118,9 @@ export function MembersPage() {
           <span>
             {filtered.length} thành viên{query && ` cho “${query}”`}
           </span>
-          <span>Dữ liệu mẫu</span>
+          <span>
+            {connection.mode === 'connected' ? 'Đã đồng bộ' : 'Dữ liệu mẫu'}
+          </span>
         </div>
         {!filtered.length ? (
           <EmptyState
@@ -128,31 +131,71 @@ export function MembersPage() {
             }}
           />
         ) : (
-          <div className={`member-results ${view}`}>
-            {filtered.slice((page - 1) * 12, page * 12).map((p) => (
-              <Link
-                href={`/members/${p.id}`}
-                className={`person-card branch-${p.branch}`}
-                key={p.id}
-              >
-                <div className="person-card-top">
-                  <Avatar person={p} />
-                  <span className="branch-badge">{branchName(p.branch)}</span>
-                </div>
-                <h3>{p.name}</h3>
-                <p>
-                  {p.born}
-                  {p.died ? ` – ${p.died}` : ' · Còn sống'}
-                </p>
-                <div className="person-card-bottom">
-                  <span>
-                    <HeritageIcon name="profile" size={14} /> Đời thứ {p.generation}
+          view === 'list' ? (
+            <div
+              className="member-directory"
+              key="member-directory"
+              role="list"
+              aria-label="Danh sách thành viên"
+            >
+              <div className="member-directory-heading" aria-hidden="true">
+                <span>Thành viên</span>
+                <span>Đời</span>
+                <span>Chi họ</span>
+                <span>Năm sinh</span>
+                <span />
+              </div>
+              {pageMembers.map((p) => (
+                <Link
+                  href={`/members/${p.id}`}
+                  className={`member-list-row branch-${p.branch}`}
+                  key={p.id}
+                  role="listitem"
+                >
+                  <span className="member-list-person">
+                    <Avatar person={p} />
+                    <span>
+                      <strong>{p.name}</strong>
+                      <small>
+                        Đời thứ {p.generation} · {branchName(p.branch)} ·{' '}
+                        {p.died ? `${p.born} – ${p.died}` : `Sinh ${p.born}`}
+                      </small>
+                    </span>
                   </span>
-                  <HeritageIcon name="next" size={17} />
-                </div>
-              </Link>
-            ))}
-          </div>
+                  <span className="member-list-generation">Đời thứ {p.generation}</span>
+                  <span className="member-list-branch">{branchName(p.branch)}</span>
+                  <span className="member-list-born">{p.born}</span>
+                  <HeritageIcon name="next" size={16} />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="member-results" key="member-grid">
+              {pageMembers.map((p) => (
+                <Link
+                  href={`/members/${p.id}`}
+                  className={`person-card branch-${p.branch}`}
+                  key={p.id}
+                >
+                  <div className="person-card-top">
+                    <Avatar person={p} />
+                    <span className="branch-badge">{branchName(p.branch)}</span>
+                  </div>
+                  <h3>{p.name}</h3>
+                  <p>
+                    {p.born}
+                    {p.died ? ` – ${p.died}` : ' · Còn sống'}
+                  </p>
+                  <div className="person-card-bottom">
+                    <span>
+                      <HeritageIcon name="profile" size={14} /> Đời thứ {p.generation}
+                    </span>
+                    <HeritageIcon name="next" size={17} />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )
         )}
         {total > 1 && (
           <div className="pagination">

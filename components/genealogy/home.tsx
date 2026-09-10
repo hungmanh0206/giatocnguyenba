@@ -59,8 +59,9 @@ function VietnamClock() {
     const frame = window.requestAnimationFrame(update);
     const timeout = window.setTimeout(() => {
       update();
-      interval = window.setInterval(update, 1000);
-    }, 1000 - new Date().getMilliseconds());
+      interval = window.setInterval(update, 60_000);
+    },
+    60_000 - new Date().getSeconds() * 1000 - new Date().getMilliseconds());
 
     return () => {
       window.cancelAnimationFrame(frame);
@@ -74,10 +75,9 @@ function VietnamClock() {
         timeZone: 'Asia/Ho_Chi_Minh',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit',
         hourCycle: 'h23',
       }).format(now)
-    : '--:--:--';
+    : '--:--';
   const solarDate = now
     ? new Intl.DateTimeFormat('vi-VN', {
         timeZone: 'Asia/Ho_Chi_Minh',
@@ -91,22 +91,26 @@ function VietnamClock() {
 
   return (
     <div className="hero-utility" aria-live="polite">
-      <span className="hero-utility-item hero-utility-date">
-        <HeritageIcon name="solar-calendar" size={16} />
-        <span>{solarDate}</span>
-      </span>
-      <span className="hero-utility-divider" aria-hidden="true" />
-      <span className="hero-utility-item hero-utility-lunar">
-        <HeritageIcon name="time" size={16} />
-        <span>
-          {lunar
-            ? `${lunar.day}/${lunar.month}${lunar.leap ? ' nhuận' : ''} ${getYearCanChi(lunar.year)}`
-            : 'Đang cập nhật ngày âm'}
+      <div className="hero-utility-primary">
+        <span className="hero-utility-item hero-utility-date">
+          <HeritageIcon name="solar-calendar" size={16} />
+          <span>{solarDate}</span>
         </span>
-      </span>
-      <span className="hero-utility-divider" aria-hidden="true" />
-      <time className="hero-utility-item hero-utility-time" dateTime={now?.toISOString()}>
-        <HeritageIcon name="clock" size={16} />
+        <span className="hero-utility-divider" aria-hidden="true">
+          ·
+        </span>
+        <span className="hero-utility-item hero-utility-lunar">
+          <HeritageIcon name="time" size={16} />
+          <span>
+            {lunar
+              ? `${lunar.day}/${lunar.month}${lunar.leap ? ' nhuận' : ''} ${getYearCanChi(lunar.year)}`
+              : 'Đang cập nhật ngày âm'}
+          </span>
+          <small>Âm lịch</small>
+        </span>
+      </div>
+      <time className="hero-utility-time" dateTime={now?.toISOString()}>
+        <HeritageIcon name="clock" size={14} />
         <span>{displayTime}</span>
       </time>
     </div>
