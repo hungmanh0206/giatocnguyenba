@@ -7174,8 +7174,8 @@ main#main .timeline-entry p {
   overflow: visible;
   pointer-events: all !important;
   border: 1px solid #dfd4c4;
-  border-radius: 12px;
-  padding: 12px 13px 14px;
+  border-radius: 10px;
+  padding: 9px 10px 10px;
   background: #fffdf8;
   box-shadow: 0 6px 20px #422c170d;
   color: #30271f;
@@ -7194,23 +7194,22 @@ main#main .timeline-entry p {
 .family-unit::after {
   position: absolute;
   top: 0;
-  right: 13px;
-  left: 13px;
-  height: 3px;
+  right: 10px;
+  left: 10px;
+  height: 2px;
   border-radius: 0 0 999px 999px;
   background: #a7703f;
   content: '';
 }
 
 .family-unit-heading {
-  display: flex;
-  min-height: 18px;
+  min-height: 16px;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding-right: 36px;
+  padding-right: 0;
   color: #8d7559;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 750;
   letter-spacing: 0.06em;
   line-height: 1.3;
@@ -7218,7 +7217,7 @@ main#main .timeline-entry p {
 
 .family-unit-heading > small {
   color: #93704a;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 650;
   letter-spacing: 0;
 }
@@ -7226,12 +7225,12 @@ main#main .timeline-entry p {
 .family-member-area {
   display: flex;
   width: 100%;
-  min-height: 54px;
+  min-height: 46px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   border: 0;
   border-radius: 8px;
-  padding: 7px 6px;
+  padding: 5px 4px;
   background: transparent;
   color: inherit;
   text-align: left;
@@ -7261,9 +7260,9 @@ main#main .timeline-entry p {
 }
 
 .family-member-area .avatar {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
 }
 
 .family-member-copy {
@@ -7277,7 +7276,7 @@ main#main .timeline-entry p {
   order: 2;
   margin-top: 2px;
   color: #98785a;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   line-height: 1.35;
 }
@@ -7285,7 +7284,7 @@ main#main .timeline-entry p {
 .family-member-copy > strong {
   overflow: hidden;
   color: #332820;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 750;
   line-height: 1.28;
   text-overflow: ellipsis;
@@ -7294,7 +7293,7 @@ main#main .timeline-entry p {
 
 .family-member-years {
   color: #716457;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.35;
 }
 
@@ -7311,35 +7310,35 @@ main#main .timeline-entry p {
 .family-unit-divider {
   display: block;
   height: 1px;
-  margin: 3px 5px 1px;
+  margin: 2px 4px 0;
   background: #e6dccf;
 }
 
 .family-spouse-missing {
-  margin: 4px 6px 2px;
+  margin: 3px 4px 1px;
   border-top: 1px dashed #ddcfbb;
-  padding-top: 8px;
+  padding-top: 6px;
   color: #9a8061;
-  font-size: 12px;
+  font-size: 11px;
   font-style: italic;
   line-height: 1.35;
 }
 
 .maternal-branch-badge {
   align-self: flex-start;
-  margin: 4px 6px 0;
+  margin: 3px 4px 0;
   border: 1px solid #d7c3a3;
   border-radius: 999px;
-  padding: 2px 7px;
+  padding: 1px 6px;
   color: #876742;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   line-height: 1.3;
 }
 
 .terminal-family-unit {
   border-style: dashed;
-  padding-top: 13px;
+  padding-top: 10px;
   background: #fffaf3;
 }
 
@@ -7348,13 +7347,13 @@ main#main .timeline-entry p {
 }
 
 .terminal-family-unit .family-member-area {
-  min-height: 64px;
+  min-height: 52px;
 }
 
 .root-family-unit {
   border: 1px solid #b98a49;
-  border-radius: 16px;
-  padding: 19px 20px 17px;
+  border-radius: 13px;
+  padding: 14px 15px 12px;
   background:
     radial-gradient(circle at 50% 100%, #f3dfb61f 0 34%, transparent 35%),
     #fffaf0;
@@ -7366,7 +7365,7 @@ main#main .timeline-entry p {
 
 .root-family-unit::before {
   position: absolute;
-  inset: 12px;
+  inset: 9px;
   border: 1px solid #d8b97b80;
   border-radius: 10px;
   background:
@@ -7382,9 +7381,9 @@ main#main .timeline-entry p {
 }
 
 .root-family-unit::after {
-  right: 28px;
-  left: 28px;
-  height: 4px;
+  right: 21px;
+  left: 21px;
+  height: 3px;
   background: #8e3030;
 }
 
@@ -7392,23 +7391,23 @@ main#main .timeline-entry p {
   justify-content: center;
   padding-right: 0;
   color: #8e3030;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.09em;
 }
 
 .root-family-unit .family-member-area {
-  min-height: 61px;
-  padding-inline: 8px;
+  min-height: 53px;
+  padding-inline: 6px;
 }
 
 .root-family-unit .family-member-area .avatar {
-  width: 42px;
-  height: 42px;
-  flex-basis: 42px;
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
 }
 
 .root-family-unit .family-member-copy > strong {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .family-unit .react-flow__handle {
@@ -7420,22 +7419,30 @@ main#main .timeline-entry p {
 }
 
 .collapse-node {
-  top: 9px;
-  right: 9px;
-  left: auto;
-  bottom: auto;
-  width: 32px !important;
-  height: 32px !important;
-  border-color: #d8c6a7;
+  top: auto;
+  right: auto;
+  bottom: -24px;
+  left: calc(50% - 11px);
+  width: 22px !important;
+  height: 22px !important;
+  border: 0 !important;
   border-radius: 50% !important;
-  background: #fffdf8e8;
-  color: #8b6138;
-  box-shadow: 0 3px 8px #482e1514;
+  padding: 1px !important;
+  background: transparent !important;
+  color: inherit;
+  box-shadow: none;
 }
 
 .collapse-node:hover {
-  border-color: #ab7b42;
-  background: #f8ead9;
+  background: transparent !important;
+  transform: scale(1.08);
+}
+
+.collapse-node-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 .home-family-preview {

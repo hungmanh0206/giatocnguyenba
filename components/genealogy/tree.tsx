@@ -15,7 +15,7 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { branchName, searchMembers, type Member } from '@/lib/family';
 import {
@@ -158,7 +158,15 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
               data.collapse(group.id);
             }}
           >
-            {data.collapsed ? <Plus size={16} /> : <Minus size={16} />}
+            <img
+              className="collapse-node-icon"
+              src={
+                data.collapsed
+                  ? '/app-icons/tree-expand.png'
+                  : '/app-icons/tree-collapse.png'
+              }
+              alt=""
+            />
           </Button>
         </>
       )}

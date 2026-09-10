@@ -1,11 +1,11 @@
 import type { Member } from './family';
 
-export const FAMILY_UNIT_WIDTH = 280;
-export const FAMILY_UNIT_HEIGHT = 196;
-export const ROOT_FAMILY_WIDTH = 360;
-export const ROOT_FAMILY_HEIGHT = 258;
-export const TERMINAL_NODE_WIDTH = 236;
-export const TERMINAL_NODE_HEIGHT = 142;
+export const FAMILY_UNIT_WIDTH = 248;
+export const FAMILY_UNIT_HEIGHT = 164;
+export const ROOT_FAMILY_WIDTH = 310;
+export const ROOT_FAMILY_HEIGHT = 202;
+export const TERMINAL_NODE_WIDTH = 212;
+export const TERMINAL_NODE_HEIGHT = 118;
 // Kept for consumers that only need a typical tree-card measurement.
 export const PERSON_WIDTH = FAMILY_UNIT_WIDTH;
 export const PERSON_HEIGHT = FAMILY_UNIT_HEIGHT;
