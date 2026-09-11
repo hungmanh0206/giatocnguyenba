@@ -292,7 +292,12 @@ export function LunarPage() {
                       <div className="hour-groups">
                         <div>
                           <h4>
-                            <HeritageIcon name="time" size={15} /> Giờ Hoàng Đạo
+                            <HeritageIcon
+                              className="traditional-heading-icon"
+                              name="auspicious-hour"
+                              size={16}
+                            />{' '}
+                            Giờ Hoàng Đạo
                           </h4>
                           <div className="chip-row">
                             {info.goodHours.map((hour) => (
@@ -301,7 +306,14 @@ export function LunarPage() {
                           </div>
                         </div>
                         <div>
-                          <h4>Giờ Hắc Đạo</h4>
+                          <h4>
+                            <HeritageIcon
+                              className="traditional-heading-icon"
+                              name="inauspicious-hour"
+                              size={16}
+                            />{' '}
+                            Giờ Hắc Đạo
+                          </h4>
                           <div className="chip-row chip-row-muted">
                             {info.badHours.map((hour) => (
                               <span key={hour}>{hour}</span>
@@ -312,7 +324,12 @@ export function LunarPage() {
 
                       <div className="trad-subsection direction-section">
                         <h4>
-                          <HeritageIcon name="location" size={15} /> Hướng xuất hành
+                          <HeritageIcon
+                            className="traditional-heading-icon"
+                            name="departure-direction"
+                            size={16}
+                          />{' '}
+                          Hướng xuất hành
                         </h4>
                         <div className="direction-row">
                           <span>
