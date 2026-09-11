@@ -493,7 +493,7 @@ function TreeCanvas() {
           maternal: link.branchType === 'maternal-terminal',
         })),
       },
-      style: { stroke: FAMILY_CONNECTOR_COLOR, strokeWidth: 1.8 },
+      style: { stroke: FAMILY_CONNECTOR_COLOR, strokeWidth: 1.35 },
     });
   }
   const found = treeMembers.filter((member) => searchMatchIds.has(member.id)).slice(0, 6);

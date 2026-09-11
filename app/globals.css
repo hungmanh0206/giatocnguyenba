@@ -3653,7 +3653,7 @@ button:disabled,
 .tree-canvas .react-flow__edge-path {
   stroke: #211a15 !important;
   stroke-opacity: 1;
-  stroke-width: 1.8px;
+  stroke-width: 1.35px;
 }
 
 .household,
@@ -7877,7 +7877,7 @@ main#main .timeline-entry p {
 }
 
 .home-family-connector {
-  width: 2px;
+  width: 1.5px;
   height: 39px;
   background: #211a15;
 }
@@ -7896,7 +7896,7 @@ main#main .timeline-entry p {
   top: 0;
   right: 16.667%;
   left: 16.667%;
-  border-top: 2px solid #211a15;
+  border-top: 1.5px solid #211a15;
   content: '';
 }
 
@@ -7930,7 +7930,7 @@ main#main .timeline-entry p {
   top: -24px;
   left: 50%;
   height: 24px;
-  border-left: 2px solid #211a15;
+  border-left: 1.5px solid #211a15;
   content: '';
 }
 
@@ -8002,7 +8002,7 @@ main#main .timeline-entry p {
 .tree-canvas .react-flow__edge-path {
   stroke: #211a15 !important;
   stroke-opacity: 1;
-  stroke-width: 1.8px;
+  stroke-width: 1.35px;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
