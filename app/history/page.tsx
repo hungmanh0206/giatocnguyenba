@@ -13,10 +13,6 @@ export default function Page() {
             Lịch sử họ <span>Nguyễn Bá</span>
           </h1>
           <p>Những thế hệ nối tiếp. Những giá trị còn mãi.</p>
-          <span className="history-location">
-            <HeritageIcon name="location" size={17} /> Thôn Quảng Trường, xã
-            Quảng Chính, tỉnh Thanh Hóa
-          </span>
         </div>
       </section>
       <div className="container history-body">
@@ -26,10 +22,9 @@ export default function Page() {
             <div className="eyebrow">01 · CỘI NGUỒN</div>
             <h2>Một mái nhà, nhiều thế hệ</h2>
             <p>
-              Trong bản gia phả minh họa này, dòng họ được ghi lại từ cụ Nguyễn
-              Bá Khởi và phu nhân Trần Thị Tâm. Ba người con của hai cụ là
-              Nguyễn Bá An, Nguyễn Bá Bình và Nguyễn Bá Chính, tiếp nối thành ba
-              chi trong dòng họ.
+              Dòng họ được ghi lại từ Ông Tổ Nguyễn Bá Linh, húy Sóc, hiệu Thần
+              Hy Phủ Quân và Bà Tổ, hiệu Tư Hòa. Hai cụ là khởi nguồn của dòng
+              họ, sinh hạ bốn người con gồm hai con trai và hai con gái.
             </p>
             <p>
               Mỗi nhánh gia đình có hành trình riêng. Gia phả lưu lại những mối
@@ -47,33 +42,33 @@ export default function Page() {
               {[
                 [
                   'Đời thứ nhất',
-                  '1872',
+                  'Chưa rõ niên đại',
                   'Khởi đầu gia phả',
-                  'Cụ Nguyễn Bá Khởi và phu nhân Trần Thị Tâm.',
+                  'Ông Tổ Nguyễn Bá Linh và Bà Tổ là khởi nguồn của dòng họ.',
                 ],
                 [
                   'Đời thứ hai',
-                  '1898 – 1915',
-                  'Hình thành ba chi',
-                  'Chi trưởng, chi hai và chi ba tiếp nối từ gia đình khởi tổ.',
+                  'Chưa rõ niên đại',
+                  'Bốn người con',
+                  'Bà Nguyễn Thị Khang, Bà Nguyễn Thị Bang, Ông Nguyễn Bá Ân và Ông Nguyễn Bá Tăng tiếp nối từ gia đình khởi tổ.',
                 ],
                 [
                   'Đời thứ ba',
-                  '1927 – 1948',
+                  'Chưa rõ niên đại',
                   'Tiếp nối nếp nhà',
-                  'Các gia đình ngày một đông hơn, gắn bó bằng quan hệ huyết thống và hôn nhân.',
+                  'Nhánh Bà Nguyễn Thị Khang ghi nhận tám người con từ Bà Cả và Bà Kế.',
                 ],
                 [
                   'Đời thứ tư',
-                  '1955 – 1973',
+                  'Chưa rõ niên đại',
                   'Gìn giữ ký ức',
-                  'Thêm những người con, những mái ấm và những câu chuyện riêng.',
+                  'Hậu duệ các nhánh Nguyễn Văn Xum, Liêm, Châm, Tốn, Giản và Sanh được lưu thành từng hồ sơ.',
                 ],
                 [
                   'Đời thứ năm',
-                  '1985 – 2001',
+                  'Chưa rõ niên đại',
                   'Kết nối hôm nay',
-                  'Thế hệ trẻ cùng lưu giữ gia phả và ghi nhớ cội nguồn.',
+                  'Các tên Xứng, Hy, Pháo, Đùng, Hướng, Lan và Thống tiếp nối mạch ghi chép đến đời thứ năm.',
                 ],
               ].map(([generation, date, title, description]) => (
                 <div className="timeline-entry" key={generation}>

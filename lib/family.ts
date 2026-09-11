@@ -56,326 +56,262 @@ export function memberBirthLabel(person: Member) {
 export function memberSortYear(person: Member) {
   return person.born ?? Number.MAX_SAFE_INTEGER;
 }
-const rows: [
-  string,
-  string,
-  'male' | 'female',
-  number,
-  number,
-  number,
-  number | undefined,
-  string[],
-  string[],
-  number?,
-  number?,
-][] = [
-  ['p1', 'Nguyễn Bá Khởi', 'male', 1, 0, 1872, 1948, [], ['p2'], 12, 8],
-  ['p2', 'Trần Thị Tâm', 'female', 1, 0, 1876, 1955, [], ['p1'], 18, 9],
-  ['p3', 'Nguyễn Bá An', 'male', 2, 1, 1898, 1974, ['p1', 'p2'], ['p4'], 22, 8],
-  ['p4', 'Phạm Thị Hiền', 'female', 2, 1, 1903, 1981, [], ['p3'], 5, 10],
-  [
-    'p5',
-    'Nguyễn Bá Bình',
-    'male',
-    2,
-    2,
-    1902,
-    1980,
-    ['p1', 'p2'],
-    ['p6'],
-    15,
-    7,
-  ],
-  ['p6', 'Lê Thị Huệ', 'female', 2, 2, 1905, 1989, [], ['p5'], 3, 9],
-  [
-    'p7',
-    'Nguyễn Bá Chính',
-    'male',
-    2,
-    3,
-    1907,
-    1988,
-    ['p1', 'p2'],
-    ['p8', 'p9'],
-    9,
-    11,
-  ],
-  ['p8', 'Đỗ Thị Lan', 'female', 2, 3, 1910, 1941, [], ['p7'], 20, 2],
-  ['p9', 'Vũ Thị Liên', 'female', 2, 3, 1915, 1996, [], ['p7'], 7, 12],
-  [
-    'p10',
-    'Nguyễn Bá Đức',
-    'male',
-    3,
-    1,
-    1927,
-    2004,
-    ['p3', 'p4'],
-    ['p11'],
-    10,
-    8,
-  ],
-  ['p11', 'Hoàng Thị Thu', 'female', 3, 1, 1930, 2015, [], ['p10'], 24, 9],
-  [
-    'p12',
-    'Nguyễn Thị Hạnh',
-    'female',
-    3,
-    1,
-    1932,
-    undefined,
-    ['p3', 'p4'],
-    ['p13'],
-  ],
-  ['p13', 'Trần Văn Phúc', 'male', 3, 1, 1930, 2018, [], ['p12'], 6, 5],
-  [
-    'p14',
-    'Nguyễn Bá Dũng',
-    'male',
-    3,
-    2,
-    1930,
-    2010,
-    ['p5', 'p6'],
-    ['p15'],
-    16,
-    8,
-  ],
-  ['p15', 'Bùi Thị Mai', 'female', 3, 2, 1935, undefined, [], ['p14']],
-  [
-    'p16',
-    'Nguyễn Bá Cường',
-    'male',
-    3,
-    3,
-    1936,
-    2019,
-    ['p7', 'p8'],
-    ['p17'],
-    27,
-    7,
-  ],
-  ['p17', 'Ngô Thị Vân', 'female', 3, 3, 1940, undefined, [], ['p16']],
-  [
-    'p18',
-    'Nguyễn Thị Thanh',
-    'female',
-    3,
-    3,
-    1948,
-    undefined,
-    ['p7', 'p9'],
-    ['p39'],
-  ],
-  [
-    'p19',
-    'Nguyễn Bá Hùng',
-    'male',
-    4,
-    1,
-    1955,
-    undefined,
-    ['p10', 'p11'],
-    ['p20'],
-  ],
-  ['p20', 'Lê Thị Hoa', 'female', 4, 1, 1958, undefined, [], ['p19']],
-  [
-    'p21',
-    'Nguyễn Bá Minh',
-    'male',
-    4,
-    1,
-    1960,
-    undefined,
-    ['p10', 'p11'],
-    ['p22'],
-  ],
-  ['p22', 'Phạm Thị Ngọc', 'female', 4, 1, 1964, undefined, [], ['p21']],
-  ['p23', 'Trần Thu Hà', 'female', 4, 1, 1960, undefined, ['p12', 'p13'], []],
-  [
-    'p24',
-    'Nguyễn Bá Hải',
-    'male',
-    4,
-    2,
-    1961,
-    undefined,
-    ['p14', 'p15'],
-    ['p25'],
-  ],
-  ['p25', 'Võ Thị Hương', 'female', 4, 2, 1965, undefined, [], ['p24']],
-  [
-    'p26',
-    'Nguyễn Thị Thảo',
-    'female',
-    4,
-    2,
-    1967,
-    undefined,
-    ['p14', 'p15'],
-    [],
-  ],
-  [
-    'p27',
-    'Nguyễn Bá Quang',
-    'male',
-    4,
-    3,
-    1964,
-    undefined,
-    ['p16', 'p17'],
-    ['p28'],
-  ],
-  ['p28', 'Đặng Thị Duyên', 'female', 4, 3, 1968, undefined, [], ['p27']],
-  [
-    'p29',
-    'Nguyễn Bá Tuấn',
-    'male',
-    4,
-    3,
-    1973,
-    undefined,
-    ['p18', 'p39'],
-    [],
-  ],
-  [
-    'p30',
-    'Nguyễn Bá Hoàng',
-    'male',
-    5,
-    1,
-    1985,
-    undefined,
-    ['p19', 'p20'],
-    ['p31'],
-  ],
-  ['p31', 'Trần Khánh Linh', 'female', 5, 1, 1988, undefined, [], ['p30']],
-  [
-    'p32',
-    'Nguyễn Thị Anh Thư',
-    'female',
-    5,
-    1,
-    1990,
-    undefined,
-    ['p19', 'p20'],
-    [],
-  ],
-  ['p33', 'Nguyễn Bá Thành', 'male', 5, 1, 1992, undefined, ['p21', 'p22'], []],
-  [
-    'p34',
-    'Nguyễn Bá Nhật Minh',
-    'male',
-    5,
-    2,
-    1990,
-    undefined,
-    ['p24', 'p25'],
-    [],
-  ],
-  [
-    'p35',
-    'Nguyễn Thị Phương Anh',
-    'female',
-    5,
-    2,
-    1994,
-    undefined,
-    ['p24', 'p25'],
-    [],
-  ],
-  [
-    'p36',
-    'Nguyễn Bá Gia Bảo',
-    'male',
-    5,
-    3,
-    1995,
-    undefined,
-    ['p27', 'p28'],
-    [],
-  ],
-  [
-    'p37',
-    'Nguyễn Thị Bảo Ngọc',
-    'female',
-    5,
-    3,
-    1999,
-    undefined,
-    ['p27', 'p28'],
-    [],
-  ],
-  ['p39', 'Trần Văn Thành', 'male', 3, 3, 1943, undefined, [], ['p18']],
-];
-const clanMemberIds = new Set([
-  'p1',
-  'p3',
-  'p5',
-  'p7',
-  'p10',
-  'p12',
-  'p14',
-  'p16',
-  'p18',
-  'p19',
-  'p21',
-  'p24',
-  'p26',
-  'p27',
-  'p30',
-  'p32',
-  'p33',
-  'p34',
-  'p35',
-  'p36',
-  'p37',
-]);
-const maternalTerminalIds = new Set([
-  'p12',
-  'p18',
-  'p26',
-  'p32',
-  'p35',
-  'p37',
-]);
-export const seedMembers: Member[] = rows.map(
-  ([
+type SeedDetails = Partial<
+  Omit<
+    Member,
+    | 'id'
+    | 'name'
+    | 'gender'
+    | 'generation'
+    | 'branch'
+    | 'isClanMember'
+    | 'lineageType'
+    | 'parents'
+    | 'spouses'
+  >
+> & {
+  isClanMember?: boolean;
+  lineageType?: Member['lineageType'];
+  parents?: string[];
+  spouses?: string[];
+};
+
+function seedMember(
+  id: string,
+  name: string,
+  gender: Member['gender'],
+  generation: number,
+  branch: number,
+  details: SeedDetails = {},
+): Member {
+  const isClanMember = details.isClanMember ?? true;
+  return {
     id,
-    name,
+    name: details.nameKnown === false ? UNKNOWN_MEMBER_NAME : name,
+    nameKnown: details.nameKnown,
+    tabooName: details.tabooName,
+    styleName: details.styleName,
     gender,
+    isClanMember,
+    lineageType:
+      details.lineageType ??
+      (isClanMember && gender === 'female' ? 'maternal-terminal' : 'direct'),
     generation,
     branch,
-    born,
-    died,
-    parents,
-    spouses,
-    day,
-    month,
-  ]) => ({
-    id,
-    name,
-    gender,
-    isClanMember: clanMemberIds.has(id),
-    lineageType: maternalTerminalIds.has(id)
-      ? 'maternal-terminal'
-      : 'direct',
-    generation,
-    branch,
-    born,
-    died,
-    parents,
-    spouses,
-    anniversary: day && month ? { day, month } : undefined,
-    hometown: 'Thôn Quảng Trường, xã Quảng Chính, tỉnh Thanh Hóa',
+    born: details.born,
+    died: details.died,
+    diedText: details.diedText,
+    lifeStatus: details.lifeStatus ?? 'unknown',
+    parents: details.parents ?? [],
+    spouses: details.spouses ?? [],
+    anniversary: details.anniversary,
+    biography: details.biography,
+    hometown: details.hometown,
+  };
+}
+
+export const seedMembers: Member[] = [
+  seedMember('p1', 'Nguyễn Bá Linh', 'male', 1, 0, {
+    tabooName: 'Sóc',
+    styleName: 'Thần Hy Phủ Quân',
+    lifeStatus: 'deceased',
+    spouses: ['p2'],
+    anniversary: { day: 27, month: 11 },
     biography:
-      id === 'p1'
-        ? 'Cụ Nguyễn Bá Khởi là vị khởi tổ được ghi nhận trong bản gia phả minh họa. Cụ cùng phu nhân Trần Thị Tâm có ba người con, hình thành ba chi của dòng họ. Các thông tin này là dữ liệu mẫu, cần được đối chiếu với gia phả gốc trước khi sử dụng.'
-        : undefined,
+      'Ông Tổ Nguyễn Bá Linh là khởi nguồn của dòng họ. Ông cùng Bà Tổ sinh hạ bốn người con, gồm hai con trai và hai con gái.',
   }),
-);
+  seedMember('p2', UNKNOWN_MEMBER_NAME, 'female', 1, 0, {
+    nameKnown: false,
+    isClanMember: false,
+    styleName: 'Tư Hòa',
+    lifeStatus: 'deceased',
+    spouses: ['p1'],
+    anniversary: { day: 17, month: 4 },
+    biography:
+      'Bà Tổ là phu nhân của Ông Tổ Nguyễn Bá Linh, cùng gây dựng khởi nguồn dòng họ.',
+  }),
+
+  seedMember('g2-khang', 'Nguyễn Thị Khang', 'female', 2, 1, {
+    parents: ['p1', 'p2'],
+    spouses: ['g2-khang-chong'],
+    lifeStatus: 'deceased',
+    anniversary: { day: 29, month: 6 },
+    biography:
+      'Tên gọi khác: Mền. Bà lấy chồng; gia đình có hai bà. Bà Cả sinh năm người con trai, Bà Kế sinh ba người con gồm một trai và hai gái.',
+  }),
+  seedMember('g2-bang', 'Nguyễn Thị Bang', 'female', 2, 2, {
+    parents: ['p1', 'p2'],
+    biography:
+      'Tên gọi khác: Hàn Song. Chưa rõ ngày húy kỵ, chồng, con và hậu duệ; nhánh này sẽ được bổ sung khi có thêm tư liệu.',
+  }),
+  seedMember('g2-an', 'Nguyễn Bá Ân', 'male', 2, 3, {
+    parents: ['p1', 'p2'],
+    lifeStatus: 'deceased',
+    anniversary: { day: 13, month: 2 },
+    biography:
+      'Ngày húy kỵ: 13 tháng 2 âm lịch. Chưa có tư liệu đầy đủ về vợ, con và hậu duệ.',
+  }),
+  seedMember('g2-tang', 'Nguyễn Bá Tăng', 'male', 2, 4, {
+    parents: ['p1', 'p2'],
+    lifeStatus: 'deceased',
+    anniversary: { day: 3, month: 2 },
+    biography:
+      'Ngày húy kỵ: 03 tháng 2 âm lịch. Chưa có thông tin chi tiết về gia đình và hậu duệ.',
+  }),
+  seedMember('g2-khang-chong', UNKNOWN_MEMBER_NAME, 'male', 2, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g2-khang', 'g2-ba-ke'],
+    biography:
+      'Chồng của Bà Nguyễn Thị Khang. Gia đình ghi nhận Bà Cả và Bà Kế.',
+  }),
+  seedMember('g2-ba-ke', UNKNOWN_MEMBER_NAME, 'female', 2, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g2-khang-chong'],
+    biography:
+      'Bà Kế trong gia đình của chồng Bà Nguyễn Thị Khang; chưa rõ họ tên.',
+  }),
+
+  seedMember('g3-xum', 'Nguyễn Văn Xum', 'male', 3, 1, {
+    parents: ['g2-khang', 'g2-khang-chong'],
+  }),
+  seedMember('g3-liem', 'Nguyễn Văn Liêm', 'male', 3, 1, {
+    parents: ['g2-khang', 'g2-khang-chong'],
+  }),
+  seedMember('g3-cham', 'Nguyễn Văn Châm', 'male', 3, 1, {
+    parents: ['g2-khang', 'g2-khang-chong'],
+  }),
+  seedMember('g3-ton', 'Nguyễn Văn Tốn', 'male', 3, 1, {
+    parents: ['g2-khang', 'g2-khang-chong'],
+  }),
+  seedMember('g3-gian', 'Nguyễn Văn Giản', 'male', 3, 1, {
+    parents: ['g2-khang', 'g2-khang-chong'],
+  }),
+  seedMember('g3-sanh', 'Nguyễn Văn Sanh', 'male', 3, 1, {
+    parents: ['g2-khang-chong', 'g2-ba-ke'],
+    biography: 'Ông có ba người vợ.',
+  }),
+  seedMember('g3-giang', 'Nguyễn Thị Giàng', 'female', 3, 1, {
+    parents: ['g2-khang-chong', 'g2-ba-ke'],
+  }),
+  seedMember('g3-ut', 'Nguyễn Thị Út', 'female', 3, 1, {
+    parents: ['g2-khang-chong', 'g2-ba-ke'],
+  }),
+
+  seedMember('g4-nghiem', 'Nguyễn Nghiễm', 'male', 4, 1, {
+    parents: ['g3-xum'],
+    biography: 'Thân phụ của anh Xứng, anh Hy và các con khác.',
+  }),
+  seedMember('g4-nhan', 'Nhàn', 'female', 4, 1, {
+    parents: ['g3-xum'],
+    biography: 'Thân mẫu của anh Pháo, anh Đùng và các con khác.',
+  }),
+  seedMember('g4-nha', 'Nhạ', 'female', 4, 1, {
+    parents: ['g3-xum'],
+    biography: 'Thân mẫu của anh Hướng, chị Lan và các con khác.',
+  }),
+  seedMember('g4-han', 'Hàn', 'female', 4, 1, {
+    parents: ['g3-liem'],
+  }),
+  seedMember('g4-khiet', 'Khiết', 'male', 4, 1, {
+    parents: ['g3-liem'],
+  }),
+  seedMember('g4-dam', 'Đạm', 'male', 4, 1, {
+    parents: ['g3-liem'],
+  }),
+  seedMember('g4-lang', 'Lặng', 'male', 4, 1, {
+    parents: ['g3-liem'],
+  }),
+  seedMember('g4-a', 'Ả', 'female', 4, 1, {
+    parents: ['g3-liem'],
+  }),
+  seedMember('g4-nghien', 'Nghiên', 'female', 4, 1, {
+    parents: ['g3-cham'],
+  }),
+  seedMember('g4-huan', 'Nguyễn Huấn', 'male', 4, 1, {
+    parents: ['g3-cham'],
+  }),
+  seedMember('g4-ve', 'Vẻ', 'male', 4, 1, {
+    parents: ['g3-ton'],
+  }),
+  seedMember('g4-kien', 'Kiện', 'male', 4, 1, {
+    parents: ['g3-ton'],
+  }),
+  seedMember('g4-tuong', 'Tương', 'female', 4, 1, {
+    parents: ['g3-ton'],
+  }),
+  seedMember('g4-doi', 'Dợi', 'male', 4, 1, {
+    parents: ['g3-gian'],
+  }),
+  seedMember('g4-du', 'Dụ', 'male', 4, 1, {
+    parents: ['g3-gian'],
+  }),
+  seedMember('g4-thac', 'Thắc', 'female', 4, 1, {
+    parents: ['g3-gian'],
+  }),
+  seedMember('g4-chuc', 'Chức', 'female', 4, 1, {
+    parents: ['g3-gian'],
+  }),
+  seedMember('g4-luc', 'Lực', 'female', 4, 1, {
+    parents: ['g3-gian'],
+  }),
+  seedMember('g4-luyen', 'Luyên', 'female', 4, 1, {
+    parents: ['g3-sanh'],
+  }),
+  seedMember('g4-nguyen', 'Nguyên', 'male', 4, 1, {
+    parents: ['g3-sanh'],
+  }),
+  seedMember('g4-xao', 'Xảo', 'female', 4, 1, {
+    parents: ['g3-sanh'],
+  }),
+  seedMember('g4-luyen-2', 'Luyến', 'female', 4, 1, {
+    parents: ['g3-sanh'],
+  }),
+  seedMember('g4-diec', 'Điếc', 'female', 4, 1, {
+    parents: ['g3-sanh'],
+  }),
+  seedMember('g4-ngoan', 'Ngoan', 'male', 4, 1, {
+    parents: ['g3-sanh'],
+  }),
+  seedMember('g4-som', 'Sớm', 'female', 4, 1, {
+    parents: ['g3-sanh'],
+  }),
+  seedMember('g4-con', 'Cớn', 'male', 4, 1, {
+    parents: ['g3-giang'],
+  }),
+  seedMember('g4-thap', 'Tháp', 'male', 4, 1, {
+    parents: ['g3-ut'],
+    biography: 'Nghề nghiệp: Giáo viên.',
+  }),
+
+  seedMember('g5-xung', 'Xứng', 'male', 5, 1, {
+    parents: ['g4-nghiem'],
+  }),
+  seedMember('g5-hy', 'Hy', 'male', 5, 1, {
+    parents: ['g4-nghiem'],
+  }),
+  seedMember('g5-phao', 'Pháo', 'male', 5, 1, {
+    parents: ['g4-nhan'],
+  }),
+  seedMember('g5-dung', 'Đùng', 'male', 5, 1, {
+    parents: ['g4-nhan'],
+  }),
+  seedMember('g5-huong', 'Hướng', 'male', 5, 1, {
+    parents: ['g4-nha'],
+  }),
+  seedMember('g5-lan', 'Lan', 'female', 5, 1, {
+    parents: ['g4-nha'],
+  }),
+  seedMember('g5-thong', 'Thống', 'male', 5, 1, {
+    parents: ['g4-con'],
+  }),
+];
+
 export const branchName = (branch: number) =>
-  branch ? `Chi ${['', 'trưởng', 'hai', 'ba'][branch] || branch}` : 'Thủy tổ';
+  branch
+    ? `Chi ${['', 'trưởng', 'hai', 'ba', 'tư', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'][branch] || branch}`
+    : 'Thủy tổ';
 export const initials = (name: string) =>
   name
     .split(' ')
@@ -617,7 +553,9 @@ export function eligibleBranches(person: Member, members: Member[]) {
           typeof branch === 'number' && Number.isInteger(branch) && branch > 0,
       ),
   );
-  return parentBranches.size === 1 ? [...parentBranches] : [1, 2, 3];
+  return parentBranches.size === 1
+    ? [...parentBranches]
+    : Array.from({ length: 20 }, (_, index) => index + 1);
 }
 
 export function eligibleBirthYears(person: Member, members: Member[]) {
@@ -651,7 +589,7 @@ export function validateMember(
     person.generation > 50 ||
     !Number.isInteger(person.branch) ||
     person.branch < 0 ||
-    person.branch > 3
+    person.branch > 20
   )
     return 'Vui lòng chọn đời và chi.';
   if (person.nameKnown !== false && !person.name.trim())

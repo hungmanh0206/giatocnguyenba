@@ -48,6 +48,7 @@ export const branchOptions = [
   { value: '1', label: 'Chi trưởng' },
   { value: '2', label: 'Chi hai' },
   { value: '3', label: 'Chi ba' },
+  { value: '4', label: 'Chi tư' },
 ];
 export const generationOptions = [
   { value: 'all', label: 'Tất cả các đời' },

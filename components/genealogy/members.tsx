@@ -64,6 +64,12 @@ export function MembersPage() {
       (a, b) =>
         a.generation - b.generation || memberSortYear(a) - memberSortYear(b),
     );
+  const generationCount = members.length
+    ? Math.max(...members.map((member) => member.generation))
+    : 0;
+  const branchCount = new Set(
+    members.filter((member) => member.branch > 0).map((member) => member.branch),
+  ).size;
   const total = Math.ceil(filtered.length / 12);
   const pageMembers = filtered.slice((page - 1) * 12, page * 12);
   return (
@@ -73,7 +79,7 @@ export function MembersPage() {
           <div>
             <div className="eyebrow">NHỮNG NGƯỜI CHUNG CỘI NGUỒN</div>
             <h1>Thành viên dòng họ</h1>
-            <p>{members.length} thành viên · 5 thế hệ · 3 chi</p>
+            <p>{members.length} thành viên · {generationCount} thế hệ · {branchCount} chi</p>
           </div>
           <Button
             className="action-button"

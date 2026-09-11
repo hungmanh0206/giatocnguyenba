@@ -127,6 +127,15 @@ export function layoutFamily(
     (person) => lineageType(person) === 'maternal-terminal',
   )) {
     const directChildren = childrenByParent.get(daughter.id) || [];
+    // A maternal branch stays expandable when the recorded data continues
+    // beyond its direct children; otherwise it remains a compact terminal branch.
+    if (
+      directChildren.some(
+        (child) => (childrenByParent.get(child.id) || []).length > 0,
+      )
+    ) {
+      continue;
+    }
     for (const child of directChildren) {
       maternalChildIds.add(child.id);
       const descendants = [...(childrenByParent.get(child.id) || [])];
@@ -157,6 +166,22 @@ export function layoutFamily(
       .map((id) => lookup.get(id))
       .filter((person): person is Member => !!person)
       .filter((person) => !groupOf.has(person.id));
+    // Keep each recorded spouse in the same household, including a co-spouse
+    // connected through the direct partner. This preserves multi-wife families.
+    for (const spouse of [...spouses]) {
+      for (const coSpouseId of spouse.spouses) {
+        const coSpouse = lookup.get(coSpouseId);
+        if (
+          !coSpouse ||
+          coSpouse.id === clanMember.id ||
+          groupOf.has(coSpouse.id) ||
+          spouses.some((person) => person.id === coSpouse.id)
+        ) {
+          continue;
+        }
+        spouses.push(coSpouse);
+      }
+    }
     const root =
       clanMember.generation === minimumGeneration &&
       clanMember.parents.length === 0;

@@ -213,7 +213,7 @@ export function HomePage() {
       },
       {
         image: '/app-icons/home-branches.png',
-        value: branches || 3,
+        value: branches || 4,
         label: 'Chi họ',
       },
       { icon: 'history', value: founderYear, label: 'Khởi nguồn' },
@@ -469,9 +469,6 @@ export function HomePage() {
             <HeritageIcon name="history" size={30} />
             <span>GIA PHẢ</span>
             <strong>Nguyễn Bá</strong>
-            <small>
-              <HeritageIcon name="location" size={13} /> Thôn Quảng Trường, Quảng Chính, Thanh Hóa
-            </small>
           </div>
         </div>
       </section>

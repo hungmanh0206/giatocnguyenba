@@ -459,7 +459,7 @@ function TreeCanvas() {
               <i className="tree-legend-line" /> Thành viên dòng họ ở trên
             </span>
             <span>
-              <i className="tree-legend-line is-dashed" /> Nhánh ngoại dừng ở con trực tiếp
+              <i className="tree-legend-line is-dashed" /> Nhánh ngoại được nối tiếp khi có hậu duệ
             </span>
           </div>
         </div>

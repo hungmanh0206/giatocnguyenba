@@ -7826,6 +7826,11 @@ main#main .timeline-entry p {
   left: 25%;
 }
 
+.home-family-branches[data-branch-count='4']::before {
+  right: 12.5%;
+  left: 12.5%;
+}
+
 .home-family-branch {
   position: relative;
   color: inherit;
@@ -7946,7 +7951,7 @@ main#main .timeline-entry p {
   }
 
   .home-family-branches {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
     padding-top: 18px;
   }
@@ -7970,6 +7975,11 @@ main#main .timeline-entry p {
   .home-family-branches[data-branch-count='2']::before {
     right: 25%;
     left: 25%;
+  }
+
+  .home-family-branches[data-branch-count='4']::before {
+    right: 12.5%;
+    left: 12.5%;
   }
 
   .home-family-branch::before {
