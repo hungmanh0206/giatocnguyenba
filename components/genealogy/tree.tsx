@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   BaseEdge,
   Background,
@@ -213,6 +213,7 @@ export function TreePage() {
 function TreeCanvas() {
   const { members } = useFamily();
   const params = useSearchParams();
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [branch, setBranch] = useState('all');
   const [generation, setGeneration] = useState('all');
@@ -266,14 +267,25 @@ function TreeCanvas() {
     [flow, model],
   );
 
+  const selectPerson = useCallback(
+    (person: Member) => {
+      if (window.matchMedia('(max-width: 767px)').matches) {
+        router.push(`/members/${person.id}`);
+        return;
+      }
+      focusPerson(person);
+    },
+    [focusPerson, router],
+  );
+
   useEffect(() => {
     if (!ready) return;
     const id = params.get('person');
     const person = members.find((member) => member.id === id);
     if (!person || !model.visibleMemberIds.has(person.id)) return;
-    const frame = requestAnimationFrame(() => focusPerson(person));
+    const frame = requestAnimationFrame(() => selectPerson(person));
     return () => cancelAnimationFrame(frame);
-  }, [focusPerson, members, model.visibleMemberIds, params, ready]);
+  }, [members, model.visibleMemberIds, params, ready, selectPerson]);
 
   useEffect(() => {
     if (!ready || initialTreeLayout.current) return;
@@ -321,7 +333,7 @@ function TreeCanvas() {
         .map((person) => person.id),
       collapsed: collapsed.has(group.id),
       hasChildren: model.links.some((link) => link.source === group.id),
-      select: focusPerson,
+      select: selectPerson,
       collapse: (id) =>
         setCollapsed((current) => {
           const next = new Set(current);
@@ -412,7 +424,7 @@ function TreeCanvas() {
                 found.map((person) => (
                   <button
                     className="relative-button"
-                    onClick={() => focusPerson(person)}
+                    onClick={() => selectPerson(person)}
                     key={person.id}
                   >
                     <Avatar person={person} />
@@ -581,7 +593,7 @@ function TreeCanvas() {
       <QuickView
         person={selected}
         onClose={() => setSelected(null)}
-        onSelect={focusPerson}
+        onSelect={selectPerson}
       />
     </main>
   );
