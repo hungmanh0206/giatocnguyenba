@@ -147,18 +147,21 @@ export function LunarPage() {
               }}
             />
             {info.supported && (
-              <div className="calendar-footnote">
-                <span>
-                  Ngày dương <b>{selected.getDate()}</b>
+              <div className="calendar-footnote" aria-label="Thông tin ngày đã chọn">
+                <span className="calendar-footnote-item">
+                  <small>Ngày dương</small>
+                  <strong>{selected.getDate()}</strong>
                 </span>
-                <span>
-                  Ngày âm{' '}
-                  <small>
+                <span className="calendar-footnote-item">
+                  <small>Ngày âm</small>
+                  <strong>
                     {info.lunar.day}/{info.lunar.month}
                     {info.lunar.leapMonth ? ' nhuận' : ''}
-                  </small>
+                  </strong>
                 </span>
-                <span>n: tháng nhuận</span>
+                <span className="calendar-footnote-key">
+                  <b>n</b> tháng nhuận
+                </span>
               </div>
             )}
           </section>
