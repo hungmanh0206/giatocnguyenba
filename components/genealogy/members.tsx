@@ -449,7 +449,9 @@ export function QuickView({
 }) {
   const { members } = useFamily();
   const mobile = useIsMobile();
-  const profile = person && (
+  if (!person) return null;
+
+  const profile = (
     <div className="quick-profile">
       <div className="quick-top">
         <Avatar person={person} large />
@@ -467,7 +469,7 @@ export function QuickView({
       </section>
     </div>
   );
-  const actions = person && (
+  const actions = (
     <div className="quick-actions">
       <Button
         className="action-button w-full"
@@ -482,7 +484,7 @@ export function QuickView({
   );
   return mobile ? (
     <Drawer
-      open={!!person}
+      open
       onOpenChange={(o) => !o && onClose()}
       snapPoints={[0.5, 0.9]}
       defaultSnapPoint={0.5}
@@ -513,8 +515,17 @@ export function QuickView({
       </DrawerContent>
     </Drawer>
   ) : (
-    <Sheet open={!!person} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="quick-sheet">
+    <Sheet open onOpenChange={(o) => !o && onClose()}>
+      <SheetContent className="quick-sheet" showCloseButton={false}>
+        <Button
+          variant="ghost"
+          className="absolute top-3 right-3"
+          size="icon-sm"
+          onClick={onClose}
+          aria-label="Đóng hồ sơ"
+        >
+          <HeritageIcon name="close" size={18} />
+        </Button>
         <SheetHeader>
           <p className="sheet-kicker">Hồ sơ thành viên</p>
           <SheetTitle>{person ? memberName(person) : ''}</SheetTitle>
