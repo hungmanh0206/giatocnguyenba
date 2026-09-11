@@ -14,6 +14,7 @@ import {
   memberDeletionError,
   memberBranchName,
   memberDeathLabel,
+  memberLifeStatus,
   memberName,
   memberYearRange,
 } from '../lib/family.ts';
@@ -80,8 +81,11 @@ test('seed stores the supplied five-generation genealogy', () => {
   assert.equal(memberName(founderSpouse), 'Bà Tổ: Chưa biết tên');
   assert.equal(memberName(member('g2-khang')), 'Bà: Nguyễn Thị Khang');
   assert.equal(memberName(member('g2-an')), 'Ông: Nguyễn Bá Ân');
-  assert.equal(memberBranchName(member('g2-khang')), 'Nhánh ngoại');
-  assert.equal(memberBranchName(member('g2-an')), 'Chi ba');
+  assert.equal(memberBranchName(member('g2-khang'), seedMembers), 'Nhánh ngoại');
+  assert.equal(memberBranchName(member('g2-an'), seedMembers), 'Chi trưởng');
+  assert.equal(memberBranchName(member('g2-tang'), seedMembers), 'Chi hai');
+  assert.equal(memberBranchName(member('g3-xum'), seedMembers), 'Nhánh ngoại');
+  assert.equal(memberBranchName(member('g4-con'), seedMembers), 'Nhánh ngoại');
   assert.equal(founderSpouse.styleName, 'Tư Hòa');
   assert.deepEqual(founderSpouse.anniversary, { day: 17, month: 4 });
 
@@ -89,7 +93,7 @@ test('seed stores the supplied five-generation genealogy', () => {
     relatives(seedMembers, founder).children.map((person) => person.id),
     ['g2-khang', 'g2-bang', 'g2-an', 'g2-tang'],
   );
-  assert.equal(member('g2-tang').branch, 4);
+  assert.equal(member('g2-tang').branch, 2);
   assert.deepEqual(
     relatives(seedMembers, member('g2-khang')).children.map((person) => person.id),
     ['g3-xum', 'g3-liem', 'g3-cham', 'g3-ton', 'g3-gian'],
@@ -104,6 +108,10 @@ test('seed stores the supplied five-generation genealogy', () => {
   assert.equal(memberName(member('g3-xum-vo')), 'Bà: Chưa biết tên');
   assert.deepEqual(member('g2-bang').spouses, []);
   assert.deepEqual(member('g5-xung').spouses, []);
+  assert.ok(
+    seedMembers.every((person) => memberLifeStatus(person) === 'deceased'),
+    'all supplied historical records are marked as deceased',
+  );
 });
 
 test('Vietnamese search includes supplied names and honorific data', () => {
@@ -384,6 +392,26 @@ test('tree preserves the full Bà Khang branch and compact empty maternal branch
       (link) => link.source === 'family-g2-khang' && link.target === 'family-g3-xum',
     ),
     true,
+  );
+});
+
+test('tree distinguishes wives and children in recorded multi-wife households', () => {
+  const model = assertRenderableTree(seedMembers);
+  const khangHousehold = model.groups.find((group) => group.id === 'family-g2-khang');
+
+  assert.equal(khangHousehold?.wifeRoles['g2-khang'], 'Bà cả');
+  assert.equal(khangHousehold?.wifeRoles['g2-ba-ke'], 'Bà hai');
+  assert.equal(
+    model.groups.find((group) => group.id === 'family-g3-xum')?.parentageLabel,
+    'Con của Bà cả',
+  );
+  assert.equal(
+    model.groups.find((group) => group.id === 'family-g3-sanh')?.parentageLabel,
+    'Con của Bà hai',
+  );
+  assert.equal(
+    model.groups.find((group) => group.id === 'family-g4-nguyen')?.parentageLabel,
+    'Chưa ghi nhận mẹ',
   );
 });
 

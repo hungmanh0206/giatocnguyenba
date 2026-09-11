@@ -112,7 +112,9 @@ function seedMember(
     born: details.born,
     died: details.died,
     diedText: details.diedText,
-    lifeStatus: details.lifeStatus ?? 'unknown',
+    // All supplied genealogy records are historical. Missing dates remain unknown,
+    // but their status is still recorded as deceased.
+    lifeStatus: details.lifeStatus ?? 'deceased',
     parents: details.parents ?? [],
     spouses: details.spouses ?? [],
     anniversary: details.anniversary,
@@ -155,14 +157,14 @@ export const seedMembers: Member[] = [
     biography:
       'Tên gọi khác: Hàn Song. Chưa rõ ngày húy kỵ, chồng, con và hậu duệ; nhánh này sẽ được bổ sung khi có thêm tư liệu.',
   }),
-  seedMember('g2-an', 'Nguyễn Bá Ân', 'male', 2, 3, {
+  seedMember('g2-an', 'Nguyễn Bá Ân', 'male', 2, 1, {
     parents: ['p1', 'p2'],
     lifeStatus: 'deceased',
     anniversary: { day: 13, month: 2 },
     biography:
       'Ngày húy kỵ: 13 tháng 2 âm lịch. Chưa có tư liệu đầy đủ về vợ, con và hậu duệ.',
   }),
-  seedMember('g2-tang', 'Nguyễn Bá Tăng', 'male', 2, 4, {
+  seedMember('g2-tang', 'Nguyễn Bá Tăng', 'male', 2, 2, {
     parents: ['p1', 'p2'],
     lifeStatus: 'deceased',
     anniversary: { day: 3, month: 2 },
@@ -408,13 +410,33 @@ export const branchName = (branch: number) =>
     ? `Chi ${['', 'trưởng', 'hai', 'ba', 'tư', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'][branch] || branch}`
     : 'Thủy tổ';
 
+function paternalBranch(
+  person: Member,
+  lookup: Map<string, Member>,
+): number | undefined {
+  const father = person.parents
+    .map((id) => lookup.get(id))
+    .find((parent): parent is Member => !!parent && parent.gender === 'male');
+
+  if (!father) return person.parents.length ? undefined : person.branch || undefined;
+  if (!father.isClanMember) return undefined;
+  if (father.generation === 1 && father.parents.length === 0) {
+    return person.branch || undefined;
+  }
+  return paternalBranch(father, lookup);
+}
+
 export function memberBranchName(
   person: Pick<Member, 'branch' | 'gender' | 'generation' | 'isClanMember'>,
+  members?: Member[],
 ) {
   if (person.generation === 1) return 'Thủy tổ';
-  return person.gender === 'male' && person.isClanMember
-    ? branchName(person.branch)
-    : 'Nhánh ngoại';
+  if (person.gender !== 'male' || !person.isClanMember) return 'Nhánh ngoại';
+
+  const branch = members
+    ? paternalBranch(person as Member, new Map(members.map((member) => [member.id, member])))
+    : person.branch;
+  return branch ? branchName(branch) : 'Nhánh ngoại';
 }
 export const initials = (name: string) =>
   name

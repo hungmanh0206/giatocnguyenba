@@ -40,6 +40,7 @@ type FamilyUnitData = {
   group: Household;
   selected: string | null;
   dimmed: string[];
+  members: Member[];
   collapsed: boolean;
   hasChildren: boolean;
   select: (person: Member) => void;
@@ -101,6 +102,11 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
   const { group } = data;
   const terminal = group.kind === 'terminal';
   const root = group.root;
+  const memberRole = group.wifeRoles[group.clanMember.id]
+    ? `${group.wifeRoles[group.clanMember.id]} · ${terminal ? 'Con trực tiếp' : 'Thành viên dòng họ'}`
+    : terminal
+      ? 'Con trực tiếp'
+      : 'Thành viên dòng họ';
 
   return (
     <article
@@ -120,12 +126,15 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
           !root &&
           group.clanMember.gender === 'male' &&
           group.clanMember.isClanMember && (
-          <small className="family-branch-label">{memberBranchName(group.clanMember)}</small>
+          <small className="family-branch-label">{memberBranchName(group.clanMember, data.members)}</small>
         )}
       </div>
+      {group.parentageLabel && (
+        <span className="family-parentage-label">{group.parentageLabel}</span>
+      )}
       <PersonArea
         person={group.clanMember}
-        role={terminal ? 'Con trực tiếp' : 'Thành viên dòng họ'}
+        role={memberRole}
         selected={data.selected === group.clanMember.id}
         dimmed={data.dimmed.includes(group.clanMember.id)}
         onSelect={data.select}
@@ -137,7 +146,10 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
               {index === 0 && <span className="family-unit-divider" />}
               <PersonArea
                 person={spouse}
-                role={spouse.gender === 'female' ? 'Vợ · phối ngẫu' : 'Chồng · phối ngẫu'}
+                role={
+                  group.wifeRoles[spouse.id] ||
+                  (spouse.gender === 'female' ? 'Vợ · phối ngẫu' : 'Chồng · phối ngẫu')
+                }
                 selected={data.selected === spouse.id}
                 dimmed={data.dimmed.includes(spouse.id)}
                 onSelect={data.select}
@@ -324,6 +336,7 @@ function TreeCanvas() {
     data: {
       group,
       selected: selected?.id || null,
+      members,
       dimmed: group.people
         .filter(
           (person) =>
@@ -431,7 +444,7 @@ function TreeCanvas() {
                     <span>
                       <strong>{memberName(person)}</strong>
                       <small>
-                        Đời {person.generation} · {memberBranchName(person)}
+                        Đời {person.generation} · {memberBranchName(person, members)}
                       </small>
                     </span>
                   </button>

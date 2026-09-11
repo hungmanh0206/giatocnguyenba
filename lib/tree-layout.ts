@@ -19,6 +19,8 @@ export type Household = {
   clanMember: Member;
   spouses: Member[];
   people: Member[];
+  wifeRoles: Record<string, string>;
+  parentageLabel?: string;
   generation: number;
   lineageType: 'direct' | 'maternal-terminal';
   kind: 'family' | 'terminal';
@@ -100,9 +102,53 @@ function compareGroups(
   );
 }
 
-function familyHeight(spouseCount: number, root: boolean) {
-  if (root) return ROOT_FAMILY_HEIGHT + Math.max(0, spouseCount - 1) * 52;
-  return FAMILY_UNIT_HEIGHT + Math.max(0, spouseCount - 1) * 52;
+function wifeOrdinal(index: number) {
+  const names = ['cả', 'hai', 'ba', 'tư', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'];
+  return `Bà ${names[index] || `thứ ${index + 1}`}`;
+}
+
+function wivesOf(husband: Member, lookup: Map<string, Member>) {
+  return husband.spouses
+    .map((id) => lookup.get(id))
+    .filter((person): person is Member => !!person && person.gender === 'female');
+}
+
+function wifeRolesFor(people: Member[], lookup: Map<string, Member>) {
+  const wifeRoles: Record<string, string> = {};
+
+  for (const husband of people.filter((person) => person.gender === 'male')) {
+    const wives = wivesOf(husband, lookup);
+    if (wives.length < 2) continue;
+    wives.forEach((wife, index) => {
+      wifeRoles[wife.id] = wifeOrdinal(index);
+    });
+  }
+
+  return wifeRoles;
+}
+
+function parentageLabelFor(person: Member, lookup: Map<string, Member>) {
+  const parents = person.parents
+    .map((id) => lookup.get(id))
+    .filter((parent): parent is Member => !!parent);
+  const father = parents.find((parent) => parent.gender === 'male');
+  if (!father) return undefined;
+
+  const wives = wivesOf(father, lookup);
+  if (wives.length < 2) return undefined;
+
+  const mother = parents.find((parent) => parent.gender === 'female');
+  const wifeIndex = mother ? wives.findIndex((wife) => wife.id === mother.id) : -1;
+  return wifeIndex >= 0 ? `Con của ${wifeOrdinal(wifeIndex)}` : 'Chưa ghi nhận mẹ';
+}
+
+function familyHeight(
+  spouseCount: number,
+  root: boolean,
+  hasParentageLabel = false,
+) {
+  const base = root ? ROOT_FAMILY_HEIGHT : FAMILY_UNIT_HEIGHT;
+  return base + Math.max(0, spouseCount - 1) * 52 + (hasParentageLabel ? 18 : 0);
 }
 
 export function layoutFamily(
@@ -186,17 +232,21 @@ export function layoutFamily(
       clanMember.generation === minimumGeneration &&
       clanMember.parents.length === 0;
     const id = `family-${clanMember.id}`;
+    const people = [clanMember, ...spouses];
+    const parentageLabel = parentageLabelFor(clanMember, lookup);
     const group: Household = {
       id,
       clanMember,
       spouses,
-      people: [clanMember, ...spouses],
+      people,
+      wifeRoles: wifeRolesFor(people, lookup),
+      parentageLabel,
       generation: clanMember.generation,
       lineageType: lineageType(clanMember),
       kind: 'family',
       root,
       width: root ? ROOT_FAMILY_WIDTH : FAMILY_UNIT_WIDTH,
-      height: familyHeight(spouses.length, root),
+      height: familyHeight(spouses.length, root, !!parentageLabel),
       x: 0,
       y: 0,
     };
@@ -217,17 +267,20 @@ export function layoutFamily(
     for (const child of childrenOf(family)) {
       if (groupOf.has(child.id)) continue;
       const id = `terminal-${child.id}`;
+      const parentageLabel = parentageLabelFor(child, lookup);
       groups.push({
         id,
         clanMember: child,
         spouses: [],
         people: [child],
+        wifeRoles: {},
+        parentageLabel,
         generation: child.generation,
         lineageType: 'maternal-terminal',
         kind: 'terminal',
         root: false,
         width: TERMINAL_NODE_WIDTH,
-        height: TERMINAL_NODE_HEIGHT,
+        height: TERMINAL_NODE_HEIGHT + (parentageLabel ? 18 : 0),
         x: 0,
         y: 0,
       });

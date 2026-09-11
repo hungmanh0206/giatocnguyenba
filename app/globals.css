@@ -7312,6 +7312,8 @@ main#main .timeline-entry p {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  margin-block: -2px;
+  padding-block: 2px;
   padding-right: 0;
   color: #8d7559;
   font-size: 9px;
@@ -7325,6 +7327,15 @@ main#main .timeline-entry p {
   font-size: 10px;
   font-weight: 650;
   letter-spacing: 0;
+}
+
+.family-parentage-label {
+  display: block;
+  margin: 1px 4px 0;
+  color: #a36e3e;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .family-branch-label::before {
@@ -7394,10 +7405,13 @@ main#main .timeline-entry p {
 
 .family-member-copy > strong {
   overflow: hidden;
+  box-sizing: content-box;
+  margin-block: -2px;
+  padding-block: 2px;
   color: #332820;
   font-size: 14px;
   font-weight: 750;
-  line-height: 1.28;
+  line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -7563,7 +7577,7 @@ main#main .timeline-entry p {
 }
 
 .root-family-unit .family-spouse-entry:first-child {
-  margin-top: 18px;
+  margin-top: 10px;
 }
 
 .tree-fullscreen-icon,
@@ -7624,15 +7638,14 @@ main#main .timeline-entry p {
 }
 
 .member-derived-branch {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
+  display: block;
 }
 
 .member-derived-branch output {
   display: flex;
   min-height: 46px;
   align-items: center;
+  margin-top: 6px;
   border: 1px solid #e1d4c1;
   border-radius: 10px;
   padding: 0 13px;

@@ -198,7 +198,7 @@ export function LunarPage() {
                             <strong>{memberName(event.person)}</strong>
                             <small>
                               Đời {event.person.generation} ·{' '}
-                              {memberBranchName(event.person)}
+                              {memberBranchName(event.person, members)}
                             </small>
                             <small className="day-event-lunar">
                               {info.lunar.day} tháng {info.lunar.month} ÂL

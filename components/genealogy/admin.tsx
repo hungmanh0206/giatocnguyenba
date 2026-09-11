@@ -321,7 +321,7 @@ export function AdminPage() {
                     </div>
                   </td>
                   <td>
-                    Đời {p.generation} · {memberBranchName(p)}
+                    Đời {p.generation} · {memberBranchName(p, members)}
                   </td>
                   <td>{memberBirthLabel(p)}</td>
                   <td>

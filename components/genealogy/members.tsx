@@ -175,13 +175,13 @@ export function MembersPage() {
                     <span>
                       <strong>{memberName(p)}</strong>
                       <small>
-                        Đời thứ {p.generation} · {memberBranchName(p)} ·{' '}
+                        Đời thứ {p.generation} · {memberBranchName(p, members)} ·{' '}
                         {memberYearRange(p)}
                       </small>
                     </span>
                   </span>
                   <span className="member-list-generation">Đời thứ {p.generation}</span>
-                  <span className="member-list-branch">{memberBranchName(p)}</span>
+                  <span className="member-list-branch">{memberBranchName(p, members)}</span>
                   <span className="member-list-born">{memberBirthLabel(p)}</span>
                   <span className="member-list-open">
                     <span>Xem hồ sơ</span>
@@ -200,7 +200,7 @@ export function MembersPage() {
                 >
                   <div className="person-card-top">
                     <Avatar person={p} />
-                    <span className="branch-badge">{memberBranchName(p)}</span>
+                    <span className="branch-badge">{memberBranchName(p, members)}</span>
                   </div>
                   <h3>{memberName(p)}</h3>
                   <p>{memberYearRange(p)}</p>
@@ -287,7 +287,7 @@ export function FamilyRelations({
                   <HeritageIcon name="next" size={16} />
                 </button>
               ) : (
-                <MemberTile person={p} key={p.id} />
+                <MemberTile person={p} members={members} key={p.id} />
               ),
             )
           ) : (
@@ -298,7 +298,7 @@ export function FamilyRelations({
     </div>
   );
 }
-function Facts({ person }: { person: Member }) {
+function Facts({ person, members }: { person: Member; members: Member[] }) {
   return (
     <dl className="person-facts">
       <div>
@@ -314,7 +314,7 @@ function Facts({ person }: { person: Member }) {
       <div>
         <dt>Đời / nhánh</dt>
         <dd>
-          Đời {person.generation} · {memberBranchName(person)}
+          Đời {person.generation} · {memberBranchName(person, members)}
         </dd>
       </div>
       <div className="fact-hometown">
@@ -387,7 +387,7 @@ export function MemberDetail({ id }: { id: string }) {
             <div className="profile-summary">
               <div className="eyebrow">
                 ĐỜI THỨ {p.generation} ·{' '}
-                {memberBranchName(p).toLocaleUpperCase('vi')}
+                {memberBranchName(p, members).toLocaleUpperCase('vi')}
               </div>
               <h1>{memberName(p)}</h1>
               <p>
@@ -411,7 +411,7 @@ export function MemberDetail({ id }: { id: string }) {
         <div className="profile-layout">
           <aside className="profile-info-panel">
             <h3>Thông tin gia phả</h3>
-            <Facts person={p} />
+            <Facts person={p} members={members} />
             <div className="sample-note">Hồ sơ minh họa · Dữ liệu mẫu</div>
             {p.anniversary && (
               <Link
@@ -462,6 +462,7 @@ export function QuickView({
   onClose: () => void;
   onSelect: (p: Member) => void;
 }) {
+  const { members } = useFamily();
   const mobile = useIsMobile();
   const profile = person && (
     <div className="quick-profile">
@@ -473,7 +474,7 @@ export function QuickView({
       </div>
       <section className="quick-info-section" aria-label="Thông tin gia phả">
         <p className="quick-section-label">Thông tin gia phả</p>
-        <Facts person={person} />
+        <Facts person={person} members={members} />
       </section>
       <section className="quick-relations-section" aria-label="Quan hệ gia đình">
         <p className="quick-section-label">Quan hệ gia đình</p>
@@ -507,7 +508,7 @@ export function QuickView({
           <p className="sheet-kicker">Hồ sơ thành viên</p>
           <DrawerTitle>{person ? memberName(person) : ''}</DrawerTitle>
           <DrawerDescription>
-            Đời {person?.generation} · {person ? memberBranchName(person) : ''}
+            Đời {person?.generation} · {person ? memberBranchName(person, members) : ''}
           </DrawerDescription>
         </DrawerHeader>
         <div className="quick-scroll">
@@ -533,7 +534,7 @@ export function QuickView({
           <p className="sheet-kicker">Hồ sơ thành viên</p>
           <SheetTitle>{person ? memberName(person) : ''}</SheetTitle>
           <SheetDescription>
-            Đời {person?.generation} · {person ? memberBranchName(person) : ''}
+            Đời {person?.generation} · {person ? memberBranchName(person, members) : ''}
           </SheetDescription>
         </SheetHeader>
         <div className="quick-scroll">

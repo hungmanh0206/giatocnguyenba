@@ -50,14 +50,20 @@ export function Avatar({
     </span>
   );
 }
-export function MemberTile({ person }: { person: Member }) {
+export function MemberTile({
+  person,
+  members,
+}: {
+  person: Member;
+  members?: Member[];
+}) {
   return (
     <Link href={`/members/${person.id}`} className="member-tile">
       <Avatar person={person} />
       <span>
         <strong>{memberName(person)}</strong>
         <small>
-          Đời {person.generation} · {memberBranchName(person)}
+          Đời {person.generation} · {memberBranchName(person, members)}
         </small>
       </span>
       <HeritageIcon name="next" size={17} />
@@ -264,7 +270,7 @@ export function HomePage() {
             {query.trim() && (
               <div className="search-results">
                 {found.length ? (
-                  found.map((p) => <MemberTile person={p} key={p.id} />)
+                  found.map((p) => <MemberTile person={p} members={members} key={p.id} />)
                 ) : (
                   <p>Không tìm thấy thành viên phù hợp.</p>
                 )}
@@ -374,7 +380,7 @@ export function HomePage() {
                         <article className="home-family-card">
                           <div className="home-family-heading">
                             <span>
-                              {memberBranchName(group.clanMember)}
+                              {memberBranchName(group.clanMember, members)}
                             </span>
                             <em>Đời thứ {group.generation}</em>
                           </div>
@@ -420,7 +426,7 @@ export function HomePage() {
                 <span className="anniversary-person">
                   <strong>{memberName(p)}</strong>
                   <small>
-                    Đời {p.generation} · {memberBranchName(p)}
+                    Đời {p.generation} · {memberBranchName(p, members)}
                   </small>
                 </span>
                 <span className="anniversary-footer">
