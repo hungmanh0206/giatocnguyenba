@@ -1091,7 +1091,7 @@ h1 > span {
     padding-right: 20px;
   }
   .header-inner {
-    padding: 0 16px;
+    padding: 0 20px;
   }
   .site-header {
     height: 70px;
@@ -1113,7 +1113,7 @@ h1 > span {
     gap: 4px;
   }
   .mobile-menu {
-    margin-right: 14px;
+    margin-right: 52px;
   }
   .header-actions .admin-link {
     display: none;
