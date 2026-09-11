@@ -386,6 +386,7 @@ function TreeCanvas() {
     const id = params.get('person');
     if (!id) {
       dismissedPersonId.current = null;
+      setSelected(null);
       return;
     }
     if (dismissedPersonId.current === id) return;

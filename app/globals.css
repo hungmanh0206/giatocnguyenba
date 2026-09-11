@@ -4022,6 +4022,28 @@ button:disabled,
   color: #7e2424;
 }
 
+.quick-sheet-close {
+  position: absolute;
+  top: 23px;
+  right: 20px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: var(--radius-md);
+  color: #62594d;
+}
+
+.quick-sheet-close:hover {
+  background: #f1ede5;
+  color: #7e2424;
+}
+
+.quick-sheet-close:focus-visible {
+  outline: 2px solid #8f2828;
+  outline-offset: 2px;
+}
+
 .member-form {
   background: #fffefa;
 }

@@ -517,15 +517,15 @@ export function QuickView({
   ) : (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="quick-sheet" showCloseButton={false}>
-        <Button
-          variant="ghost"
-          className="absolute top-3 right-3"
-          size="icon-sm"
-          onClick={onClose}
+        <Link
+          href="/family-tree"
+          replace
+          scroll={false}
+          className="quick-sheet-close"
           aria-label="Đóng hồ sơ"
         >
           <HeritageIcon name="close" size={18} />
-        </Button>
+        </Link>
         <SheetHeader>
           <p className="sheet-kicker">Hồ sơ thành viên</p>
           <SheetTitle>{person ? memberName(person) : ''}</SheetTitle>
