@@ -17,7 +17,7 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Info, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   branchName,
@@ -528,73 +528,80 @@ function TreeCanvas() {
       className={`tree-page ${full ? 'is-fullscreen' : ''}`}
       ref={container}
     >
-      <div className="tree-toolbar">
-        <div className="tree-title">
-          <HeritageIcon name="tree" size={22} />
-          <div>
-            <h1>Cây gia phả</h1>
-            <small>Họ Nguyễn Bá · {treeMembers.length} người được ghi nhận</small>
+      <div className="tree-toolbar-band">
+        <div className="tree-toolbar">
+          <div className="tree-title">
+            <HeritageIcon name="tree" size={22} />
+            <div>
+              <h1>Cây gia phả</h1>
+              <small>Họ Nguyễn Bá · {treeMembers.length} người được ghi nhận</small>
+            </div>
           </div>
-        </div>
-        <div className="tree-search">
-          <SearchBox
-            query={query}
-            setQuery={setQuery}
-            placeholder="Tìm trong gia phả…"
-          />
-          {query && (
-            <div className="search-results">
-              {found.length ? (
-                found.map((person) => (
-                  <button
-                    className="relative-button"
-                    onClick={() => selectPerson(person)}
-                    key={person.id}
-                  >
-                    <Avatar person={person} />
-                    <span>
-                      <strong>{memberName(person)}</strong>
-                      <small>
-                        Đời {person.generation} · {memberBranchName(person, members)}
-                      </small>
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <p>Không tìm thấy thành viên.</p>
+          <div className="tree-toolbar-actions">
+            <div className="tree-search">
+              <SearchBox
+                query={query}
+                setQuery={setQuery}
+                placeholder="Tìm trong gia phả…"
+              />
+              {query && (
+                <div className="search-results">
+                  {found.length ? (
+                    found.map((person) => (
+                      <button
+                        className="relative-button"
+                        onClick={() => selectPerson(person)}
+                        key={person.id}
+                      >
+                        <Avatar person={person} />
+                        <span>
+                          <strong>{memberName(person)}</strong>
+                          <small>
+                            Đời {person.generation} · {memberBranchName(person, members)}
+                          </small>
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <p>Không tìm thấy thành viên.</p>
+                  )}
+                </div>
               )}
             </div>
-          )}
+            <Choice
+              label="Lọc chi"
+              value={branch}
+              onChange={setBranch}
+              options={branchOptions}
+            />
+            <Choice
+              label="Lọc đời"
+              value={generation}
+              onChange={setGeneration}
+              options={generationOptions.filter(
+                (option) =>
+                  option.value === 'all' || Number(option.value) <= maxGeneration,
+              )}
+            />
+            <Button
+              className="icon-button"
+              variant="ghost"
+              title="Đặt lại chế độ xem"
+              aria-label="Đặt lại chế độ xem"
+              onClick={reset}
+            >
+              <HeritageIcon name="reset" size={19} />
+            </Button>
+          </div>
         </div>
-        <Choice
-          label="Lọc chi"
-          value={branch}
-          onChange={setBranch}
-          options={branchOptions}
-        />
-        <Choice
-          label="Lọc đời"
-          value={generation}
-          onChange={setGeneration}
-          options={generationOptions.filter(
-            (option) =>
-              option.value === 'all' || Number(option.value) <= maxGeneration,
-          )}
-        />
-        <Button
-          className="icon-button"
-          variant="ghost"
-          title="Đặt lại chế độ xem"
-          aria-label="Đặt lại chế độ xem"
-          onClick={reset}
-        >
-          <HeritageIcon name="reset" size={19} />
-        </Button>
       </div>
       <div className="tree-canvas">
-        <div className="tree-legend" aria-label="Cách đọc cây gia phả">
-          <strong>Cách đọc cây</strong>
-          <div>
+        <details className="tree-legend">
+          <summary aria-label="Mở hướng dẫn đọc cây gia phả" title="Cách đọc cây">
+            <Info size={16} strokeWidth={2} aria-hidden="true" />
+            <span>Cách đọc cây</span>
+          </summary>
+          <div className="tree-legend-panel">
             <span>
               <i className="tree-legend-line" /> Thành viên dòng họ ở trên
             </span>
@@ -602,7 +609,7 @@ function TreeCanvas() {
               <i className="tree-legend-line is-dashed" /> Nhánh ngoại được nối tiếp khi có hậu duệ
             </span>
           </div>
-        </div>
+        </details>
         <ReactFlow
           nodes={[...familyNodes, ...generationNodes]}
           edges={edges}
@@ -654,29 +661,6 @@ function TreeCanvas() {
           <Button
             variant="ghost"
             className="icon-button"
-            onClick={collapseAll}
-            disabled={
-              !collapsibleGroupIds.size ||
-              collapsed.size === collapsibleGroupIds.size
-            }
-            title="Thu gọn toàn bộ hậu duệ"
-            aria-label="Thu gọn toàn bộ hậu duệ"
-          >
-            <ChevronUp size={19} />
-          </Button>
-          <Button
-            variant="ghost"
-            className="icon-button"
-            onClick={() => setCollapsed(new Set())}
-            disabled={!collapsed.size}
-            title="Mở toàn bộ hậu duệ"
-            aria-label="Mở toàn bộ hậu duệ"
-          >
-            <ChevronDown size={19} />
-          </Button>
-          <Button
-            variant="ghost"
-            className="icon-button"
             onClick={async () => {
               try {
                 if (document.fullscreenElement) await document.exitFullscreen();
@@ -694,6 +678,30 @@ function TreeCanvas() {
               alt=""
             />
           </Button>
+          <details className="tree-more-menu">
+            <summary title="Tùy chọn cây" aria-label="Tùy chọn cây">
+              <MoreHorizontal size={19} aria-hidden="true" />
+            </summary>
+            <div className="tree-more-menu-panel">
+              <Button
+                variant="ghost"
+                onClick={collapseAll}
+                disabled={
+                  !collapsibleGroupIds.size ||
+                  collapsed.size === collapsibleGroupIds.size
+                }
+              >
+                <ChevronUp size={17} /> Thu gọn toàn bộ hậu duệ
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setCollapsed(new Set())}
+                disabled={!collapsed.size}
+              >
+                <ChevronDown size={17} /> Mở toàn bộ hậu duệ
+              </Button>
+            </div>
+          </details>
         </div>
         {(branch !== 'all' || generation !== 'all') && (
           <div className="active-filter">

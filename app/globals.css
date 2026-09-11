@@ -8516,3 +8516,289 @@ main#main .timeline-entry p {
     margin-left: auto;
   }
 }
+
+/* A clear reading hierarchy: navigation and filters are solid; only the tree is a patterned canvas. */
+.site-header .brand-mark {
+  width: 43px;
+  height: 43px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.site-header .brand-mark .brand-icon {
+  padding: 0;
+  filter: saturate(0.82) contrast(0.98);
+}
+
+.logout-icon {
+  width: 25px;
+  height: 25px;
+}
+
+.family-tree-page {
+  background: #fdfbf6;
+}
+
+.family-tree-tabs-band {
+  background: #fffdf8;
+  border-bottom-color: #e4dccf;
+}
+
+.family-tree-page .tree-toolbar-band {
+  flex: 0 0 auto;
+  width: 100%;
+  border-bottom: 1px solid #e4dccf;
+  background: #fffdf8;
+}
+
+.family-tree-page .tree-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: center;
+  width: min(100%, 1380px);
+  min-height: 92px;
+  margin: 0 auto;
+  padding: 16px 48px;
+  border: 0;
+  background: transparent;
+}
+
+.family-tree-page .tree-title {
+  margin-right: 32px;
+}
+
+.family-tree-page .tree-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.family-tree-page .tree-search {
+  width: 300px;
+}
+
+.family-tree-page .tree-canvas {
+  background-color: #f5f3eb;
+  background-image:
+    linear-gradient(#f5f3ebcf, #f5f3ebcf),
+    url('/vietnamese-heritage-pattern.png');
+  background-repeat: repeat;
+  background-size: auto, 600px 600px;
+}
+
+.members-tab {
+  background-color: #f7f3e9;
+  background-image:
+    linear-gradient(#f7f3e9e5, #f7f3e9e5),
+    url('/vietnamese-heritage-pattern.png');
+  background-repeat: repeat;
+  background-size: auto, 760px 760px;
+}
+
+.tree-legend {
+  top: 18px;
+  left: 20px;
+  gap: 0;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  color: #685d50;
+  pointer-events: auto;
+}
+
+.tree-legend > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #ddd1be;
+  border-radius: 6px;
+  background: #fffdf8e8;
+  color: #625649;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+  list-style: none;
+  user-select: none;
+}
+
+.tree-legend > summary::-webkit-details-marker,
+.tree-more-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tree-legend > summary:hover,
+.tree-legend[open] > summary {
+  border-color: #bd9867;
+  background: #fffaf1;
+  color: var(--primary);
+}
+
+.tree-legend-panel {
+  display: grid;
+  gap: 6px;
+  width: max-content;
+  max-width: min(310px, calc(100vw - 40px));
+  margin-top: 7px;
+  padding: 10px 12px;
+  border: 1px solid #ddd1be;
+  border-radius: 6px;
+  background: #fffdf8f5;
+  box-shadow: 0 8px 20px #49331a16;
+  font-size: 11px;
+}
+
+.tree-legend-panel span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.tree-controls {
+  bottom: 18px;
+  left: 20px;
+  padding: 3px;
+  border-color: #ddd1be;
+  border-radius: 6px;
+  background: #fffdf8f2;
+  box-shadow: 0 4px 13px #49331a14;
+}
+
+.tree-controls output {
+  width: 44px;
+  color: #655848;
+  font-weight: 650;
+}
+
+.tree-more-menu {
+  position: relative;
+}
+
+.tree-more-menu > summary {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 5px;
+  color: #76604a;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tree-more-menu > summary:hover,
+.tree-more-menu[open] > summary {
+  background: #f4ead9;
+  color: var(--primary);
+}
+
+.tree-more-menu-panel {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 7;
+  display: grid;
+  width: max-content;
+  min-width: 220px;
+  padding: 5px;
+  border: 1px solid #ddd1be;
+  border-radius: 6px;
+  background: #fffdf8;
+  box-shadow: 0 8px 20px #49331a1d;
+}
+
+.tree-more-menu-panel [data-slot='button'] {
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 9px;
+  color: #55493d;
+  font-size: 12px;
+}
+
+.family-tree-page .active-filter {
+  top: 18px;
+  right: 20px;
+  left: auto;
+  border-color: #d8b985;
+  background: #fff7e8ee;
+  box-shadow: 0 3px 10px #49331a10;
+}
+
+@media (min-width: 768px) and (max-width: 1200px) {
+  .family-tree-page .tree-toolbar {
+    padding-right: 32px;
+    padding-left: 32px;
+  }
+
+  .family-tree-page .tree-search {
+    width: 240px;
+  }
+}
+
+@media (max-width: 900px) {
+  .family-tree-page .tree-toolbar {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .family-tree-page .tree-title {
+    margin-right: 0;
+  }
+
+  .family-tree-page .tree-toolbar-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 767px) {
+  .family-tree-page .tree-toolbar {
+    min-height: 0;
+    padding: 13px 14px 14px;
+  }
+
+  .family-tree-page .tree-toolbar-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) repeat(2, minmax(0, 1fr)) auto;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .family-tree-page .tree-search {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .family-tree-page .tree-toolbar-actions .choice {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .tree-legend {
+    top: 14px;
+    left: 14px;
+  }
+
+  .tree-controls {
+    bottom: 14px;
+    left: 14px;
+  }
+
+  .family-tree-page .active-filter {
+    top: 14px;
+    right: 14px;
+    max-width: calc(100% - 128px);
+    font-size: 11px;
+  }
+
+  .members-tab {
+    background-size: auto, 560px 560px;
+  }
+}
