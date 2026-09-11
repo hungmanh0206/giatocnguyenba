@@ -522,6 +522,7 @@ export function QuickView({
           replace
           scroll={false}
           className="quick-sheet-close"
+          onClick={onClose}
           aria-label="Đóng hồ sơ"
         >
           <HeritageIcon name="close" size={18} />
