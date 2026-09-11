@@ -1,5 +1,5 @@
 import { addDays, startOfDay } from 'date-fns';
-import type { Member } from '../family.ts';
+import { memberName, type Member } from '../family.ts';
 import { lichtaAdapter } from './lichta-adapter.ts';
 import type {
   FamilyCalendarEvent,
@@ -13,7 +13,7 @@ function memberAnniversaries(members: Member[]): FamilyCalendarEvent[] {
       ? [
           {
             id: `anniversary-${person.id}`,
-            title: `Ngày giỗ ${person.name}`,
+            title: `Ngày giỗ ${memberName(person)}`,
             kind: 'anniversary' as const,
             calendarType: 'lunar' as const,
             lunarDay: person.anniversary.day,

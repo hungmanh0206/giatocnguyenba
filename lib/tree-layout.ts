@@ -1,4 +1,4 @@
-import type { Member } from './family';
+import { memberSortYear, type Member } from './family.ts';
 
 export const FAMILY_UNIT_WIDTH = 248;
 export const FAMILY_UNIT_HEIGHT = 164;
@@ -94,7 +94,7 @@ function compareGroups(
   indexOf: Map<string, number>,
 ) {
   return (
-    a.clanMember.born - b.clanMember.born ||
+    memberSortYear(a.clanMember) - memberSortYear(b.clanMember) ||
     a.clanMember.branch - b.clanMember.branch ||
     indexOf.get(a.clanMember.id)! - indexOf.get(b.clanMember.id)!
   );

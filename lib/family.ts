@@ -1,19 +1,61 @@
 export type Member = {
   id: string;
   name: string;
+  nameKnown?: boolean;
+  tabooName?: string;
+  styleName?: string;
   gender: 'male' | 'female';
   isClanMember: boolean;
   lineageType: 'direct' | 'maternal-terminal';
   generation: number;
   branch: number;
-  born: number;
+  born?: number;
   died?: number;
+  diedText?: string;
+  lifeStatus?: 'living' | 'deceased' | 'unknown';
   parents: string[];
   spouses: string[];
   anniversary?: { day: number; month: number };
   biography?: string;
   hometown?: string;
 };
+
+export const UNKNOWN_MEMBER_NAME = 'Chưa rõ tên';
+
+export function memberName(person: Member) {
+  return person.nameKnown === false || !person.name.trim()
+    ? UNKNOWN_MEMBER_NAME
+    : person.name;
+}
+
+export function memberLifeStatus(person: Member) {
+  if (person.lifeStatus) return person.lifeStatus;
+  return person.died !== undefined || !!person.diedText || !!person.anniversary
+    ? 'deceased'
+    : 'living';
+}
+
+export function memberDeathLabel(person: Member) {
+  if (person.died !== undefined) return String(person.died);
+  if (person.diedText) return person.diedText;
+  return memberLifeStatus(person) === 'living' ? 'nay' : 'Chưa rõ';
+}
+
+export function memberYearRange(person: Member) {
+  const birth = person.born === undefined ? 'Chưa rõ' : String(person.born);
+  const death = memberDeathLabel(person);
+  return birth === 'Chưa rõ' && death === 'Chưa rõ'
+    ? 'Chưa rõ niên đại'
+    : `${birth} – ${death}`;
+}
+
+export function memberBirthLabel(person: Member) {
+  return person.born === undefined ? 'Chưa rõ' : String(person.born);
+}
+
+export function memberSortYear(person: Member) {
+  return person.born ?? Number.MAX_SAFE_INTEGER;
+}
 const rows: [
   string,
   string,
@@ -350,7 +392,9 @@ export const normalize = (text: string) =>
 export function searchMembers(members: Member[], query: string) {
   const tokens = normalize(query).trim().split(/\s+/).filter(Boolean);
   return members.filter((p) =>
-    tokens.every((t) => normalize(p.name).includes(t)),
+    tokens.every((t) =>
+      normalize([memberName(p), p.tabooName, p.styleName].filter(Boolean).join(' ')).includes(t),
+    ),
   );
 }
 export function relatives(members: Member[], person: Member) {
@@ -495,7 +539,7 @@ export function eligibleParents(
   members: Member[],
   parentIndex: number,
 ) {
-  if (person.generation <= 1 || !person.born) return [];
+  if (person.generation <= 1) return [];
   const selectedInSlot = person.parents[parentIndex];
   const coParentId = person.parents[parentIndex === 0 ? 1 : 0];
 
@@ -508,7 +552,9 @@ export function eligibleParents(
       (candidate.branch === 0 ||
         person.branch === 0 ||
         candidate.branch === person.branch) &&
-      candidate.born < person.born &&
+      (person.born === undefined ||
+        candidate.born === undefined ||
+        candidate.born < person.born) &&
       (!coParentId ||
         areRegisteredSpouses(members, candidate.id, coParentId)) &&
       !isDescendantOf(members, person.id, candidate.id),
@@ -580,7 +626,8 @@ export function eligibleBirthYears(person: Member, members: Member[]) {
     .filter((born): born is number => Number.isInteger(born));
   const childYears = members
     .filter((member) => member.parents.includes(person.id))
-    .map((member) => member.born);
+    .map((member) => member.born)
+    .filter((born): born is number => Number.isInteger(born));
 
   return {
     min: Math.max(1600, ...(parentYears.length ? parentYears.map((born) => born + 1) : [1600])),
@@ -607,7 +654,8 @@ export function validateMember(
     person.branch > 3
   )
     return 'Vui lòng chọn đời và chi.';
-  if (!person.name.trim()) return 'Vui lòng nhập họ và tên.';
+  if (person.nameKnown !== false && !person.name.trim())
+    return 'Vui lòng nhập họ và tên hoặc chọn Chưa rõ tên.';
   if (person.isClanMember && person.gender === 'female' && person.lineageType !== 'maternal-terminal') {
     return 'Con gái trong dòng họ được ghi là nhánh ngoại.';
   }
@@ -620,16 +668,26 @@ export function validateMember(
       : 'Chi cần khớp với đời và cha mẹ đã chọn.';
   }
   if (
-    !Number.isInteger(person.born) ||
-    person.born < 1600 ||
-    person.born > new Date().getFullYear()
+    person.born !== undefined &&
+    (!Number.isInteger(person.born) ||
+      person.born < 1600 ||
+      person.born > new Date().getFullYear())
   )
     return 'Năm sinh chưa hợp lệ.';
   if (
-    person.died &&
-    (person.died < person.born || person.died > new Date().getFullYear())
+    person.died !== undefined &&
+    (!Number.isInteger(person.died) ||
+      (person.born !== undefined && person.died < person.born) ||
+      person.died > new Date().getFullYear())
   )
     return 'Năm mất chưa hợp lệ.';
+  if (person.diedText && person.diedText.trim().length > 100)
+    return 'Thông tin năm mất không quá 100 ký tự.';
+  if (
+    memberLifeStatus(person) !== 'deceased' &&
+    (person.died !== undefined || person.diedText || person.anniversary)
+  )
+    return 'Hồ sơ có thông tin mất cần được ghi là Đã mất.';
   if (person.parents.includes(person.id) || person.spouses.includes(person.id))
     return 'Không thể tạo quan hệ với chính mình.';
   if (
@@ -668,7 +726,13 @@ export function validateMember(
     )
   )
     return 'Cha mẹ cần ở đời liền trước và thuộc đúng chi.';
-  if (person.parents.some((id) => lookup.get(id)!.born >= person.born))
+  if (
+    person.born !== undefined &&
+    person.parents.some((id) => {
+      const parentBorn = lookup.get(id)!.born;
+      return parentBorn !== undefined && parentBorn >= person.born!;
+    })
+  )
     return 'Năm sinh của con phải sau năm sinh của cha mẹ.';
   if (
     person.parents.some((id) => lookup.get(id)!.generation >= person.generation)
@@ -690,12 +754,18 @@ export function validateMember(
     members.some(
       (p) =>
         p.parents.includes(person.id) &&
-        (p.born <= person.born || p.generation <= person.generation),
+        ((person.born !== undefined &&
+          p.born !== undefined &&
+          p.born <= person.born) ||
+          p.generation <= person.generation),
     )
   )
     return 'Năm sinh hoặc đời không phù hợp với hồ sơ con đã có.';
   const birthYears = eligibleBirthYears(person, members);
-  if (person.born < birthYears.min || person.born > birthYears.max)
+  if (
+    person.born !== undefined &&
+    (person.born < birthYears.min || person.born > birthYears.max)
+  )
     return 'Năm sinh cần phù hợp với cha mẹ và con đã ghi nhận.';
   if (person.spouses.some((id) => lookup.get(id)!.parents.includes(person.id)))
     return 'Không thể tạo quan hệ vợ chồng với con.';
@@ -703,8 +773,7 @@ export function validateMember(
     return 'Vợ chồng cần được ghi nhận trong cùng chi.';
   if (
     person.anniversary &&
-    (!person.died ||
-      person.anniversary.day < 1 ||
+    (person.anniversary.day < 1 ||
       person.anniversary.day > 30 ||
       person.anniversary.month < 1 ||
       person.anniversary.month > 12)

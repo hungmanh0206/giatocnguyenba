@@ -17,7 +17,13 @@ import {
 import '@xyflow/react/dist/style.css';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { branchName, searchMembers, type Member } from '@/lib/family';
+import {
+  branchName,
+  memberName,
+  memberYearRange,
+  searchMembers,
+  type Member,
+} from '@/lib/family';
 import {
   collapsedDescendantGroups,
   layoutFamily,
@@ -76,14 +82,14 @@ function PersonArea({
         event.stopPropagation();
         onSelect(person);
       }}
-      aria-label={`${person.name}, ${role}, đời ${person.generation}`}
+      aria-label={`${memberName(person)}, ${role}, đời ${person.generation}`}
     >
       <Avatar person={person} />
       <span className="family-member-copy">
         <span className="family-member-role">{role}</span>
-        <strong>{person.name}</strong>
+        <strong>{memberName(person)}</strong>
         <span className="family-member-years">
-          {person.born} – {person.died || 'nay'}
+          {memberYearRange(person)}
         </span>
       </span>
     </button>
@@ -407,7 +413,7 @@ function TreeCanvas() {
                   >
                     <Avatar person={person} />
                     <span>
-                      <strong>{person.name}</strong>
+                      <strong>{memberName(person)}</strong>
                       <small>
                         Đời {person.generation} · {branchName(person.branch)}
                       </small>

@@ -16,11 +16,18 @@ import {
 } from 'firebase/firestore';
 import { firebaseFamilyId } from './config';
 import { isFamilyRole, type FamilyRole } from '@/lib/access';
-import { type Member } from '@/lib/family';
+import {
+  UNKNOWN_MEMBER_NAME,
+  memberSortYear,
+  type Member,
+} from '@/lib/family';
 
 const memberFields = [
   'id',
   'name',
+  'nameKnown',
+  'tabooName',
+  'styleName',
   'gender',
   'isClanMember',
   'lineageType',
@@ -28,6 +35,8 @@ const memberFields = [
   'branch',
   'born',
   'died',
+  'diedText',
+  'lifeStatus',
   'parents',
   'spouses',
   'anniversary',
@@ -54,10 +63,13 @@ function ids(value: unknown) {
 export function firestoreMember(id: string, raw: DocumentData): Member | null {
   const gender =
     raw.gender === 'female' ? 'female' : raw.gender === 'male' ? 'male' : null;
-  const name = string(raw.name).trim();
-  const born = integer(raw.born);
+  const nameKnown = raw.nameKnown !== false;
+  const name = nameKnown
+    ? string(raw.name).trim()
+    : UNKNOWN_MEMBER_NAME;
+  const born = integer(raw.born) || undefined;
 
-  if (!gender || !name || born < 1600) return null;
+  if (!gender || !name || (born !== undefined && born < 1600)) return null;
 
   const anniversary = raw.anniversary;
   const day =
@@ -77,6 +89,9 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
   return {
     id,
     name,
+    nameKnown,
+    tabooName: string(raw.tabooName).trim() || undefined,
+    styleName: string(raw.styleName).trim() || undefined,
     gender,
     // Legacy records can be classified in the editor after this migration.
     isClanMember,
@@ -90,6 +105,13 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
     branch: integer(raw.branch),
     born,
     died: integer(raw.died) || undefined,
+    diedText: string(raw.diedText).trim() || undefined,
+    lifeStatus:
+      raw.lifeStatus === 'living' ||
+      raw.lifeStatus === 'deceased' ||
+      raw.lifeStatus === 'unknown'
+        ? raw.lifeStatus
+        : undefined,
     parents: ids(raw.parents),
     spouses: ids(raw.spouses),
     anniversary:
@@ -104,14 +126,22 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
 function memberData(person: Member) {
   return {
     id: person.id,
-    name: person.name.trim(),
+    name:
+      person.nameKnown === false
+        ? UNKNOWN_MEMBER_NAME
+        : person.name.trim(),
+    nameKnown: person.nameKnown !== false,
+    tabooName: person.tabooName?.trim() || null,
+    styleName: person.styleName?.trim() || null,
     gender: person.gender,
     isClanMember: person.isClanMember,
     lineageType: person.lineageType,
     generation: person.generation,
     branch: person.branch,
-    born: person.born,
+    born: person.born ?? null,
     died: person.died ?? null,
+    diedText: person.diedText?.trim() || null,
+    lifeStatus: person.lifeStatus ?? null,
     parents: [...new Set(person.parents)],
     spouses: [...new Set(person.spouses)],
     anniversary: person.anniversary ?? null,
@@ -177,7 +207,7 @@ export function subscribeToFamilyMembers(
         .sort(
           (a, b) =>
             a.generation - b.generation ||
-            a.born - b.born ||
+            memberSortYear(a) - memberSortYear(b) ||
             a.name.localeCompare(b.name, 'vi'),
         );
       onMembers(data);

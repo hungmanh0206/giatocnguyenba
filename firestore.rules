@@ -39,17 +39,23 @@ service cloud.firestore {
 
     function validMember(memberId) {
       let data = request.resource.data;
-      return data.keys().hasOnly(['id', 'name', 'gender', 'isClanMember', 'lineageType', 'generation', 'branch', 'born', 'died', 'parents', 'spouses', 'anniversary', 'biography', 'hometown', 'createdAt', 'updatedAt'])
+      return data.keys().hasOnly(['id', 'name', 'nameKnown', 'tabooName', 'styleName', 'gender', 'isClanMember', 'lineageType', 'generation', 'branch', 'born', 'died', 'diedText', 'lifeStatus', 'parents', 'spouses', 'anniversary', 'biography', 'hometown', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['id', 'name', 'gender', 'isClanMember', 'lineageType', 'generation', 'branch', 'born', 'died', 'parents', 'spouses', 'anniversary', 'biography', 'hometown', 'createdAt', 'updatedAt'])
         && data.id == memberId
         && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && (!data.keys().hasAny(['nameKnown']) || data.nameKnown is bool)
+        && (!data.keys().hasAny(['tabooName']) || data.tabooName == null || (data.tabooName is string && data.tabooName.size() <= 100))
+        && (!data.keys().hasAny(['styleName']) || data.styleName == null || (data.styleName is string && data.styleName.size() <= 100))
         && data.gender in ['male', 'female']
         && data.isClanMember is bool
         && data.lineageType in ['direct', 'maternal-terminal']
         && data.generation is int && data.generation >= 1 && data.generation <= 50
         && data.branch is int && data.branch >= 0 && data.branch <= 20
-        && data.born is int && data.born >= 1600 && data.born <= 3000
-        && (data.died == null || (data.died is int && data.died >= data.born && data.died <= 3000))
+        && (data.born == null || (data.born is int && data.born >= 1600 && data.born <= 3000))
+        && (data.died == null || (data.died is int && data.died >= 1600 && data.died <= 3000 && (data.born == null || data.died >= data.born)))
+        && (!data.keys().hasAny(['diedText']) || data.diedText == null || (data.diedText is string && data.diedText.size() <= 100))
+        && (!data.keys().hasAny(['lifeStatus']) || data.lifeStatus == null || data.lifeStatus in ['living', 'deceased', 'unknown'])
+        && (!data.keys().hasAny(['lifeStatus']) || data.lifeStatus == null || data.lifeStatus == 'deceased' || (data.died == null && (!data.keys().hasAny(['diedText']) || data.diedText == null) && data.anniversary == null))
         && data.parents is list && data.parents.size() <= 2
         && data.spouses is list && data.spouses.size() <= 10
         && validAnniversary(data.anniversary)

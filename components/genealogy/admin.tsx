@@ -32,12 +32,17 @@ import {
   EmptyState,
 } from './common';
 import {
+  UNKNOWN_MEMBER_NAME,
   eligibleBirthYears,
   eligibleBranches,
   eligibleGenerations,
   eligibleParents,
   eligibleSpouses,
   memberDeletionError,
+  memberBirthLabel,
+  memberDeathLabel,
+  memberLifeStatus,
+  memberName,
   memberPositionLockMessage,
   searchMembers,
   branchName,
@@ -52,10 +57,22 @@ const blank = (): Member => ({
   lineageType: 'direct',
   generation: 0,
   branch: -1,
-  born: 0,
+  born: undefined,
+  lifeStatus: 'unknown',
   parents: [],
   spouses: [],
 });
+
+function deathFieldValue(person: Member) {
+  return person.died !== undefined ? String(person.died) : person.diedText || '';
+}
+
+function deathFields(value: string) {
+  const text = value.trim();
+  return /^\d{4}$/.test(text)
+    ? { died: Number(text), diedText: undefined }
+    : { died: undefined, diedText: text || undefined };
+}
 export function AdminPage() {
   const { members, save, remove, connection, signIn } = useFamily();
   const [query, setQuery] = useState('');
@@ -67,6 +84,7 @@ export function AdminPage() {
   const [deletingPending, setDeletingPending] = useState(false);
   const [authPending, setAuthPending] = useState(false);
   const filtered = searchMembers(members, query);
+  const membersById = new Map(members.map((member) => [member.id, member]));
   const birthYears = editing ? eligibleBirthYears(editing, members) : null;
   const existingEditing = editing
     ? members.find((member) => member.id === editing.id)
@@ -112,7 +130,17 @@ export function AdminPage() {
     e.preventDefault();
     if (!editing) return;
     setSaving(true);
-    const result = await save({ ...editing, name: editing.name.trim() });
+    const person = {
+      ...editing,
+      name:
+        editing.nameKnown === false
+          ? UNKNOWN_MEMBER_NAME
+          : editing.name.trim(),
+      tabooName: editing.tabooName?.trim() || undefined,
+      styleName: editing.styleName?.trim() || undefined,
+      diedText: editing.diedText?.trim() || undefined,
+    };
+    const result = await save(person);
     setSaving(false);
     if (result) {
       setError(result);
@@ -120,8 +148,8 @@ export function AdminPage() {
     }
     setSuccess(
       connection.mode === 'demo'
-        ? `Đã lưu hồ sơ ${editing.name} trong phiên dùng thử.`
-        : `Đã đồng bộ hồ sơ ${editing.name} với Firestore.`,
+        ? `Đã lưu hồ sơ ${memberName(person)} trong phiên dùng thử.`
+        : `Đã đồng bộ hồ sơ ${memberName(person)} với Firestore.`,
     );
     setEditing(null);
     setError('');
@@ -145,7 +173,7 @@ export function AdminPage() {
       return;
     }
 
-    setSuccess(`Đã xóa hồ sơ ${deleting.name}.`);
+    setSuccess(`Đã xóa hồ sơ ${memberName(deleting)}.`);
     setEditing((current) => (current?.id === deleting.id ? null : current));
     setDeleting(null);
     setError('');
@@ -288,26 +316,30 @@ export function AdminPage() {
                   <td>
                     <div className="table-person">
                       <Avatar person={p} />
-                      <Link href={`/members/${p.id}`}>{p.name}</Link>
+                      <Link href={`/members/${p.id}`}>{memberName(p)}</Link>
                     </div>
                   </td>
                   <td>
                     Đời {p.generation} · {branchName(p.branch)}
                   </td>
-                  <td>{p.born}</td>
+                  <td>{memberBirthLabel(p)}</td>
                   <td>
                     <span
-                      className={`status-label ${p.died ? 'deceased' : 'living'}`}
+                      className={`status-label ${memberLifeStatus(p)}`}
                     >
-                      {p.died ? `Đã mất · ${p.died}` : 'Còn sống'}
+                      {memberLifeStatus(p) === 'deceased'
+                        ? `Đã mất · ${memberDeathLabel(p)}`
+                        : memberLifeStatus(p) === 'living'
+                          ? 'Còn sống'
+                          : 'Chưa rõ'}
                     </span>
                   </td>
                   <td>
                     <Button
                       variant="ghost"
                       className="icon-button"
-                      title={`Sửa ${p.name}`}
-                      aria-label={`Sửa ${p.name}`}
+                      title={`Sửa ${memberName(p)}`}
+                      aria-label={`Sửa ${memberName(p)}`}
                       onClick={() => {
                         setEditing({
                           ...p,
@@ -323,8 +355,8 @@ export function AdminPage() {
                     <Button
                       variant="ghost"
                       className="icon-button delete-member-button"
-                      title={memberDeletionError(p, members) || `Xóa ${p.name}`}
-                      aria-label={memberDeletionError(p, members) || `Xóa ${p.name}`}
+                      title={memberDeletionError(p, members) || `Xóa ${memberName(p)}`}
+                      aria-label={memberDeletionError(p, members) || `Xóa ${memberName(p)}`}
                       disabled={!!memberDeletionError(p, members)}
                       onClick={() => {
                         setDeleting(p);
@@ -337,7 +369,7 @@ export function AdminPage() {
                     <Link
                       className="icon-button"
                       title="Mở hồ sơ"
-                      aria-label={`Mở hồ sơ ${p.name}`}
+                      aria-label={`Mở hồ sơ ${memberName(p)}`}
                       href={`/members/${p.id}`}
                     >
                       <HeritageIcon name="open-link" size={17} />
@@ -373,15 +405,44 @@ export function AdminPage() {
                   </p>
                 )}
                 <h3>Thông tin cơ bản</h3>
-                <label>
-                  Họ và tên <span>*</span>
-                  <Input
-                    required
-                    maxLength={100}
-                    value={editing.name}
-                    onChange={(e) => update('name', e.target.value)}
-                  />
-                </label>
+                <div className="member-name-field">
+                  <label>
+                    Họ và tên {editing.nameKnown !== false && <span>*</span>}
+                    <Input
+                      required={editing.nameKnown !== false}
+                      disabled={editing.nameKnown === false}
+                      maxLength={100}
+                      value={
+                        editing.nameKnown === false
+                          ? UNKNOWN_MEMBER_NAME
+                          : editing.name
+                      }
+                      onChange={(e) => update('name', e.target.value)}
+                    />
+                  </label>
+                  <label className="member-name-unknown">
+                    <input
+                      type="checkbox"
+                      checked={editing.nameKnown === false}
+                      onChange={(e) =>
+                        setEditing((person) =>
+                          person
+                            ? {
+                                ...person,
+                                nameKnown: !e.target.checked,
+                                name: e.target.checked
+                                  ? UNKNOWN_MEMBER_NAME
+                                  : person.name === UNKNOWN_MEMBER_NAME
+                                    ? ''
+                                    : person.name,
+                              }
+                            : null,
+                        )
+                      }
+                    />
+                    Chưa rõ tên
+                  </label>
+                </div>
                 <div className="form-columns">
                   <label>
                     Giới tính <span>*</span>
@@ -413,16 +474,37 @@ export function AdminPage() {
                     />
                   </label>
                   <label>
-                    Năm sinh <span>*</span>
+                    Năm sinh
                     <Input
-                      required
                       type="number"
                       min={birthYears?.min || 1600}
                       max={birthYears?.max || new Date().getFullYear()}
-                      value={editing.born || ''}
+                      placeholder="Chưa rõ"
+                      value={editing.born ?? ''}
                       onChange={(e) =>
-                        update('born', e.target.value ? Number(e.target.value) : 0)
+                        update(
+                          'born',
+                          e.target.value ? Number(e.target.value) : undefined,
+                        )
                       }
+                    />
+                  </label>
+                </div>
+                <div className="form-columns">
+                  <label>
+                    Tên húy
+                    <Input
+                      maxLength={100}
+                      value={editing.tabooName || ''}
+                      onChange={(e) => update('tabooName', e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Hiệu
+                    <Input
+                      maxLength={100}
+                      value={editing.styleName || ''}
+                      onChange={(e) => update('styleName', e.target.value)}
                     />
                   </label>
                 </div>
@@ -565,7 +647,7 @@ export function AdminPage() {
                         ...eligibleParents(editing, members, index)
                           .map((p) => ({
                             value: p.id,
-                            label: `${p.name} (${p.born})`,
+                            label: `${memberName(p)} (${memberBirthLabel(p)})`,
                           })),
                       ]}
                       disabled={
@@ -588,7 +670,7 @@ export function AdminPage() {
                     options={[
                       { value: 'none', label: 'Chọn để thêm…' },
                       ...eligibleSpouses(editing, members)
-                        .map((p) => ({ value: p.id, label: p.name })),
+                        .map((p) => ({ value: p.id, label: memberName(p) })),
                     ]}
                     disabled={!!spouseLock}
                   />
@@ -608,39 +690,66 @@ export function AdminPage() {
                       title="Bỏ quan hệ vợ chồng"
                       disabled={!!spouseLock}
                     >
-                      {members.find((p) => p.id === id)?.name} ×
+                      {memberName(membersById.get(id) || editing)} ×
                     </Button>
                   ))}
                 </div>
                 <h3>Ngày mất & tưởng nhớ</h3>
                 <label>
-                  Năm mất (để trống nếu còn sống)
-                  <Input
-                    type="number"
-                    min={editing.born}
-                    max={new Date().getFullYear()}
-                    value={editing.died || ''}
-                    onChange={(e) => {
-                      const died = e.target.value
-                        ? Number(e.target.value)
-                        : undefined;
+                  Tình trạng
+                  <Choice
+                    label="Tình trạng"
+                    value={memberLifeStatus(editing)}
+                    onChange={(value) =>
                       setEditing((p) =>
                         p
                           ? {
                               ...p,
-                              died,
-                              anniversary: died ? p.anniversary : undefined,
+                              lifeStatus: value as NonNullable<Member['lifeStatus']>,
+                              ...(value !== 'deceased'
+                                ? {
+                                    died: undefined,
+                                    diedText: undefined,
+                                    anniversary: undefined,
+                                  }
+                                : {}),
                             }
                           : null,
-                      );
-                    }}
+                      )
+                    }
+                    options={[
+                      { value: 'unknown', label: 'Chưa rõ' },
+                      { value: 'living', label: 'Còn sống' },
+                      { value: 'deceased', label: 'Đã mất' },
+                    ]}
                   />
                 </label>
-                {editing.died && (
+                {memberLifeStatus(editing) === 'deceased' && (
                   <>
+                    <label>
+                      Năm mất
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={100}
+                        placeholder="Chưa rõ"
+                        value={deathFieldValue(editing)}
+                        onChange={(e) =>
+                          setEditing((p) =>
+                            p
+                              ? {
+                                  ...p,
+                                  ...deathFields(e.target.value),
+                                  lifeStatus: 'deceased',
+                                }
+                              : null,
+                          )
+                        }
+                      />
+                    </label>
                     <div className="form-columns">
                       <label>
-                        Ngày giỗ âm
+                        Ngày mất âm lịch
                         <Input
                           type="number"
                           min={1}
@@ -660,7 +769,7 @@ export function AdminPage() {
                         />
                       </label>
                       <label>
-                        Tháng giỗ âm
+                        Tháng mất âm lịch
                         <Input
                           type="number"
                           min={1}
@@ -754,7 +863,7 @@ export function AdminPage() {
             <div className="delete-dialog-copy">
               <p className="delete-dialog-kicker">THAO TÁC KHÔNG THỂ HOÀN TÁC</p>
               <AlertDialogTitle>
-                Xóa hồ sơ {deleting?.name}?
+                Xóa hồ sơ {deleting ? memberName(deleting) : ''}?
               </AlertDialogTitle>
               <AlertDialogDescription>
                 Hồ sơ và các dữ liệu ghi chú sẽ bị xóa vĩnh viễn. Chỉ hồ sơ

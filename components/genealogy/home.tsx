@@ -8,7 +8,14 @@ import { FamilyMoments } from './family-moments';
 import { HeritageIcon, type HeritageIconName } from './heritage-icon';
 import { useFamily } from './provider';
 import { Footer } from './header';
-import { branchName, searchMembers, type Member } from '@/lib/family';
+import {
+  branchName,
+  memberName,
+  memberSortYear,
+  memberYearRange,
+  searchMembers,
+  type Member,
+} from '@/lib/family';
 import { layoutFamily, type Household } from '@/lib/tree-layout';
 import {
   getYearCanChi,
@@ -43,7 +50,7 @@ export function MemberTile({ person }: { person: Member }) {
     <Link href={`/members/${person.id}`} className="member-tile">
       <Avatar person={person} />
       <span>
-        <strong>{person.name}</strong>
+        <strong>{memberName(person)}</strong>
         <small>
           Đời {person.generation} · {branchName(person.branch)}
         </small>
@@ -166,7 +173,10 @@ export function HomePage() {
       .filter((link) => link.source === root.id)
       .map((link) => model.groups.find((group) => group.id === link.target))
       .filter((group): group is Household => !!group)
-      .sort((a, b) => a.clanMember.born - b.clanMember.born);
+      .sort(
+        (a, b) =>
+          memberSortYear(a.clanMember) - memberSortYear(b.clanMember),
+      );
     return {
       founders: [root.clanMember, ...root.spouses],
       branches: branchGroups.map((group) => ({
@@ -186,7 +196,7 @@ export function HomePage() {
     ).size;
     const founderYears = members
       .map((person) => person.born)
-      .filter(Boolean);
+      .filter((born): born is number => Number.isInteger(born));
     const founderYear = founderYears.length ? Math.min(...founderYears) : 1872;
 
     return [
@@ -300,9 +310,9 @@ export function HomePage() {
                       >
                         <Avatar person={person} />
                         <span>
-                          <strong>{person.name}</strong>
+                          <strong>{memberName(person)}</strong>
                           <small>
-                            {person.born} – {person.died || 'nay'}
+                            {memberYearRange(person)}
                           </small>
                           <em>{person.gender === 'male' ? 'Thủy tổ' : 'Phu nhân'}</em>
                         </span>
@@ -356,7 +366,7 @@ export function HomePage() {
                           <div className="home-family-person">
                             <Avatar person={group.clanMember} />
                             <span>
-                              <strong>{group.clanMember.name}</strong>
+                              <strong>{memberName(group.clanMember)}</strong>
                               <small>{descendants} hậu duệ · {generations} thế hệ</small>
                             </span>
                           </div>
@@ -393,7 +403,7 @@ export function HomePage() {
                   <small>Tháng {p.anniversary!.month}</small>
                 </span>
                 <span className="anniversary-person">
-                  <strong>{p.name}</strong>
+                  <strong>{memberName(p)}</strong>
                   <small>
                     Đời {p.generation} · {branchName(p.branch)}
                   </small>

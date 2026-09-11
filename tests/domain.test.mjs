@@ -14,6 +14,9 @@ import {
   eligibleSpouses,
   memberChangeError,
   memberDeletionError,
+  memberDeathLabel,
+  memberName,
+  memberYearRange,
 } from '../lib/family.ts';
 import {
   collapsedDescendantGroups,
@@ -44,6 +47,47 @@ test('Vietnamese search supports accents, case and nonadjacent tokens', () => {
   );
   assert.equal(searchMembers(seedMembers, 'nguyễn bá đức').length, 1);
   assert.equal(searchMembers(seedMembers, 'khongtontai').length, 0);
+});
+
+test('incomplete historical records retain unknown names and flexible death dates', () => {
+  const unknownMember = {
+    ...seedMembers.find((member) => member.id === 'p12'),
+    name: '',
+    nameKnown: false,
+    tabooName: 'Ngọc',
+    styleName: 'Tĩnh Trai',
+    born: undefined,
+    died: undefined,
+    diedText: 'Mất vào tháng Chạp, chưa rõ năm',
+    lifeStatus: 'deceased',
+    anniversary: { day: 12, month: 8 },
+  };
+
+  assert.equal(validateMember(unknownMember, seedMembers), null);
+  assert.equal(memberName(unknownMember), 'Chưa rõ tên');
+  assert.equal(memberDeathLabel(unknownMember), 'Mất vào tháng Chạp, chưa rõ năm');
+  assert.equal(memberYearRange(unknownMember), 'Chưa rõ – Mất vào tháng Chạp, chưa rõ năm');
+  assert.equal(searchMembers([unknownMember], 'tĩnh trai').length, 1);
+  assert.equal(
+    validateMember({ ...unknownMember, lifeStatus: 'unknown' }, seedMembers),
+    'Hồ sơ có thông tin mất cần được ghi là Đã mất.',
+  );
+
+  const yearOnly = {
+    ...unknownMember,
+    name: 'Nguyễn Thị Vô Danh',
+    nameKnown: true,
+    died: 1948,
+    diedText: undefined,
+    anniversary: undefined,
+  };
+  assert.equal(validateMember(yearOnly, seedMembers), null);
+  assert.equal(memberDeathLabel(yearOnly), '1948');
+  assert.equal(
+    eligibleParents({ ...seedMembers.find((member) => member.id === 'p19'), born: undefined }, seedMembers, 0)
+      .some((member) => member.id === 'p10'),
+    true,
+  );
 });
 test('seed genealogy is valid and spouse links are symmetric', () => {
   for (const p of seedMembers) {

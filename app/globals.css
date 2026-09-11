@@ -2747,6 +2747,15 @@ h1 > span {
 .status-label.deceased {
   color: #9b8871;
 }
+.status-label.unknown {
+  color: #8c8378;
+}
+.logout-icon {
+  display: block;
+  width: 21px;
+  height: 21px;
+  object-fit: contain;
+}
 .success-message {
   display: flex;
   gap: 9px;
@@ -2797,6 +2806,28 @@ h1 > span {
 }
 .member-form label > span {
   color: #9d4141;
+}
+.member-name-field {
+  margin-bottom: 17px;
+}
+.member-name-field > label:first-child {
+  margin-bottom: 8px;
+}
+.member-name-unknown {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  margin: 0 !important;
+  color: #6f685d !important;
+  cursor: pointer;
+}
+.member-name-unknown input {
+  width: 15px !important;
+  min-width: 15px !important;
+  min-height: 15px !important;
+  height: 15px;
+  margin: 0 !important;
+  accent-color: #a04832;
 }
 .member-form input,
 .member-form textarea,

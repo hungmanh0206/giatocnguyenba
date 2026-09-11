@@ -13,7 +13,7 @@ import { Footer } from './header';
 import { HeritageIcon } from './heritage-icon';
 import { Avatar } from './home';
 import { Choice, branchOptions } from './common';
-import { branchName } from '@/lib/family';
+import { branchName, memberName } from '@/lib/family';
 import { dateLabel, vietnamToday } from '@/lib/lunar';
 import {
   getFamilyEventsForDate,
@@ -195,7 +195,7 @@ export function LunarPage() {
                         <div className="day-event" key={event.id}>
                           <Avatar person={event.person} />
                           <div className="day-event-copy">
-                            <strong>{event.person.name}</strong>
+                            <strong>{memberName(event.person)}</strong>
                             <small>
                               Đời {event.person.generation} ·{' '}
                               {branchName(event.person.branch)}
@@ -404,7 +404,7 @@ export function LunarPage() {
                           <small>Tháng {event.lunarMonth} âm</small>
                         </span>
                         <span>
-                          <strong>{event.person.name}</strong>
+                          <strong>{memberName(event.person)}</strong>
                           <small>{dateLabel(date)} dương lịch</small>
                           <em>
                             {daysAway === 0

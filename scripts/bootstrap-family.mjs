@@ -49,7 +49,13 @@ for (const person of seedMembers) {
     family.collection('members').doc(person.id),
     {
       ...person,
+      nameKnown: person.nameKnown ?? true,
+      tabooName: person.tabooName ?? null,
+      styleName: person.styleName ?? null,
+      born: person.born ?? null,
       died: person.died ?? null,
+      diedText: person.diedText ?? null,
+      lifeStatus: person.lifeStatus ?? null,
       anniversary: person.anniversary ?? null,
       biography: person.biography ?? null,
       hometown: person.hometown ?? null,

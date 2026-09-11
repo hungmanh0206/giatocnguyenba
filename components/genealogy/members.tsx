@@ -33,6 +33,12 @@ import {
 } from './common';
 import {
   branchName,
+  memberBirthLabel,
+  memberDeathLabel,
+  memberLifeStatus,
+  memberName,
+  memberSortYear,
+  memberYearRange,
   relatives,
   searchMembers,
   type Member,
@@ -54,7 +60,10 @@ export function MembersPage() {
         (branch === 'all' || p.branch === Number(branch)) &&
         (generation === 'all' || p.generation === Number(generation)),
     )
-    .sort((a, b) => a.generation - b.generation || a.born - b.born);
+    .sort(
+      (a, b) =>
+        a.generation - b.generation || memberSortYear(a) - memberSortYear(b),
+    );
   const total = Math.ceil(filtered.length / 12);
   const pageMembers = filtered.slice((page - 1) * 12, page * 12);
   return (
@@ -158,16 +167,16 @@ export function MembersPage() {
                   <span className="member-list-person">
                     <Avatar person={p} />
                     <span>
-                      <strong>{p.name}</strong>
+                      <strong>{memberName(p)}</strong>
                       <small>
                         Đời thứ {p.generation} · {branchName(p.branch)} ·{' '}
-                        {p.died ? `${p.born} – ${p.died}` : `Sinh ${p.born}`}
+                        {memberYearRange(p)}
                       </small>
                     </span>
                   </span>
                   <span className="member-list-generation">Đời thứ {p.generation}</span>
                   <span className="member-list-branch">{branchName(p.branch)}</span>
-                  <span className="member-list-born">{p.born}</span>
+                  <span className="member-list-born">{memberBirthLabel(p)}</span>
                   <span className="member-list-open">
                     <span>Xem hồ sơ</span>
                     <HeritageIcon name="next" size={16} />
@@ -187,11 +196,8 @@ export function MembersPage() {
                     <Avatar person={p} />
                     <span className="branch-badge">{branchName(p.branch)}</span>
                   </div>
-                  <h3>{p.name}</h3>
-                  <p>
-                    {p.born}
-                    {p.died ? ` – ${p.died}` : ' · Còn sống'}
-                  </p>
+                  <h3>{memberName(p)}</h3>
+                  <p>{memberYearRange(p)}</p>
                   <div className="person-card-bottom">
                     <span>
                       <HeritageIcon name="profile" size={14} /> Đời thứ {p.generation}
@@ -267,9 +273,9 @@ export function FamilyRelations({
                 >
                   <Avatar person={p} />
                   <span>
-                    <strong>{p.name}</strong>
+                    <strong>{memberName(p)}</strong>
                     <small>
-                      Đời {p.generation} · {p.born}
+                      Đời {p.generation} · {memberBirthLabel(p)}
                     </small>
                   </span>
                   <HeritageIcon name="next" size={16} />
@@ -294,8 +300,10 @@ function Facts({ person }: { person: Member }) {
         <dd>{person.gender === 'male' ? 'Nam' : 'Nữ'}</dd>
       </div>
       <div>
-        <dt>Ngày sinh</dt>
-        <dd>Năm {person.born}</dd>
+        <dt>Năm sinh</dt>
+        <dd>
+          {person.born === undefined ? 'Chưa rõ' : `Năm ${person.born}`}
+        </dd>
       </div>
       <div>
         <dt>Đời / chi</dt>
@@ -307,10 +315,32 @@ function Facts({ person }: { person: Member }) {
         <dt>Quê quán</dt>
         <dd>{person.hometown || 'Chưa cập nhật'}</dd>
       </div>
-      {person.died && (
+      {person.tabooName && (
+        <div>
+          <dt>Tên húy</dt>
+          <dd>{person.tabooName}</dd>
+        </div>
+      )}
+      {person.styleName && (
+        <div>
+          <dt>Hiệu</dt>
+          <dd>{person.styleName}</dd>
+        </div>
+      )}
+      <div>
+        <dt>Tình trạng</dt>
+        <dd>
+          {memberLifeStatus(person) === 'living'
+            ? 'Còn sống'
+            : memberLifeStatus(person) === 'deceased'
+              ? 'Đã mất'
+              : 'Chưa rõ'}
+        </dd>
+      </div>
+      {memberLifeStatus(person) === 'deceased' && (
         <div>
           <dt>Năm mất</dt>
-          <dd>{person.died}</dd>
+          <dd>{memberDeathLabel(person)}</dd>
         </div>
       )}
       {person.anniversary && (
@@ -353,10 +383,9 @@ export function MemberDetail({ id }: { id: string }) {
                 ĐỜI THỨ {p.generation} ·{' '}
                 {branchName(p.branch).toLocaleUpperCase('vi')}
               </div>
-              <h1>{p.name}</h1>
+              <h1>{memberName(p)}</h1>
               <p>
-                {p.born}
-                {p.died ? ` – ${p.died}` : ' · Còn sống'}
+                {memberYearRange(p)}
                 <span>
                   <HeritageIcon name="location" size={15} />
                   {p.hometown || 'Chưa cập nhật quê quán'}
@@ -433,8 +462,7 @@ export function QuickView({
       <div className="quick-top">
         <Avatar person={person} large />
         <p>
-          {person.born}
-          {person.died ? ` – ${person.died}` : ' · Còn sống'}
+          {memberYearRange(person)}
         </p>
       </div>
       <section className="quick-info-section" aria-label="Thông tin gia phả">
@@ -471,7 +499,7 @@ export function QuickView({
       <DrawerContent className="quick-drawer">
         <DrawerHeader>
           <p className="sheet-kicker">Hồ sơ thành viên</p>
-          <DrawerTitle>{person?.name}</DrawerTitle>
+          <DrawerTitle>{person ? memberName(person) : ''}</DrawerTitle>
           <DrawerDescription>
             Đời {person?.generation} · {branchName(person?.branch || 0)}
           </DrawerDescription>
@@ -497,7 +525,7 @@ export function QuickView({
       <SheetContent className="quick-sheet">
         <SheetHeader>
           <p className="sheet-kicker">Hồ sơ thành viên</p>
-          <SheetTitle>{person?.name}</SheetTitle>
+          <SheetTitle>{person ? memberName(person) : ''}</SheetTitle>
           <SheetDescription>
             Đời {person?.generation} · {branchName(person?.branch || 0)}
           </SheetDescription>

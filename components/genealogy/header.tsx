@@ -60,7 +60,11 @@ export function Header() {
                 title={`Đăng xuất ${connection.user.email || connection.user.displayName || ''}`}
                 aria-label="Đăng xuất"
               >
-                <HeritageIcon name="logout" size={18} />
+                <img
+                  className="logout-icon"
+                  src="/app-icons/logout.png"
+                  alt=""
+                />
               </Button>
             )}
             <Link
