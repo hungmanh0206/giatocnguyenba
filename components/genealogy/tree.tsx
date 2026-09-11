@@ -304,6 +304,7 @@ function TreeCanvas() {
   const [zoom, setZoom] = useState(1);
   const [full, setFull] = useState(false);
   const container = useRef<HTMLDivElement>(null);
+  const dismissedPersonId = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
   const initialTreeLayout = useRef(false);
   const flow = useReactFlow();
@@ -383,11 +384,30 @@ function TreeCanvas() {
   useEffect(() => {
     if (!ready) return;
     const id = params.get('person');
+    if (!id) {
+      dismissedPersonId.current = null;
+      return;
+    }
+    if (dismissedPersonId.current === id) return;
     const person = members.find((member) => member.id === id);
     if (!person || !model.visibleMemberIds.has(person.id)) return;
     const frame = requestAnimationFrame(() => selectPerson(person));
     return () => cancelAnimationFrame(frame);
   }, [members, model.visibleMemberIds, params, ready, selectPerson]);
+
+  const closeQuickView = useCallback(() => {
+    const id = params.get('person');
+    if (id) dismissedPersonId.current = id;
+    setSelected(null);
+    if (!id) return;
+
+    const next = new URLSearchParams(params.toString());
+    next.delete('person');
+    const search = next.toString();
+    router.replace(search ? `/family-tree?${search}` : '/family-tree', {
+      scroll: false,
+    });
+  }, [params, router]);
 
   useEffect(() => {
     if (!ready || initialTreeLayout.current) return;
@@ -718,7 +738,7 @@ function TreeCanvas() {
       </div>
       <QuickView
         person={selected}
-        onClose={() => setSelected(null)}
+        onClose={closeQuickView}
         onSelect={selectPerson}
       />
     </section>

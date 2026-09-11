@@ -177,6 +177,7 @@ export function Header() {
       : authMode === 'reset'
         ? 'Chúng tôi sẽ gửi liên kết tạo mật khẩu mới về email của bạn.'
         : 'Xác thực để quản lý dữ liệu gia phả.';
+  const isSuperAdmin = connection.role === 'super_admin';
 
   return (
     <>
@@ -227,26 +228,30 @@ export function Header() {
                 </Button>
               ) : (
                 <>
-                  <Link href="/admin" onClick={() => setNavigationOpen(false)}>
-                    <img
-                      className="account-menu-icon"
-                      src="/app-icons/admin-dashboard.png"
-                      alt=""
-                    />
-                    Quản trị
-                  </Link>
-                  <Button
-                    className="mobile-account-entry"
-                    variant="ghost"
-                    onClick={openChangePassword}
-                  >
-                    <img
-                      className="account-menu-icon"
-                      src="/app-icons/password-reset.png"
-                      alt=""
-                    />
-                    Đổi mật khẩu
-                  </Button>
+                  {isSuperAdmin && (
+                    <>
+                      <Link href="/admin" onClick={() => setNavigationOpen(false)}>
+                        <img
+                          className="account-menu-icon"
+                          src="/app-icons/admin-dashboard.png"
+                          alt=""
+                        />
+                        Quản trị
+                      </Link>
+                      <Button
+                        className="mobile-account-entry"
+                        variant="ghost"
+                        onClick={openChangePassword}
+                      >
+                        <img
+                          className="account-menu-icon"
+                          src="/app-icons/password-reset.png"
+                          alt=""
+                        />
+                        Đổi mật khẩu
+                      </Button>
+                    </>
+                  )}
                   <Button
                     className="mobile-account-entry"
                     variant="ghost"
@@ -288,31 +293,35 @@ export function Header() {
                   </DropdownMenuItem>
                 ) : (
                   <>
-                    <DropdownMenuItem
-                      className="account-menu-item"
-                      onClick={() => {
-                        window.location.assign('/admin');
-                      }}
-                    >
-                      <img
-                        className="account-menu-icon"
-                        src="/app-icons/admin-dashboard.png"
-                        alt=""
-                      />
-                      Quản trị
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="account-menu-item"
-                      onClick={openChangePassword}
-                    >
-                      <img
-                        className="account-menu-icon"
-                        src="/app-icons/password-reset.png"
-                        alt=""
-                      />
-                      Đổi mật khẩu
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
+                    {isSuperAdmin && (
+                      <>
+                        <DropdownMenuItem
+                          className="account-menu-item"
+                          onClick={() => {
+                            window.location.assign('/admin');
+                          }}
+                        >
+                          <img
+                            className="account-menu-icon"
+                            src="/app-icons/admin-dashboard.png"
+                            alt=""
+                          />
+                          Quản trị
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="account-menu-item"
+                          onClick={openChangePassword}
+                        >
+                          <img
+                            className="account-menu-icon"
+                            src="/app-icons/password-reset.png"
+                            alt=""
+                          />
+                          Đổi mật khẩu
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuItem
                       className="account-menu-item account-menu-logout"
                       onClick={() => void logout()}

@@ -1112,9 +1112,6 @@ h1 > span {
   .header-actions {
     gap: 4px;
   }
-  .mobile-menu {
-    margin-right: 52px;
-  }
   .header-actions .admin-link {
     display: none;
   }
