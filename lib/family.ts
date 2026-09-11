@@ -136,14 +136,26 @@ function seedMember(
 }
 
 function withSiblingOrders(members: Member[]) {
-  const countByParents = new Map<string, number>();
+  const peopleById = new Map(members.map((person) => [person.id, person]));
+  const countByHousehold = new Map<string, number>();
 
   return members.map((person) => {
     if (!person.parents.length) return person;
 
-    const parentsKey = [...person.parents].sort().join('|');
-    const siblingOrder = (countByParents.get(parentsKey) || 0) + 1;
-    countByParents.set(parentsKey, siblingOrder);
+    const parents = person.parents
+      .map((id) => peopleById.get(id))
+      .filter((parent): parent is Member => !!parent);
+    const father = parents.find((parent) => parent.gender === 'male');
+    const mother = parents.find((parent) => parent.gender === 'female');
+    // Children of a polygamous household share one sequence, even when each
+    // recorded child has a different mother.
+    const householdKey = father
+      ? `father:${father.id}`
+      : mother
+        ? `mother:${mother.id}`
+        : `parents:${[...person.parents].sort().join('|')}`;
+    const siblingOrder = (countByHousehold.get(householdKey) || 0) + 1;
+    countByHousehold.set(householdKey, siblingOrder);
     return { ...person, siblingOrder: person.siblingOrder ?? siblingOrder };
   });
 }

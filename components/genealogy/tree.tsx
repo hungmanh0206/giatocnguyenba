@@ -10,6 +10,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  type Edge,
   type EdgeProps,
   type Node,
   type NodeProps,
@@ -50,17 +51,50 @@ type FamilyUnitData = {
 type FamilyUnitNode = Node<FamilyUnitData, 'family-unit' | 'root-family'>;
 type GenerationBandNode = Node<{ generation: number }, 'generation-band'>;
 
+type FamilyBranchEdgeData = {
+  children: Array<{ targetX: number; maternal: boolean }>;
+};
+type FamilyBranchEdgeType = Edge<FamilyBranchEdgeData, 'family-branch'>;
+
 function FamilyBranchEdge({
   sourceX,
   sourceY,
   targetX,
   targetY,
+  data,
   ...edge
-}: EdgeProps) {
+}: EdgeProps<FamilyBranchEdgeType>) {
+  const children = data?.children.length
+    ? data.children
+    : [{ targetX, maternal: false }];
   const busY = sourceY + Math.max(32, Math.min(58, (targetY - sourceY) * 0.38));
-  const path = `M ${sourceX},${sourceY} L ${sourceX},${busY} L ${targetX},${busY} L ${targetX},${targetY}`;
+  const left = Math.min(...children.map((child) => child.targetX));
+  const right = Math.max(...children.map((child) => child.targetX));
+  const trunkPath = `M ${sourceX},${sourceY} L ${sourceX},${busY} L ${left},${busY} L ${right},${busY}`;
 
-  return <BaseEdge path={path} {...edge} />;
+  return (
+    <>
+      <BaseEdge
+        {...edge}
+        id={`${edge.id}-trunk`}
+        path={trunkPath}
+        style={{ ...edge.style, stroke: '#958d7d', strokeDasharray: undefined }}
+      />
+      {children.map((child, index) => (
+        <BaseEdge
+          {...edge}
+          id={`${edge.id}-child-${index}`}
+          key={index}
+          path={`M ${child.targetX},${busY} L ${child.targetX},${targetY}`}
+          style={{
+            ...edge.style,
+            stroke: child.maternal ? '#a47b51' : '#958d7d',
+            strokeDasharray: child.maternal ? '5 5' : undefined,
+          }}
+        />
+      ))}
+    </>
+  );
 }
 
 function PersonArea({
@@ -370,23 +404,39 @@ function TreeCanvas() {
       data: { generation: lane.generation },
     }),
   );
-  const edges = model.links.map((link) => ({
-    id: link.id,
-    source: link.source,
-    target: link.target,
-    sourceHandle: 'family-out',
-    targetHandle: 'family-in',
-    type: 'family-branch',
-    hidden: hidden.has(link.source) || hidden.has(link.target),
-    className:
-      link.branchType === 'maternal-terminal' ? 'maternal-tree-edge' : '',
-    style: {
-      stroke: link.branchType === 'maternal-terminal' ? '#a47b51' : '#958d7d',
-      strokeDasharray:
-        link.branchType === 'maternal-terminal' ? '5 5' : undefined,
-      strokeWidth: link.branchType === 'maternal-terminal' ? 1.45 : 1.35,
-    },
-  }));
+  const edges: FamilyBranchEdgeType[] = [];
+  const linksBySource = new Map<string, typeof model.links>();
+  for (const link of model.links) {
+    const links = linksBySource.get(link.source) || [];
+    links.push(link);
+    linksBySource.set(link.source, links);
+  }
+  for (const [source, links] of linksBySource) {
+    const targets = links
+      .map((link) => ({ link, group: model.groups.find((group) => group.id === link.target) }))
+      .filter(
+        (entry): entry is { link: (typeof links)[number]; group: Household } =>
+          !!entry.group,
+      );
+    if (!targets.length) continue;
+
+    edges.push({
+      id: `${source}-family-bus`,
+      source,
+      target: targets[0].group.id,
+      sourceHandle: 'family-out',
+      targetHandle: 'family-in',
+      type: 'family-branch',
+      hidden: hidden.has(source) || targets.every(({ group }) => hidden.has(group.id)),
+      data: {
+        children: targets.map(({ link, group }) => ({
+          targetX: group.x + group.width / 2,
+          maternal: link.branchType === 'maternal-terminal',
+        })),
+      },
+      style: { stroke: '#958d7d', strokeWidth: 1.35 },
+    });
+  }
   const found = searchMembers(treeMembers, query).slice(0, 6);
 
   function resetViewport() {

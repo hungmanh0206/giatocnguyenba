@@ -99,6 +99,19 @@ test('seed stores the supplied five-generation genealogy', () => {
     ),
     [1, 2, 3, 4],
   );
+  assert.deepEqual(
+    [
+      'g3-xum',
+      'g3-liem',
+      'g3-cham',
+      'g3-ton',
+      'g3-gian',
+      'g3-sanh',
+      'g3-giang',
+      'g3-ut',
+    ].map((id) => member(id).siblingOrder),
+    [1, 2, 3, 4, 5, 6, 7, 8],
+  );
   assert.equal(member('g2-tang').branch, 2);
   assert.deepEqual(
     relatives(seedMembers, member('g2-khang')).children.map((person) => person.id),
@@ -409,6 +422,23 @@ test('tree positions siblings by recorded order instead of branch label', () => 
     .map((group) => group.clanMember.id);
 
   assert.deepEqual(generationTwo, ['g2-khang', 'g2-bang', 'g2-an', 'g2-tang']);
+
+  const khangChildren = model.links
+    .filter((link) => link.source === 'family-g2-khang')
+    .map((link) => model.groups.find((group) => group.id === link.target))
+    .filter(Boolean)
+    .sort((left, right) => left.x - right.x)
+    .map((group) => group.clanMember.id);
+  assert.deepEqual(khangChildren, [
+    'g3-xum',
+    'g3-liem',
+    'g3-cham',
+    'g3-ton',
+    'g3-gian',
+    'g3-sanh',
+    'g3-giang',
+    'g3-ut',
+  ]);
 });
 
 test('tree distinguishes wives and children in recorded multi-wife households', () => {
