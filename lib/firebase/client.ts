@@ -2,6 +2,7 @@ import { getApp, getApps, initializeApp } from 'firebase/app';
 import {
   GoogleAuthProvider,
   getAuth,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   type User,
@@ -25,6 +26,15 @@ export function getFirebaseServices() {
 export async function signInWithGoogle(): Promise<User> {
   const { auth } = getFirebaseServices();
   const result = await signInWithPopup(auth, new GoogleAuthProvider());
+  return result.user;
+}
+
+export async function signInWithPassword(
+  email: string,
+  password: string,
+): Promise<User> {
+  const { auth } = getFirebaseServices();
+  const result = await signInWithEmailAndPassword(auth, email, password);
   return result.user;
 }
 

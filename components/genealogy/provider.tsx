@@ -24,6 +24,7 @@ import {
 } from '@/lib/firebase/config';
 import {
   getFirebaseServices,
+  signInWithPassword as signInWithFirebasePassword,
   signInWithGoogle,
   signOutFromFirebase,
 } from '@/lib/firebase/client';
@@ -50,6 +51,7 @@ type FamilyContextValue = {
   remove: (memberId: string) => Promise<string | null>;
   reset: () => void;
   signIn: () => Promise<string | null>;
+  signInWithPassword: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 };
 
@@ -67,6 +69,7 @@ const FamilyContext = createContext<FamilyContextValue>({
   remove: async () => null,
   reset: () => {},
   signIn: async () => null,
+  signInWithPassword: async () => null,
   signOut: async () => {},
 });
 
@@ -85,6 +88,15 @@ function messageFor(error: unknown, context: 'connection' | 'write' = 'connectio
   }
   if (code.includes('unauthorized-domain')) {
     return 'Tên miền này chưa được thêm vào danh sách miền được phép của Firebase Authentication.';
+  }
+  if (code.includes('invalid-email')) {
+    return 'Địa chỉ email không hợp lệ.';
+  }
+  if (code.includes('invalid-credential') || code.includes('wrong-password')) {
+    return 'Email hoặc mật khẩu không đúng.';
+  }
+  if (code.includes('operation-not-allowed')) {
+    return 'Đăng nhập bằng email và mật khẩu chưa được bật trong Firebase Authentication.';
   }
   return 'Không thể kết nối Firebase. Kiểm tra cấu hình, quyền truy cập và kết nối mạng.';
 }
@@ -269,6 +281,18 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function signInWithPassword(email: string, password: string) {
+    if (!isFirebaseConfigured) {
+      return 'Firebase chưa được cấu hình trên môi trường này.';
+    }
+    try {
+      await signInWithFirebasePassword(email.trim(), password);
+      return null;
+    } catch (error) {
+      return messageFor(error);
+    }
+  }
+
   async function signOut() {
     if (!isFirebaseConfigured) return;
     await signOutFromFirebase();
@@ -283,6 +307,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         remove,
         reset: () => setMembers(seedMembers),
         signIn,
+        signInWithPassword,
         signOut,
       }}
     >
