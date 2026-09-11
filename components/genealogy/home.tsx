@@ -250,11 +250,10 @@ export function HomePage() {
           </p>
           <div className="hero-actions">
             <Link className="action-button hero-tree-link" href="/family-tree">
-              <HeritageIcon name="tree-cta" size={20} />
               Khám phá cây gia phả
               <HeritageIcon name="next" size={18} />
             </Link>
-            <Link className="text-link" href="/history">
+            <Link className="text-link hero-history-link" href="/history">
               Lịch sử dòng họ <HeritageIcon name="next" size={17} />
             </Link>
           </div>
