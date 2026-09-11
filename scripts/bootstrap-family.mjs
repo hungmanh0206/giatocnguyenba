@@ -52,6 +52,7 @@ for (const person of seedMembers) {
       nameKnown: person.nameKnown ?? true,
       tabooName: person.tabooName ?? null,
       styleName: person.styleName ?? null,
+      siblingOrder: person.siblingOrder ?? null,
       born: person.born ?? null,
       died: person.died ?? null,
       diedText: person.diedText ?? null,

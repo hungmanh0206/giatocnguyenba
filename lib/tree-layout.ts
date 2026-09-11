@@ -1,4 +1,4 @@
-import { memberSortYear, type Member } from './family.ts';
+import { compareSiblingOrder, type Member } from './family.ts';
 
 export const FAMILY_UNIT_WIDTH = 248;
 export const FAMILY_UNIT_HEIGHT = 164;
@@ -86,7 +86,7 @@ function lineageType(person: Member) {
 function orderedPeople(members: Member[], indexOf: Map<string, number>) {
   return [...members].sort((a, b) => {
     const sourceOrder = indexOf.get(a.id)! - indexOf.get(b.id)!;
-    return a.generation - b.generation || sourceOrder;
+    return a.generation - b.generation || compareSiblingOrder(a, b) || sourceOrder;
   });
 }
 
@@ -96,8 +96,7 @@ function compareGroups(
   indexOf: Map<string, number>,
 ) {
   return (
-    memberSortYear(a.clanMember) - memberSortYear(b.clanMember) ||
-    a.clanMember.branch - b.clanMember.branch ||
+    compareSiblingOrder(a.clanMember, b.clanMember) ||
     indexOf.get(a.clanMember.id)! - indexOf.get(b.clanMember.id)!
   );
 }

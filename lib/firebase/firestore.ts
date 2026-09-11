@@ -18,7 +18,7 @@ import { firebaseFamilyId } from './config';
 import { isFamilyRole, type FamilyRole } from '@/lib/access';
 import {
   UNKNOWN_MEMBER_NAME,
-  memberSortYear,
+  compareSiblingOrder,
   type Member,
 } from '@/lib/family';
 
@@ -33,6 +33,7 @@ const memberFields = [
   'lineageType',
   'generation',
   'branch',
+  'siblingOrder',
   'born',
   'died',
   'diedText',
@@ -103,6 +104,7 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
             : 'direct',
     generation: integer(raw.generation, 1),
     branch: integer(raw.branch),
+    siblingOrder: integer(raw.siblingOrder) || undefined,
     born,
     died: integer(raw.died) || undefined,
     diedText: string(raw.diedText).trim() || undefined,
@@ -138,6 +140,7 @@ function memberData(person: Member) {
     lineageType: person.lineageType,
     generation: person.generation,
     branch: person.branch,
+    siblingOrder: person.siblingOrder ?? null,
     born: person.born ?? null,
     died: person.died ?? null,
     diedText: person.diedText?.trim() || null,
@@ -207,8 +210,7 @@ export function subscribeToFamilyMembers(
         .sort(
           (a, b) =>
             a.generation - b.generation ||
-            memberSortYear(a) - memberSortYear(b) ||
-            a.name.localeCompare(b.name, 'vi'),
+            compareSiblingOrder(a, b),
         );
       onMembers(data);
     },

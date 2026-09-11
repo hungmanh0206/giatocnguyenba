@@ -650,6 +650,23 @@ export function AdminPage() {
                     </label>
                   )}
                 </div>
+                <label>
+                  Thứ tự trong anh chị em
+                  <Input
+                    type="number"
+                    min={1}
+                    max={999}
+                    inputMode="numeric"
+                    placeholder="Ví dụ: 3"
+                    value={editing.siblingOrder ?? ''}
+                    onChange={(event) =>
+                      update(
+                        'siblingOrder',
+                        event.target.value ? Number(event.target.value) : undefined,
+                      )
+                    }
+                  />
+                </label>
                 <h3>Quan hệ gia đình</h3>
                 {[0, 1].map((index) => (
                   <label key={index}>

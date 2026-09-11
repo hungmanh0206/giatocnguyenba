@@ -93,6 +93,12 @@ test('seed stores the supplied five-generation genealogy', () => {
     relatives(seedMembers, founder).children.map((person) => person.id),
     ['g2-khang', 'g2-bang', 'g2-an', 'g2-tang'],
   );
+  assert.deepEqual(
+    ['g2-khang', 'g2-bang', 'g2-an', 'g2-tang'].map(
+      (id) => member(id).siblingOrder,
+    ),
+    [1, 2, 3, 4],
+  );
   assert.equal(member('g2-tang').branch, 2);
   assert.deepEqual(
     relatives(seedMembers, member('g2-khang')).children.map((person) => person.id),
@@ -393,6 +399,16 @@ test('tree preserves the full Bà Khang branch and compact empty maternal branch
     ),
     true,
   );
+});
+
+test('tree positions siblings by recorded order instead of branch label', () => {
+  const model = assertRenderableTree([...seedMembers].reverse());
+  const generationTwo = model.groups
+    .filter((group) => group.generation === 2 && group.kind === 'family')
+    .sort((left, right) => left.x - right.x)
+    .map((group) => group.clanMember.id);
+
+  assert.deepEqual(generationTwo, ['g2-khang', 'g2-bang', 'g2-an', 'g2-tang']);
 });
 
 test('tree distinguishes wives and children in recorded multi-wife households', () => {

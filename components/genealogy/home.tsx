@@ -9,9 +9,9 @@ import { HeritageIcon, type HeritageIconName } from './heritage-icon';
 import { useFamily } from './provider';
 import { Footer } from './header';
 import {
+  compareSiblingOrder,
   memberBranchName,
   memberName,
-  memberSortYear,
   memberYearRange,
   searchMembers,
   type Member,
@@ -184,10 +184,7 @@ export function HomePage() {
       .filter((link) => link.source === root.id)
       .map((link) => model.groups.find((group) => group.id === link.target))
       .filter((group): group is Household => !!group)
-      .sort(
-        (a, b) =>
-          memberSortYear(a.clanMember) - memberSortYear(b.clanMember),
-      );
+      .sort((a, b) => compareSiblingOrder(a.clanMember, b.clanMember));
     return {
       founders: [root.clanMember, ...root.spouses],
       branches: branchGroups.map((group) => ({

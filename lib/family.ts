@@ -9,6 +9,7 @@ export type Member = {
   lineageType: 'direct' | 'maternal-terminal';
   generation: number;
   branch: number;
+  siblingOrder?: number;
   born?: number;
   died?: number;
   diedText?: string;
@@ -67,6 +68,17 @@ export function memberBirthLabel(person: Member) {
 export function memberSortYear(person: Member) {
   return person.born ?? Number.MAX_SAFE_INTEGER;
 }
+
+export function compareSiblingOrder(left: Member, right: Member) {
+  const leftOrder = left.siblingOrder ?? Number.MAX_SAFE_INTEGER;
+  const rightOrder = right.siblingOrder ?? Number.MAX_SAFE_INTEGER;
+
+  return (
+    leftOrder - rightOrder ||
+    memberSortYear(left) - memberSortYear(right) ||
+    left.name.localeCompare(right.name, 'vi')
+  );
+}
 type SeedDetails = Partial<
   Omit<
     Member,
@@ -123,7 +135,20 @@ function seedMember(
   };
 }
 
-export const seedMembers: Member[] = [
+function withSiblingOrders(members: Member[]) {
+  const countByParents = new Map<string, number>();
+
+  return members.map((person) => {
+    if (!person.parents.length) return person;
+
+    const parentsKey = [...person.parents].sort().join('|');
+    const siblingOrder = (countByParents.get(parentsKey) || 0) + 1;
+    countByParents.set(parentsKey, siblingOrder);
+    return { ...person, siblingOrder: person.siblingOrder ?? siblingOrder };
+  });
+}
+
+export const seedMembers: Member[] = withSiblingOrders([
   seedMember('p1', 'Nguyễn Bá Linh', 'male', 1, 0, {
     tabooName: 'Sóc',
     styleName: 'Thần Hy Phủ Quân',
@@ -403,7 +428,7 @@ export const seedMembers: Member[] = [
   seedMember('g5-thong', 'Thống', 'male', 5, 1, {
     parents: ['g4-con'],
   }),
-];
+]);
 
 export const branchName = (branch: number) =>
   branch
@@ -463,12 +488,14 @@ export function relatives(members: Member[], person: Member) {
   return {
     parents: members.filter((p) => person.parents.includes(p.id)),
     spouses: members.filter((p) => person.spouses.includes(p.id)),
-    children: members.filter((p) => p.parents.includes(person.id)),
+    children: members
+      .filter((p) => p.parents.includes(person.id))
+      .sort(compareSiblingOrder),
     siblings: members.filter(
       (p) =>
         p.id !== person.id &&
         p.parents.some((id) => person.parents.includes(id)),
-    ),
+    ).sort(compareSiblingOrder),
   };
 }
 
@@ -718,6 +745,13 @@ export function validateMember(
     person.branch > 20
   )
     return 'Vui lòng chọn đời và chi.';
+  if (
+    person.siblingOrder !== undefined &&
+    (!Number.isInteger(person.siblingOrder) ||
+      person.siblingOrder < 1 ||
+      person.siblingOrder > 999)
+  )
+    return 'Thứ tự anh chị em cần là số nguyên từ 1 đến 999.';
   if (person.nameKnown !== false && !person.name.trim())
     return 'Vui lòng nhập họ và tên hoặc chọn Chưa biết tên.';
   if (person.isClanMember && person.gender === 'female' && person.lineageType !== 'maternal-terminal') {

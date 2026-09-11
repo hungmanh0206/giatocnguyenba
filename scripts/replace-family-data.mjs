@@ -41,6 +41,7 @@ function memberData(person, timestamp) {
     lineageType: person.lineageType,
     generation: person.generation,
     branch: person.branch,
+    siblingOrder: person.siblingOrder ?? null,
     born: person.born ?? null,
     died: person.died ?? null,
     diedText: person.diedText ?? null,
