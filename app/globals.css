@@ -8390,6 +8390,12 @@ main#main .timeline-entry p {
   white-space: nowrap;
 }
 
+@media (min-width: 768px) {
+  .home-stats-band {
+    background: transparent;
+  }
+}
+
 @media (max-width: 767px) {
   .family-tree-tabs {
     min-height: 54px;
