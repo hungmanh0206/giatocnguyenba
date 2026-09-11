@@ -6401,7 +6401,7 @@ main#main .branch-preview > .branch-preview-meta {
 
 .admin-result-count {
   display: block;
-  margin: 16px 0 -2px;
+  margin: 16px 0 14px;
 }
 
 .admin-table-wrap {
