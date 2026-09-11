@@ -33,7 +33,6 @@ import {
   EmptyState,
   branchOptions,
   generationOptions,
-  pageSizeOptions,
   ResultsPagination,
 } from './common';
 import {
@@ -380,15 +379,7 @@ export function AdminPage() {
           </Button>
         )}
       </div>
-      <div className="admin-results-summary">
-        <span className="muted">{filtered.length} hồ sơ</span>
-        <Choice
-          label="Số hồ sơ mỗi trang"
-          value={pageSize}
-          onChange={setPageSize}
-          options={pageSizeOptions}
-        />
-      </div>
+      <span className="muted admin-result-count">{filtered.length} hồ sơ</span>
       {!filtered.length ? (
         <EmptyState
           onReset={() => {
@@ -486,6 +477,8 @@ export function AdminPage() {
         page={currentPage}
         total={totalPages}
         onPageChange={setPage}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
       />
       <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <SheetContent className="editor-sheet">

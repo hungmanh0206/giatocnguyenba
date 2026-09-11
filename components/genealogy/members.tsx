@@ -28,7 +28,6 @@ import {
   Choice,
   branchOptions,
   generationOptions,
-  pageSizeOptions,
   ResultsPagination,
   SearchBox,
   EmptyState,
@@ -110,38 +109,30 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
           <span>
             {filtered.length} thành viên{query && ` cho “${query}”`}
           </span>
-          <div className="member-results-actions">
-            <Choice
-              label="Số thành viên mỗi trang"
-              value={pageSize}
-              onChange={setPageSize}
-              options={pageSizeOptions}
-            />
-            <div className="view-toggle" role="group" aria-label="Kiểu hiển thị">
-              <span className="view-toggle-label">Hiển thị</span>
-              <Button
-                variant="ghost"
-                className="view-toggle-button"
-                data-active={view === 'grid'}
-                aria-label="Dạng thẻ"
-                aria-pressed={view === 'grid'}
-                title="Dạng thẻ"
-                onClick={() => setView('grid')}
-              >
-                <HeritageIcon name="grid" size={18} />
-              </Button>
-              <Button
-                variant="ghost"
-                className="view-toggle-button"
-                data-active={view === 'list'}
-                aria-label="Danh sách"
-                aria-pressed={view === 'list'}
-                title="Danh sách"
-                onClick={() => setView('list')}
-              >
-                <HeritageIcon name="list" size={18} />
-              </Button>
-            </div>
+          <div className="view-toggle" role="group" aria-label="Kiểu hiển thị">
+            <span className="view-toggle-label">Hiển thị</span>
+            <Button
+              variant="ghost"
+              className="view-toggle-button"
+              data-active={view === 'grid'}
+              aria-label="Dạng thẻ"
+              aria-pressed={view === 'grid'}
+              title="Dạng thẻ"
+              onClick={() => setView('grid')}
+            >
+              <HeritageIcon name="grid" size={18} />
+            </Button>
+            <Button
+              variant="ghost"
+              className="view-toggle-button"
+              data-active={view === 'list'}
+              aria-label="Danh sách"
+              aria-pressed={view === 'list'}
+              title="Danh sách"
+              onClick={() => setView('list')}
+            >
+              <HeritageIcon name="list" size={18} />
+            </Button>
           </div>
         </div>
         {!filtered.length ? (
@@ -223,6 +214,8 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
           page={currentPage}
           total={total}
           onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
         />
       </div>
       {!embedded && <Footer />}

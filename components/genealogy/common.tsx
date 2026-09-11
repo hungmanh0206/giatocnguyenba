@@ -69,36 +69,48 @@ export function ResultsPagination({
   page,
   total,
   onPageChange,
+  pageSize,
+  onPageSizeChange,
 }: {
   page: number;
   total: number;
   onPageChange: (page: number) => void;
+  pageSize: string;
+  onPageSizeChange: (pageSize: string) => void;
 }) {
-  if (total <= 1) return null;
-
   return (
     <nav className="pagination" aria-label="Phân trang">
-      <Button
-        variant="outline"
-        className="icon-button"
-        disabled={page === 1}
-        aria-label="Trang trước"
-        onClick={() => onPageChange(page - 1)}
-      >
-        <HeritageIcon name="previous" size={18} />
-      </Button>
-      <span>
-        Trang {page} / {total}
-      </span>
-      <Button
-        variant="outline"
-        className="icon-button"
-        disabled={page === total}
-        aria-label="Trang sau"
-        onClick={() => onPageChange(page + 1)}
-      >
-        <HeritageIcon name="next" size={18} />
-      </Button>
+      <Choice
+        label="Số kết quả mỗi trang"
+        value={pageSize}
+        onChange={onPageSizeChange}
+        options={pageSizeOptions}
+      />
+      {total > 1 && (
+        <div className="pagination-page-controls">
+          <Button
+            variant="outline"
+            className="icon-button"
+            disabled={page === 1}
+            aria-label="Trang trước"
+            onClick={() => onPageChange(page - 1)}
+          >
+            <HeritageIcon name="previous" size={18} />
+          </Button>
+          <span>
+            Trang {page} / {total}
+          </span>
+          <Button
+            variant="outline"
+            className="icon-button"
+            disabled={page === total}
+            aria-label="Trang sau"
+            onClick={() => onPageChange(page + 1)}
+          >
+            <HeritageIcon name="next" size={18} />
+          </Button>
+        </div>
+      )}
     </nav>
   );
 }
