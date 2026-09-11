@@ -6479,6 +6479,10 @@ main#main .branch-preview > .branch-preview-meta {
   color: #5f5549;
 }
 
+.hero-date-compact {
+  display: none;
+}
+
 .hero-utility-lunar {
   color: #7c2e2d;
   font-weight: 650;
@@ -8149,16 +8153,15 @@ main#main .timeline-entry p {
     display: flex !important;
     width: 100% !important;
     flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 4px;
-    margin: 24px 0 18px;
+    align-items: flex-start !important;
+    gap: 8px;
+    margin: 22px 0 16px;
   }
 
-  .home-page .home-hero .hero-tree-link,
-  .home-page .home-hero .hero-history-link {
+  .home-page .home-hero .hero-tree-link {
     display: flex !important;
     width: 100% !important;
-    min-height: 48px !important;
+    min-height: 46px !important;
     padding-inline: 16px;
   }
 
@@ -8171,8 +8174,13 @@ main#main .timeline-entry p {
   }
 
   .home-page .home-hero .hero-history-link {
-    justify-content: center !important;
-    align-self: stretch;
+    display: inline-flex !important;
+    width: auto !important;
+    min-height: 32px !important;
+    justify-content: flex-start !important;
+    padding: 0 !important;
+    font-size: 13px;
+    text-align: left;
   }
 
   .home-page .home-hero .hero-search {
@@ -8191,41 +8199,74 @@ main#main .timeline-entry p {
 
   .home-page .home-hero .hero-utility {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
+    align-items: center;
+    grid-template-columns: max-content max-content max-content max-content;
+    grid-template-rows: auto;
+    justify-content: start;
     width: 100% !important;
-    column-gap: 14px;
-    row-gap: 8px;
-    margin-top: 13px;
-    font-size: 12px;
+    column-gap: 6px;
+    margin-top: 10px;
+    font-size: 11px;
+    line-height: 1.3;
+    white-space: nowrap;
   }
 
   .home-page .home-hero .hero-utility-primary {
     display: contents !important;
   }
 
+  .home-page .home-hero .hero-utility .heritage-icon,
+  .home-page .home-hero .hero-date-long,
+  .home-page .home-hero .hero-utility-lunar small {
+    display: none;
+  }
+
+  .home-page .home-hero .hero-date-compact {
+    display: inline;
+  }
+
+  .home-page .home-hero .hero-utility-date,
+  .home-page .home-hero .hero-utility-lunar,
+  .home-page .home-hero .hero-utility-time {
+    flex: 0 0 auto;
+    flex-basis: auto;
+    grid-row: 1 !important;
+  }
+
   .home-page .home-hero .hero-utility-date {
-    grid-column: 1 / -1 !important;
-    grid-row: 1;
+    grid-column: 1 !important;
     padding-bottom: 0;
     border: 0;
   }
 
+  .home-page .home-hero .hero-utility-divider {
+    display: inline !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    color: #c7b9a5;
+    font-size: inherit;
+  }
+
   .home-page .home-hero .hero-utility-lunar {
-    grid-column: 1 !important;
-    grid-row: 2;
+    grid-column: 3 !important;
   }
 
   .home-page .home-hero .hero-utility-time {
-    grid-column: 2 !important;
-    grid-row: 2;
-    justify-self: end !important;
-    align-self: center;
-    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: auto;
+    grid-column: 4 !important;
+    font-size: inherit;
+  }
+
+  .home-page .home-hero .hero-utility-time::before {
+    color: #c7b9a5;
+    content: '·';
   }
 
   .home-page .home-hero .heritage-art {
-    object-position: 76% center;
-    opacity: 0.12;
+    object-position: 86% center;
+    opacity: 0.1;
   }
 }

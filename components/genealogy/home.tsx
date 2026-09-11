@@ -108,6 +108,20 @@ function VietnamClock() {
         year: 'numeric',
       }).format(now)
     : 'Đang cập nhật ngày dương';
+  const compactSolarDate = now
+    ? (() => {
+        const parts = new Intl.DateTimeFormat('vi-VN', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          weekday: 'long',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        }).formatToParts(now);
+        const part = (type: Intl.DateTimeFormatPartTypes) =>
+          parts.find((value) => value.type === type)?.value || '';
+        return `${part('weekday')}, ${part('day')}/${part('month')}/${part('year')}`;
+      })()
+    : 'Đang cập nhật ngày dương';
   const lunar = now ? lunarOf(vietnamDate(now)) : null;
 
   return (
@@ -115,7 +129,8 @@ function VietnamClock() {
       <div className="hero-utility-primary">
         <span className="hero-utility-item hero-utility-date">
           <HeritageIcon className="hero-calendar-icon" name="solar-calendar" size={16} />
-          <span>{solarDate}</span>
+          <span className="hero-date-long">{solarDate}</span>
+          <span className="hero-date-compact">{compactSolarDate}</span>
         </span>
         <span className="hero-utility-divider" aria-hidden="true">
           ·
