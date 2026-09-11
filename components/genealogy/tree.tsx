@@ -17,7 +17,7 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ChevronDown, ChevronUp, Info, MoreHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   branchName,
@@ -147,7 +147,9 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
       : group.clanMember.gender === 'male' && group.clanMember.isClanMember
         ? memberBranchName(group.clanMember, data.members)
         : undefined);
-  const memberRole = group.wifeRoles[group.clanMember.id] || (terminal ? 'Con trực tiếp' : undefined);
+  const memberRole =
+    (root ? 'Thủy tổ' : group.wifeRoles[group.clanMember.id]) ||
+    (terminal ? 'Con trực tiếp' : undefined);
 
   return (
     <article
@@ -182,7 +184,7 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
               <PersonArea
                 person={spouse}
                 role={
-                  group.wifeRoles[spouse.id] ||
+                  (root && spouse.gender === 'female' ? 'Phu nhân' : group.wifeRoles[spouse.id]) ||
                   (spouse.gender === 'female' ? 'Vợ · phối ngẫu' : 'Chồng · phối ngẫu')
                 }
                 selected={data.selected === spouse.id}
@@ -589,12 +591,9 @@ function TreeCanvas() {
         </div>
       </div>
       <div className="tree-canvas">
-        <details className="tree-legend">
-          <summary aria-label="Mở hướng dẫn đọc cây gia phả" title="Cách đọc cây">
-            <Info size={16} strokeWidth={2} aria-hidden="true" />
-            <span>Cách đọc cây</span>
-          </summary>
-          <div className="tree-legend-panel">
+        <div className="tree-legend" aria-label="Cách đọc cây gia phả">
+          <strong>Cách đọc cây</strong>
+          <div>
             <span>
               <i className="tree-legend-line" /> Thành viên dòng họ ở trên
             </span>
@@ -602,7 +601,7 @@ function TreeCanvas() {
               <i className="tree-legend-line is-dashed" /> Nhánh ngoại được nối tiếp khi có hậu duệ
             </span>
           </div>
-        </details>
+        </div>
         <ReactFlow
           nodes={[...familyNodes, ...generationNodes]}
           edges={edges}

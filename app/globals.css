@@ -8589,65 +8589,41 @@ main#main .timeline-entry p {
 .tree-legend {
   top: 18px;
   left: 20px;
-  gap: 0;
-  max-width: none;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  box-shadow: none;
-  color: #685d50;
-  pointer-events: auto;
-}
-
-.tree-legend > summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 34px;
-  padding: 0 10px;
-  border: 1px solid #ddd1be;
-  border-radius: 6px;
-  background: #fffdf8e8;
-  color: #625649;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 650;
-  list-style: none;
-  user-select: none;
-}
-
-.tree-legend > summary::-webkit-details-marker,
-.tree-more-menu > summary::-webkit-details-marker {
-  display: none;
-}
-
-.tree-legend > summary:hover,
-.tree-legend[open] > summary {
-  border-color: #bd9867;
-  background: #fffaf1;
-  color: var(--primary);
-}
-
-.tree-legend-panel {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
-  width: max-content;
-  max-width: min(310px, calc(100vw - 40px));
-  margin-top: 7px;
+  max-width: 310px;
   padding: 10px 12px;
   border: 1px solid #ddd1be;
   border-radius: 6px;
-  background: #fffdf8f5;
-  box-shadow: 0 8px 20px #49331a16;
+  background: #fffdf8ed;
+  box-shadow: 0 5px 15px #49331a12;
+  color: #332820;
   font-size: 11px;
+  pointer-events: none;
 }
 
-.tree-legend-panel span {
+.tree-legend > strong {
+  color: #211a15;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tree-legend > div {
+  display: grid;
+  gap: 6px;
+}
+
+.tree-legend span {
   display: flex;
   align-items: center;
   gap: 6px;
   line-height: 1.4;
+}
+
+.tree-more-menu > summary::-webkit-details-marker {
+  display: none;
 }
 
 .tree-controls {
