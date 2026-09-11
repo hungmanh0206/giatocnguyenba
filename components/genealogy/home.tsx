@@ -9,7 +9,7 @@ import { HeritageIcon, type HeritageIconName } from './heritage-icon';
 import { useFamily } from './provider';
 import { Footer } from './header';
 import {
-  branchName,
+  memberBranchName,
   memberName,
   memberSortYear,
   memberYearRange,
@@ -57,7 +57,7 @@ export function MemberTile({ person }: { person: Member }) {
       <span>
         <strong>{memberName(person)}</strong>
         <small>
-          Đời {person.generation} · {branchName(person.branch)}
+          Đời {person.generation} · {memberBranchName(person)}
         </small>
       </span>
       <HeritageIcon name="next" size={17} />
@@ -374,9 +374,7 @@ export function HomePage() {
                         <article className="home-family-card">
                           <div className="home-family-heading">
                             <span>
-                              {group.lineageType === 'maternal-terminal'
-                                ? 'Nhánh ngoại'
-                                : branchName(group.clanMember.branch)}
+                              {memberBranchName(group.clanMember)}
                             </span>
                             <em>Đời thứ {group.generation}</em>
                           </div>
@@ -422,7 +420,7 @@ export function HomePage() {
                 <span className="anniversary-person">
                   <strong>{memberName(p)}</strong>
                   <small>
-                    Đời {p.generation} · {branchName(p.branch)}
+                    Đời {p.generation} · {memberBranchName(p)}
                   </small>
                 </span>
                 <span className="anniversary-footer">

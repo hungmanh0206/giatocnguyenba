@@ -20,7 +20,7 @@ export type Member = {
   hometown?: string;
 };
 
-export const UNKNOWN_MEMBER_NAME = 'Chưa rõ tên';
+export const UNKNOWN_MEMBER_NAME = 'Chưa biết tên';
 
 export function memberName(person: Member) {
   const name = person.nameKnown === false || !person.name.trim()
@@ -181,45 +181,107 @@ export const seedMembers: Member[] = [
     isClanMember: false,
     spouses: ['g2-khang-chong'],
     biography:
-      'Bà Kế trong gia đình của chồng Bà Nguyễn Thị Khang; chưa rõ họ tên.',
+      'Bà Kế trong gia đình của chồng Bà Nguyễn Thị Khang; chưa biết tên.',
   }),
 
   seedMember('g3-xum', 'Nguyễn Văn Xum', 'male', 3, 1, {
     parents: ['g2-khang', 'g2-khang-chong'],
+    spouses: ['g3-xum-vo'],
   }),
   seedMember('g3-liem', 'Nguyễn Văn Liêm', 'male', 3, 1, {
     parents: ['g2-khang', 'g2-khang-chong'],
+    spouses: ['g3-liem-vo'],
   }),
   seedMember('g3-cham', 'Nguyễn Văn Châm', 'male', 3, 1, {
     parents: ['g2-khang', 'g2-khang-chong'],
+    spouses: ['g3-cham-vo'],
   }),
   seedMember('g3-ton', 'Nguyễn Văn Tốn', 'male', 3, 1, {
     parents: ['g2-khang', 'g2-khang-chong'],
+    spouses: ['g3-ton-vo'],
   }),
   seedMember('g3-gian', 'Nguyễn Văn Giản', 'male', 3, 1, {
     parents: ['g2-khang', 'g2-khang-chong'],
+    spouses: ['g3-gian-vo'],
   }),
   seedMember('g3-sanh', 'Nguyễn Văn Sanh', 'male', 3, 1, {
     parents: ['g2-khang-chong', 'g2-ba-ke'],
+    spouses: ['g3-sanh-vo-1', 'g3-sanh-vo-2', 'g3-sanh-vo-3'],
     biography: 'Ông có ba người vợ.',
   }),
   seedMember('g3-giang', 'Nguyễn Thị Giàng', 'female', 3, 1, {
     parents: ['g2-khang-chong', 'g2-ba-ke'],
+    spouses: ['g3-giang-chong'],
   }),
   seedMember('g3-ut', 'Nguyễn Thị Út', 'female', 3, 1, {
     parents: ['g2-khang-chong', 'g2-ba-ke'],
+    spouses: ['g3-ut-chong'],
+  }),
+
+  seedMember('g3-xum-vo', UNKNOWN_MEMBER_NAME, 'female', 3, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g3-xum'],
+  }),
+  seedMember('g3-liem-vo', UNKNOWN_MEMBER_NAME, 'female', 3, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g3-liem'],
+  }),
+  seedMember('g3-cham-vo', UNKNOWN_MEMBER_NAME, 'female', 3, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g3-cham'],
+  }),
+  seedMember('g3-ton-vo', UNKNOWN_MEMBER_NAME, 'female', 3, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g3-ton'],
+  }),
+  seedMember('g3-gian-vo', UNKNOWN_MEMBER_NAME, 'female', 3, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g3-gian'],
+  }),
+  seedMember('g3-sanh-vo-1', UNKNOWN_MEMBER_NAME, 'female', 3, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g3-sanh'],
+  }),
+  seedMember('g3-sanh-vo-2', UNKNOWN_MEMBER_NAME, 'female', 3, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g3-sanh'],
+  }),
+  seedMember('g3-sanh-vo-3', UNKNOWN_MEMBER_NAME, 'female', 3, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g3-sanh'],
+  }),
+  seedMember('g3-giang-chong', UNKNOWN_MEMBER_NAME, 'male', 3, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g3-giang'],
+  }),
+  seedMember('g3-ut-chong', UNKNOWN_MEMBER_NAME, 'male', 3, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g3-ut'],
   }),
 
   seedMember('g4-nghiem', 'Nguyễn Nghiễm', 'male', 4, 1, {
     parents: ['g3-xum'],
+    spouses: ['g4-nghiem-vo'],
     biography: 'Thân phụ của anh Xứng, anh Hy và các con khác.',
   }),
   seedMember('g4-nhan', 'Nhàn', 'female', 4, 1, {
     parents: ['g3-xum'],
+    spouses: ['g4-nhan-chong'],
     biography: 'Thân mẫu của anh Pháo, anh Đùng và các con khác.',
   }),
   seedMember('g4-nha', 'Nhạ', 'female', 4, 1, {
     parents: ['g3-xum'],
+    spouses: ['g4-nha-chong'],
     biography: 'Thân mẫu của anh Hướng, chị Lan và các con khác.',
   }),
   seedMember('g4-han', 'Hàn', 'female', 4, 1, {
@@ -290,10 +352,32 @@ export const seedMembers: Member[] = [
   }),
   seedMember('g4-con', 'Cớn', 'male', 4, 1, {
     parents: ['g3-giang'],
+    spouses: ['g4-con-vo'],
   }),
   seedMember('g4-thap', 'Tháp', 'male', 4, 1, {
     parents: ['g3-ut'],
     biography: 'Nghề nghiệp: Giáo viên.',
+  }),
+
+  seedMember('g4-nghiem-vo', UNKNOWN_MEMBER_NAME, 'female', 4, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g4-nghiem'],
+  }),
+  seedMember('g4-nhan-chong', UNKNOWN_MEMBER_NAME, 'male', 4, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g4-nhan'],
+  }),
+  seedMember('g4-nha-chong', UNKNOWN_MEMBER_NAME, 'male', 4, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g4-nha'],
+  }),
+  seedMember('g4-con-vo', UNKNOWN_MEMBER_NAME, 'female', 4, 1, {
+    nameKnown: false,
+    isClanMember: false,
+    spouses: ['g4-con'],
   }),
 
   seedMember('g5-xung', 'Xứng', 'male', 5, 1, {
@@ -323,6 +407,15 @@ export const branchName = (branch: number) =>
   branch
     ? `Chi ${['', 'trưởng', 'hai', 'ba', 'tư', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'][branch] || branch}`
     : 'Thủy tổ';
+
+export function memberBranchName(
+  person: Pick<Member, 'branch' | 'gender' | 'generation' | 'isClanMember'>,
+) {
+  if (person.generation === 1) return 'Thủy tổ';
+  return person.gender === 'male' && person.isClanMember
+    ? branchName(person.branch)
+    : 'Nhánh ngoại';
+}
 export const initials = (name: string) =>
   name
     .split(' ')
@@ -604,7 +697,7 @@ export function validateMember(
   )
     return 'Vui lòng chọn đời và chi.';
   if (person.nameKnown !== false && !person.name.trim())
-    return 'Vui lòng nhập họ và tên hoặc chọn Chưa rõ tên.';
+    return 'Vui lòng nhập họ và tên hoặc chọn Chưa biết tên.';
   if (person.isClanMember && person.gender === 'female' && person.lineageType !== 'maternal-terminal') {
     return 'Con gái trong dòng họ được ghi là nhánh ngoại.';
   }

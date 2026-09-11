@@ -13,7 +13,7 @@ import { Footer } from './header';
 import { HeritageIcon } from './heritage-icon';
 import { Avatar } from './home';
 import { Choice, branchOptions } from './common';
-import { branchName, memberName } from '@/lib/family';
+import { memberBranchName, memberName } from '@/lib/family';
 import { dateLabel, vietnamToday } from '@/lib/lunar';
 import {
   getFamilyEventsForDate,
@@ -198,7 +198,7 @@ export function LunarPage() {
                             <strong>{memberName(event.person)}</strong>
                             <small>
                               Đời {event.person.generation} ·{' '}
-                              {branchName(event.person.branch)}
+                              {memberBranchName(event.person)}
                             </small>
                             <small className="day-event-lunar">
                               {info.lunar.day} tháng {info.lunar.month} ÂL
@@ -214,7 +214,21 @@ export function LunarPage() {
                             <HeritageIcon name="next" size={15} />
                           </Link>
                         </div>
-                      ) : null,
+                      ) : (
+                        <div className="day-event clan-memorial-event" key={event.id}>
+                          <span className="clan-memorial-mark" aria-hidden="true">
+                            <HeritageIcon name="memorial" size={20} />
+                          </span>
+                          <div className="day-event-copy">
+                            <strong>{event.title}</strong>
+                            <small>Ngày giỗ chung của dòng họ</small>
+                            <small className="day-event-lunar">
+                              {info.lunar.day} tháng {info.lunar.month} ÂL
+                              {isApproximate ? ' · Điều chỉnh tháng thiếu' : ''}
+                            </small>
+                          </div>
+                        </div>
+                      ),
                     )
                   ) : (
                     <p className="muted">
@@ -380,44 +394,40 @@ export function LunarPage() {
             </span>
           </div>
           <div className="upcoming-grid">
-            {upcoming
-              .slice(0, 6)
-              .flatMap(({ event, date, daysAway, isApproximate }) =>
-                event.person
-                  ? [
-                      <button
-                        className="upcoming-event"
-                        key={event.id}
-                        onClick={() => {
-                          setSelected(date);
-                          setMonth(date);
-                          document
-                            .querySelector('.calendar-layout')
-                            ?.scrollIntoView({
-                              behavior: 'smooth',
-                              block: 'start',
-                            });
-                        }}
-                      >
-                        <span className="date-block">
-                          <strong>{event.lunarDay}</strong>
-                          <small>Tháng {event.lunarMonth} âm</small>
-                        </span>
-                        <span>
-                          <strong>{memberName(event.person)}</strong>
-                          <small>{dateLabel(date)} dương lịch</small>
-                          <em>
-                            {daysAway === 0
-                              ? 'Hôm nay'
-                              : `Còn ${daysAway} ngày`}
-                            {isApproximate ? ' · Tháng thiếu' : ''}
-                          </em>
-                        </span>
-                        <HeritageIcon name="next" size={17} />
-                      </button>,
-                    ]
-                  : [],
-              )}
+            {upcoming.slice(0, 6).map(({ event, date, daysAway, isApproximate }) => (
+              <button
+                className={`upcoming-event ${event.person ? '' : 'is-clan-memorial'}`}
+                key={event.id}
+                onClick={() => {
+                  setSelected(date);
+                  setMonth(date);
+                  document
+                    .querySelector('.calendar-layout')
+                    ?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'start',
+                    });
+                }}
+              >
+                <span className="date-block">
+                  <strong>{event.lunarDay}</strong>
+                  <small>Tháng {event.lunarMonth} âm</small>
+                </span>
+                <span>
+                  <strong>{event.person ? memberName(event.person) : event.title}</strong>
+                  <small>
+                    {event.person
+                      ? `${dateLabel(date)} dương lịch`
+                      : 'Ngày giỗ chung của dòng họ'}
+                  </small>
+                  <em>
+                    {daysAway === 0 ? 'Hôm nay' : `Còn ${daysAway} ngày`}
+                    {isApproximate ? ' · Tháng thiếu' : ''}
+                  </em>
+                </span>
+                <HeritageIcon name="next" size={17} />
+              </button>
+            ))}
           </div>
           <p className="calendar-policy">
             <span className="calendar-policy-info" aria-hidden="true">

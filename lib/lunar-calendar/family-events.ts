@@ -7,6 +7,19 @@ import type {
   UpcomingFamilyEvent,
 } from './types.ts';
 
+export const clanMemorialEvent: FamilyCalendarEvent = {
+  id: 'clan-memorial-nguyen-ba',
+  title: 'Ngày giỗ Họ Nguyễn Bá',
+  kind: 'family-ceremony',
+  calendarType: 'lunar',
+  lunarDay: 6,
+  lunarMonth: 1,
+  leapMonth: false,
+  repeat: 'yearly',
+  originalDate: '06/01 âm lịch',
+  source: 'Gia phả họ Nguyễn Bá',
+};
+
 function memberAnniversaries(members: Member[]): FamilyCalendarEvent[] {
   return members.flatMap((person) =>
     person.anniversary
@@ -72,7 +85,11 @@ export class FamilyLunarEventService {
     date: Date,
     additionalEvents: FamilyCalendarEvent[] = [],
   ): FamilyEventOccurrence[] {
-    return [...memberAnniversaries(members), ...additionalEvents].flatMap(
+    return [
+      clanMemorialEvent,
+      ...memberAnniversaries(members),
+      ...additionalEvents,
+    ].flatMap(
       (event) => {
         const occurrence = matchesEvent(event, date);
         return occurrence.matches
@@ -96,11 +113,13 @@ export class FamilyLunarEventService {
     const upcoming: UpcomingFamilyEvent[] = [];
     const found = new Set<string>();
     const start = startOfDay(from);
-    const maxResults = Math.max(1, limit);
+    const maxMemberEvents = Math.max(0, limit);
+    let memberEventCount = 0;
 
     for (
       let daysAway = 0;
-      daysAway < 400 && upcoming.length < maxResults;
+      daysAway < 400 &&
+      (memberEventCount < maxMemberEvents || !found.has(clanMemorialEvent.id));
       daysAway++
     ) {
       const date = addDays(start, daysAway);
@@ -110,9 +129,11 @@ export class FamilyLunarEventService {
         additionalEvents,
       )) {
         if (found.has(occurrence.event.id)) continue;
+        const isClanMemorial = occurrence.event.id === clanMemorialEvent.id;
+        if (!isClanMemorial && memberEventCount >= maxMemberEvents) continue;
         found.add(occurrence.event.id);
         upcoming.push({ ...occurrence, daysAway });
-        if (upcoming.length >= maxResults) break;
+        if (!isClanMemorial) memberEventCount++;
       }
     }
     return upcoming;

@@ -82,6 +82,11 @@ test('lunar month length reports both 29-day and 30-day months', () => {
 });
 
 test('family lunar events recur yearly and explicitly mark 30th-day adjustments', () => {
+  const clanMemorial = getFamilyEventsForDate([], new Date(2024, 1, 15));
+  assert.equal(clanMemorial.length, 1);
+  assert.equal(clanMemorial[0].event.id, 'clan-memorial-nguyen-ba');
+  assert.equal(clanMemorial[0].event.title, 'Ngày giỗ Họ Nguyễn Bá');
+
   const midAutumnEvent = {
     id: 'family-mid-autumn',
     title: 'Lễ họ tháng Tám',
@@ -123,6 +128,14 @@ test('family lunar events recur yearly and explicitly mark 30th-day adjustments'
   ]);
   assert.equal(adjusted.length, 1);
   assert.equal(adjusted[0].isApproximate, true);
+
+  const upcomingClanMemorial = getUpcomingFamilyEvents({
+    members: [],
+    from: new Date(2024, 1, 10),
+    limit: 1,
+  });
+  assert.equal(upcomingClanMemorial[0].event.id, 'clan-memorial-nguyen-ba');
+  assert.deepEqual(solarParts(upcomingClanMemorial[0].date), [15, 2, 2024]);
 
   const upcoming = getUpcomingFamilyEvents({
     members: seedMembers,

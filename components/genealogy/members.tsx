@@ -32,7 +32,7 @@ import {
   EmptyState,
 } from './common';
 import {
-  branchName,
+  memberBranchName,
   memberBirthLabel,
   memberDeathLabel,
   memberLifeStatus,
@@ -159,7 +159,7 @@ export function MembersPage() {
               <div className="member-directory-heading" aria-hidden="true">
                 <span>Thành viên</span>
                 <span>Đời</span>
-                <span>Chi họ</span>
+                <span>Nhánh</span>
                 <span>Năm sinh</span>
                 <span>Hồ sơ</span>
               </div>
@@ -175,13 +175,13 @@ export function MembersPage() {
                     <span>
                       <strong>{memberName(p)}</strong>
                       <small>
-                        Đời thứ {p.generation} · {branchName(p.branch)} ·{' '}
+                        Đời thứ {p.generation} · {memberBranchName(p)} ·{' '}
                         {memberYearRange(p)}
                       </small>
                     </span>
                   </span>
                   <span className="member-list-generation">Đời thứ {p.generation}</span>
-                  <span className="member-list-branch">{branchName(p.branch)}</span>
+                  <span className="member-list-branch">{memberBranchName(p)}</span>
                   <span className="member-list-born">{memberBirthLabel(p)}</span>
                   <span className="member-list-open">
                     <span>Xem hồ sơ</span>
@@ -200,7 +200,7 @@ export function MembersPage() {
                 >
                   <div className="person-card-top">
                     <Avatar person={p} />
-                    <span className="branch-badge">{branchName(p.branch)}</span>
+                    <span className="branch-badge">{memberBranchName(p)}</span>
                   </div>
                   <h3>{memberName(p)}</h3>
                   <p>{memberYearRange(p)}</p>
@@ -312,9 +312,9 @@ function Facts({ person }: { person: Member }) {
         </dd>
       </div>
       <div>
-        <dt>Đời / chi</dt>
+        <dt>Đời / nhánh</dt>
         <dd>
-          Đời {person.generation} · {branchName(person.branch)}
+          Đời {person.generation} · {memberBranchName(person)}
         </dd>
       </div>
       <div className="fact-hometown">
@@ -387,7 +387,7 @@ export function MemberDetail({ id }: { id: string }) {
             <div className="profile-summary">
               <div className="eyebrow">
                 ĐỜI THỨ {p.generation} ·{' '}
-                {branchName(p.branch).toLocaleUpperCase('vi')}
+                {memberBranchName(p).toLocaleUpperCase('vi')}
               </div>
               <h1>{memberName(p)}</h1>
               <p>
@@ -507,7 +507,7 @@ export function QuickView({
           <p className="sheet-kicker">Hồ sơ thành viên</p>
           <DrawerTitle>{person ? memberName(person) : ''}</DrawerTitle>
           <DrawerDescription>
-            Đời {person?.generation} · {branchName(person?.branch || 0)}
+            Đời {person?.generation} · {person ? memberBranchName(person) : ''}
           </DrawerDescription>
         </DrawerHeader>
         <div className="quick-scroll">
@@ -533,7 +533,7 @@ export function QuickView({
           <p className="sheet-kicker">Hồ sơ thành viên</p>
           <SheetTitle>{person ? memberName(person) : ''}</SheetTitle>
           <SheetDescription>
-            Đời {person?.generation} · {branchName(person?.branch || 0)}
+            Đời {person?.generation} · {person ? memberBranchName(person) : ''}
           </SheetDescription>
         </SheetHeader>
         <div className="quick-scroll">

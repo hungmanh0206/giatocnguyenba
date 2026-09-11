@@ -42,6 +42,7 @@ import {
   memberBirthLabel,
   memberDeathLabel,
   memberLifeStatus,
+  memberBranchName,
   memberName,
   memberPositionLockMessage,
   searchMembers,
@@ -304,7 +305,7 @@ export function AdminPage() {
             <thead>
               <tr>
                 <th>Thành viên</th>
-                <th>Đời / chi</th>
+                <th>Đời / nhánh</th>
                 <th>Năm sinh</th>
                 <th>Tình trạng</th>
                 <th>Thao tác</th>
@@ -320,7 +321,7 @@ export function AdminPage() {
                     </div>
                   </td>
                   <td>
-                    Đời {p.generation} · {branchName(p.branch)}
+                    Đời {p.generation} · {memberBranchName(p)}
                   </td>
                   <td>{memberBirthLabel(p)}</td>
                   <td>
@@ -440,7 +441,7 @@ export function AdminPage() {
                         )
                       }
                     />
-                    Chưa rõ tên
+                    Chưa biết tên
                   </label>
                 </div>
                 <div className="form-columns">
@@ -469,19 +470,25 @@ export function AdminPage() {
                       value={editing.gender || 'unselected'}
                       onChange={(v) => {
                         const gender = (v === 'unselected' ? '' : v) as Member['gender'];
-                        setEditing((person) =>
-                          person
-                            ? {
-                                ...person,
-                                gender,
-                                lineageType: person.isClanMember
-                                  ? gender === 'female'
-                                    ? 'maternal-terminal'
-                                    : 'direct'
-                                  : person.lineageType,
-                              }
-                            : null,
-                        );
+                        setEditing((person) => {
+                          if (!person) return null;
+                          const next = {
+                            ...person,
+                            gender,
+                            lineageType: person.isClanMember
+                              ? gender === 'female'
+                                ? 'maternal-terminal'
+                                : 'direct'
+                              : person.lineageType,
+                          };
+                          const branches = eligibleBranches(next, members);
+                          return {
+                            ...next,
+                            branch: branches.includes(next.branch)
+                              ? next.branch
+                              : (branches[0] ?? -1),
+                          };
+                        });
                       }}
                       options={[
                         { value: 'unselected', label: 'Chọn giới tính' },
@@ -550,26 +557,35 @@ export function AdminPage() {
                       disabled={!!positionLock}
                     />
                   </label>
-                  <label>
-                    Chi <span>*</span>
-                    <Choice
-                      label="Chi"
-                      value={
-                        editing.branch >= 0 ? String(editing.branch) : 'unselected'
-                      }
-                      onChange={(v) =>
-                        update('branch', v === 'unselected' ? -1 : Number(v))
-                      }
-                      options={[
-                        { value: 'unselected', label: 'Chọn chi' },
-                        ...eligibleBranches(editing, members).map((branch) => ({
-                          value: String(branch),
-                          label: branchName(branch),
-                        })),
-                      ]}
-                      disabled={!!positionLock}
-                    />
-                  </label>
+                  {editing.gender === 'male' && editing.isClanMember ? (
+                    <label>
+                      Chi <span>*</span>
+                      <Choice
+                        label="Chi"
+                        value={
+                          editing.branch >= 0 ? String(editing.branch) : 'unselected'
+                        }
+                        onChange={(v) =>
+                          update('branch', v === 'unselected' ? -1 : Number(v))
+                        }
+                        options={[
+                          { value: 'unselected', label: 'Chọn chi' },
+                          ...eligibleBranches(editing, members).map((branch) => ({
+                            value: String(branch),
+                            label: branchName(branch),
+                          })),
+                        ]}
+                        disabled={!!positionLock}
+                      />
+                    </label>
+                  ) : (
+                    <label className="member-derived-branch">
+                      Nhánh gia đình
+                      <output>
+                        {editing.generation === 1 ? 'Thủy tổ' : 'Nhánh ngoại'}
+                      </output>
+                    </label>
+                  )}
                 </div>
                 <div className="form-columns">
                   <label>

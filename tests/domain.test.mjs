@@ -12,6 +12,7 @@ import {
   eligibleSpouses,
   memberChangeError,
   memberDeletionError,
+  memberBranchName,
   memberDeathLabel,
   memberName,
   memberYearRange,
@@ -66,7 +67,7 @@ test('only super admin is a valid management role', () => {
 });
 
 test('seed stores the supplied five-generation genealogy', () => {
-  assert.equal(seedMembers.length, 50);
+  assert.equal(seedMembers.length, 64);
 
   const founder = member('p1');
   const founderSpouse = member('p2');
@@ -76,9 +77,11 @@ test('seed stores the supplied five-generation genealogy', () => {
   assert.equal(founder.styleName, 'Thần Hy Phủ Quân');
   assert.deepEqual(founder.anniversary, { day: 27, month: 11 });
   assert.equal(founderSpouse.nameKnown, false);
-  assert.equal(memberName(founderSpouse), 'Bà Tổ: Chưa rõ tên');
+  assert.equal(memberName(founderSpouse), 'Bà Tổ: Chưa biết tên');
   assert.equal(memberName(member('g2-khang')), 'Bà: Nguyễn Thị Khang');
   assert.equal(memberName(member('g2-an')), 'Ông: Nguyễn Bá Ân');
+  assert.equal(memberBranchName(member('g2-khang')), 'Nhánh ngoại');
+  assert.equal(memberBranchName(member('g2-an')), 'Chi ba');
   assert.equal(founderSpouse.styleName, 'Tư Hòa');
   assert.deepEqual(founderSpouse.anniversary, { day: 17, month: 4 });
 
@@ -93,6 +96,14 @@ test('seed stores the supplied five-generation genealogy', () => {
   );
   assert.equal(member('g4-thap').biography, 'Nghề nghiệp: Giáo viên.');
   assert.deepEqual(member('g5-thong').parents, ['g4-con']);
+  assert.deepEqual(member('g3-sanh').spouses, [
+    'g3-sanh-vo-1',
+    'g3-sanh-vo-2',
+    'g3-sanh-vo-3',
+  ]);
+  assert.equal(memberName(member('g3-xum-vo')), 'Bà: Chưa biết tên');
+  assert.deepEqual(member('g2-bang').spouses, []);
+  assert.deepEqual(member('g5-xung').spouses, []);
 });
 
 test('Vietnamese search includes supplied names and honorific data', () => {
@@ -114,6 +125,9 @@ test('Vietnamese search includes supplied names and honorific data', () => {
 test('seed genealogy is valid and spouse links are symmetric', () => {
   for (const person of seedMembers) {
     assert.equal(validateMember(person, seedMembers), null, person.name);
+    if (seedMembers.some((candidate) => candidate.parents.includes(person.id))) {
+      assert.ok(person.spouses.length, `${person.id} needs a recorded partner`);
+    }
     for (const spouseId of person.spouses) {
       assert.ok(member(spouseId).spouses.includes(person.id));
     }
@@ -135,7 +149,7 @@ test('incomplete historical records retain unknown names and flexible death date
   };
 
   assert.equal(validateMember(unknownMember, seedMembers), null);
-  assert.equal(memberName(unknownMember), 'Bà Tổ: Chưa rõ tên');
+  assert.equal(memberName(unknownMember), 'Bà Tổ: Chưa biết tên');
   assert.equal(memberDeathLabel(unknownMember), 'Mất vào tháng Chạp, chưa rõ năm');
   assert.equal(memberYearRange(unknownMember), 'Chưa rõ – Mất vào tháng Chạp, chưa rõ năm');
   assert.equal(searchMembers([unknownMember], 'tĩnh trai').length, 1);

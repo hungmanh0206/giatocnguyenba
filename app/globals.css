@@ -2455,6 +2455,25 @@ h1 > span {
   font-weight: 600;
   white-space: nowrap;
 }
+
+.clan-memorial-event {
+  margin: 3px -7px;
+  border: 1px solid #e4c995;
+  border-radius: 8px;
+  padding: 8px 7px;
+  background: #fff7e8;
+}
+
+.clan-memorial-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: #8d3026;
+  color: #fff1d3;
+}
 .upcoming-section {
   margin-top: 34px;
 }
@@ -2505,6 +2524,15 @@ h1 > span {
   width: 70px;
   min-width: 70px;
   border-radius: var(--radius-lg);
+}
+
+.upcoming-event.is-clan-memorial .date-block {
+  border-color: #d6aa63;
+  background: #fff4de;
+}
+
+.upcoming-event.is-clan-memorial > span:nth-child(2) > strong {
+  color: #8d3026;
 }
 .calendar-policy {
   display: flex;
@@ -7573,10 +7601,13 @@ main#main .timeline-entry p {
 }
 
 .collapse-node {
+  position: absolute !important;
   top: auto;
   right: auto;
-  bottom: -24px;
-  left: calc(50% - 11px);
+  bottom: -11px;
+  left: 50%;
+  z-index: 2 !important;
+  transform: translateX(-50%);
   width: 22px !important;
   height: 22px !important;
   border: 0 !important;
@@ -7589,7 +7620,25 @@ main#main .timeline-entry p {
 
 .collapse-node:hover {
   background: transparent !important;
-  transform: scale(1.08);
+  transform: translateX(-50%) scale(1.08);
+}
+
+.member-derived-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.member-derived-branch output {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  border: 1px solid #e1d4c1;
+  border-radius: 10px;
+  padding: 0 13px;
+  background: #fbf7ef;
+  color: #83694c;
+  font-size: 14px;
 }
 
 .collapse-node-icon {

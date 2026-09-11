@@ -19,6 +19,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   branchName,
+  memberBranchName,
   memberName,
   memberYearRange,
   searchMembers,
@@ -115,8 +116,11 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
               ? 'NHÁNH NGOẠI'
               : `ĐỜI THỨ ${group.generation}`}
         </span>
-        {!terminal && !root && (
-          <small className="family-branch-label">{branchName(group.clanMember.branch)}</small>
+        {!terminal &&
+          !root &&
+          group.clanMember.gender === 'male' &&
+          group.clanMember.isClanMember && (
+          <small className="family-branch-label">{memberBranchName(group.clanMember)}</small>
         )}
       </div>
       <PersonArea
@@ -415,7 +419,7 @@ function TreeCanvas() {
                     <span>
                       <strong>{memberName(person)}</strong>
                       <small>
-                        Đời {person.generation} · {branchName(person.branch)}
+                        Đời {person.generation} · {memberBranchName(person)}
                       </small>
                     </span>
                   </button>
