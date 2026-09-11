@@ -41,6 +41,7 @@ import { useFamily } from './provider';
 type FamilyUnitData = {
   group: Household;
   selected: string | null;
+  highlighted: string[];
   dimmed: string[];
   members: Member[];
   collapsed: boolean;
@@ -102,18 +103,20 @@ function PersonArea({
   person,
   role,
   selected,
+  highlighted,
   dimmed,
   onSelect,
 }: {
   person: Member;
   role: string;
   selected: boolean;
+  highlighted: boolean;
   dimmed: boolean;
   onSelect: (person: Member) => void;
 }) {
   return (
     <button
-      className={`family-member-area nodrag nopan ${selected ? 'is-selected' : ''} ${dimmed ? 'is-dimmed' : ''}`}
+      className={`family-member-area nodrag nopan ${selected ? 'is-selected' : ''} ${highlighted ? 'is-highlighted' : ''} ${dimmed ? 'is-dimmed' : ''}`}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => {
         event.stopPropagation();
@@ -171,6 +174,7 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
         person={group.clanMember}
         role={memberRole}
         selected={data.selected === group.clanMember.id}
+        highlighted={data.highlighted.includes(group.clanMember.id)}
         dimmed={data.dimmed.includes(group.clanMember.id)}
         onSelect={data.select}
       />
@@ -186,6 +190,7 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
                   (spouse.gender === 'female' ? 'Vợ · phối ngẫu' : 'Chồng · phối ngẫu')
                 }
                 selected={data.selected === spouse.id}
+                highlighted={data.highlighted.includes(spouse.id)}
                 dimmed={data.dimmed.includes(spouse.id)}
                 onSelect={data.select}
               />
@@ -313,6 +318,26 @@ function TreeCanvas() {
     () => members.filter((member) => model.visibleMemberIds.has(member.id)),
     [members, model.visibleMemberIds],
   );
+  const searchMatchIds = useMemo(
+    () => new Set(searchMembers(treeMembers, query).map((member) => member.id)),
+    [query, treeMembers],
+  );
+  const hasActiveEmphasis =
+    !!query.trim() || branch !== 'all' || generation !== 'all';
+  const highlightedMemberIds = useMemo(
+    () =>
+      new Set(
+        treeMembers
+          .filter(
+            (member) =>
+              (!query.trim() || searchMatchIds.has(member.id)) &&
+              (branch === 'all' || member.branch === Number(branch)) &&
+              (generation === 'all' || member.generation === Number(generation)),
+          )
+          .map((member) => member.id),
+      ),
+    [branch, generation, query, searchMatchIds, treeMembers],
+  );
   const allTreeNodes = useMemo(
     () => model.groups.map((group) => ({ id: group.id })),
     [model.groups],
@@ -405,13 +430,16 @@ function TreeCanvas() {
       group,
       selected: selected?.id || null,
       members,
-      dimmed: group.people
-        .filter(
-          (person) =>
-            (branch !== 'all' && person.branch !== Number(branch)) ||
-            (generation !== 'all' && person.generation !== Number(generation)),
-        )
-        .map((person) => person.id),
+      highlighted: hasActiveEmphasis
+        ? group.people
+            .filter((person) => highlightedMemberIds.has(person.id))
+            .map((person) => person.id)
+        : [],
+      dimmed: hasActiveEmphasis
+        ? group.people
+            .filter((person) => !highlightedMemberIds.has(person.id))
+            .map((person) => person.id)
+        : [],
       collapsed: collapsed.has(group.id),
       hasChildren: model.links.some((link) => link.source === group.id),
       select: selectPerson,
@@ -471,7 +499,7 @@ function TreeCanvas() {
       style: { stroke: '#958d7d', strokeWidth: 1.35 },
     });
   }
-  const found = searchMembers(treeMembers, query).slice(0, 6);
+  const found = treeMembers.filter((member) => searchMatchIds.has(member.id)).slice(0, 6);
 
   function resetViewport() {
     return flow.fitView({
