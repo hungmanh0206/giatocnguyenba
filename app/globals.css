@@ -8766,7 +8766,7 @@ main#main .timeline-entry p {
 
   .family-tree-page .tree-toolbar-actions {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) repeat(2, minmax(0, 1fr)) auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) 38px;
     width: 100%;
     gap: 8px;
   }
@@ -8774,11 +8774,19 @@ main#main .timeline-entry p {
   .family-tree-page .tree-search {
     grid-column: 1 / -1;
     width: 100%;
+    order: initial;
   }
 
   .family-tree-page .tree-toolbar-actions .choice {
     min-width: 0;
     width: 100%;
+    order: initial;
+  }
+
+  .family-tree-page .tree-toolbar-actions > .icon-button {
+    order: initial;
+    width: 38px;
+    height: 36px !important;
   }
 
   .tree-legend {
