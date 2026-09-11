@@ -445,6 +445,24 @@ export function AdminPage() {
                 </div>
                 <div className="form-columns">
                   <label>
+                    Tên húy
+                    <Input
+                      maxLength={100}
+                      value={editing.tabooName || ''}
+                      onChange={(e) => update('tabooName', e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Hiệu
+                    <Input
+                      maxLength={100}
+                      value={editing.styleName || ''}
+                      onChange={(e) => update('styleName', e.target.value)}
+                    />
+                  </label>
+                </div>
+                <div className="form-columns">
+                  <label>
                     Giới tính <span>*</span>
                     <Choice
                       label="Giới tính"
@@ -487,24 +505,6 @@ export function AdminPage() {
                           e.target.value ? Number(e.target.value) : undefined,
                         )
                       }
-                    />
-                  </label>
-                </div>
-                <div className="form-columns">
-                  <label>
-                    Tên húy
-                    <Input
-                      maxLength={100}
-                      value={editing.tabooName || ''}
-                      onChange={(e) => update('tabooName', e.target.value)}
-                    />
-                  </label>
-                  <label>
-                    Hiệu
-                    <Input
-                      maxLength={100}
-                      value={editing.styleName || ''}
-                      onChange={(e) => update('styleName', e.target.value)}
                     />
                   </label>
                 </div>
