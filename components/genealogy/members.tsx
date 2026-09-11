@@ -28,6 +28,8 @@ import {
   Choice,
   branchOptions,
   generationOptions,
+  pageSizeOptions,
+  ResultsPagination,
   SearchBox,
   EmptyState,
 } from './common';
@@ -50,10 +52,11 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
   const [branch, setBranch] = useState('all');
   const [generation, setGeneration] = useState('all');
   const [view, setView] = useState('grid');
+  const [pageSize, setPageSize] = useState('10');
   const [page, setPage] = useState(1);
   useEffect(() => {
     setPage(1);
-  }, [query, branch, generation]);
+  }, [query, branch, generation, pageSize]);
   const filtered = searchMembers(members, query)
     .filter(
       (p) =>
@@ -70,8 +73,10 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
   const branchCount = new Set(
     members.filter((member) => member.branch > 0).map((member) => member.branch),
   ).size;
-  const total = Math.ceil(filtered.length / 12);
-  const pageMembers = filtered.slice((page - 1) * 12, page * 12);
+  const size = pageSize === 'all' ? Math.max(1, filtered.length) : Number(pageSize);
+  const total = Math.max(1, Math.ceil(filtered.length / size));
+  const currentPage = Math.min(page, total);
+  const pageMembers = filtered.slice((currentPage - 1) * size, currentPage * size);
   const PageFrame = embedded ? 'section' : 'main';
 
   return (
@@ -105,30 +110,38 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
           <span>
             {filtered.length} thành viên{query && ` cho “${query}”`}
           </span>
-          <div className="view-toggle" role="group" aria-label="Kiểu hiển thị">
-            <span className="view-toggle-label">Hiển thị</span>
-            <Button
-              variant="ghost"
-              className="view-toggle-button"
-              data-active={view === 'grid'}
-              aria-label="Dạng thẻ"
-              aria-pressed={view === 'grid'}
-              title="Dạng thẻ"
-              onClick={() => setView('grid')}
-            >
-              <HeritageIcon name="grid" size={18} />
-            </Button>
-            <Button
-              variant="ghost"
-              className="view-toggle-button"
-              data-active={view === 'list'}
-              aria-label="Danh sách"
-              aria-pressed={view === 'list'}
-              title="Danh sách"
-              onClick={() => setView('list')}
-            >
-              <HeritageIcon name="list" size={18} />
-            </Button>
+          <div className="member-results-actions">
+            <Choice
+              label="Số thành viên mỗi trang"
+              value={pageSize}
+              onChange={setPageSize}
+              options={pageSizeOptions}
+            />
+            <div className="view-toggle" role="group" aria-label="Kiểu hiển thị">
+              <span className="view-toggle-label">Hiển thị</span>
+              <Button
+                variant="ghost"
+                className="view-toggle-button"
+                data-active={view === 'grid'}
+                aria-label="Dạng thẻ"
+                aria-pressed={view === 'grid'}
+                title="Dạng thẻ"
+                onClick={() => setView('grid')}
+              >
+                <HeritageIcon name="grid" size={18} />
+              </Button>
+              <Button
+                variant="ghost"
+                className="view-toggle-button"
+                data-active={view === 'list'}
+                aria-label="Danh sách"
+                aria-pressed={view === 'list'}
+                title="Danh sách"
+                onClick={() => setView('list')}
+              >
+                <HeritageIcon name="list" size={18} />
+              </Button>
+            </div>
           </div>
         </div>
         {!filtered.length ? (
@@ -206,31 +219,11 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
             </div>
           )
         )}
-        {total > 1 && (
-          <div className="pagination">
-            <Button
-              variant="outline"
-              className="icon-button"
-              disabled={page === 1}
-              aria-label="Trang trước"
-              onClick={() => setPage((p) => p - 1)}
-            >
-              <HeritageIcon name="previous" size={18} />
-            </Button>
-            <span>
-              Trang {page} / {total}
-            </span>
-            <Button
-              variant="outline"
-              className="icon-button"
-              disabled={page === total}
-              aria-label="Trang sau"
-              onClick={() => setPage((p) => p + 1)}
-            >
-              <HeritageIcon name="next" size={18} />
-            </Button>
-          </div>
-        )}
+        <ResultsPagination
+          page={currentPage}
+          total={total}
+          onPageChange={setPage}
+        />
       </div>
       {!embedded && <Footer />}
     </PageFrame>

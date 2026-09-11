@@ -5672,6 +5672,11 @@ main#main:not(.tree-page) {
   background-size: auto, 840px 840px;
 }
 
+/* The admin workspace sits directly on the global cultural canvas. */
+main#main.admin-page {
+  background: transparent;
+}
+
 .history-band {
   background-color: #f7f3e9;
   background-image:
@@ -6391,6 +6396,45 @@ main#main .branch-preview > .branch-preview-meta {
 
   .history-index > a > span {
     font-size: 12px;
+  }
+}
+
+.member-results-actions,
+.admin-results-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.member-results-actions .choice,
+.admin-results-summary .choice {
+  min-width: 132px;
+}
+
+.member-results-actions .view-toggle {
+  margin-left: 0;
+}
+
+.admin-results-summary {
+  justify-content: space-between;
+  margin: 18px 0;
+}
+
+@media (max-width: 560px) {
+  .results-summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .member-results-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .member-results-actions .choice,
+  .admin-results-summary .choice {
+    min-width: 0;
+    width: 148px;
   }
 }
 
@@ -8921,7 +8965,7 @@ main#main .timeline-entry p {
   gap: 18px !important;
   padding: 24px !important;
   border: 1px solid #dfd3c1;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
   background: #fffefa !important;
   box-shadow: 0 20px 46px #3925152e;
 }
@@ -8932,6 +8976,21 @@ main#main .timeline-entry p {
   flex-direction: row !important;
   gap: 12px !important;
   padding-right: 34px;
+}
+
+.login-dialog [data-slot='dialog-close'] {
+  top: 13px !important;
+  right: 13px !important;
+  width: 28px;
+  height: 28px;
+  padding: 2px !important;
+}
+
+.login-close-icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 .login-dialog-icon {
@@ -8993,6 +9052,45 @@ main#main .timeline-entry p {
   line-height: 1.4;
 }
 
+.login-success {
+  margin: -2px 0 0;
+  padding: 8px 10px;
+  border: 1px solid #c7dbca;
+  border-radius: 4px;
+  background: #f2faf2;
+  color: #356239;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.login-text-link {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8c2f2f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: #cfa287;
+  text-underline-offset: 3px;
+}
+
+.login-text-link:hover:not(:disabled) {
+  color: #642020;
+}
+
+.login-text-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.login-text-link-centered {
+  justify-self: center;
+}
+
 .login-submit,
 .google-login-button {
   width: 100%;
@@ -9031,17 +9129,12 @@ main#main .timeline-entry p {
   background: #fff9f0 !important;
 }
 
-.google-mark {
-  display: grid;
+.google-icon {
+  display: block;
   width: 20px;
   height: 20px;
-  place-items: center;
-  border-radius: 50%;
-  background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 0 50%, #fbbc05 0 75%, #ea4335 0);
-  color: #fff;
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 700;
+  flex: 0 0 20px;
+  object-fit: contain;
 }
 
 @media (max-width: 900px) {

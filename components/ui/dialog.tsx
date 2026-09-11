@@ -43,9 +43,11 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  closeIcon,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
+  closeIcon?: React.ReactNode;
 }) {
   return (
     <DialogPortal>
@@ -70,7 +72,7 @@ function DialogContent({
               />
             }
           >
-            <XIcon />
+            {closeIcon || <XIcon />}
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}

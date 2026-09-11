@@ -23,7 +23,9 @@ import {
   isFirebaseConfigured,
 } from '@/lib/firebase/config';
 import {
+  changeFirebasePassword,
   getFirebaseServices,
+  requestPasswordReset,
   signInWithPassword as signInWithFirebasePassword,
   signInWithGoogle,
   signOutFromFirebase,
@@ -52,6 +54,8 @@ type FamilyContextValue = {
   reset: () => void;
   signIn: () => Promise<string | null>;
   signInWithPassword: (email: string, password: string) => Promise<string | null>;
+  requestPasswordReset: (email: string) => Promise<string | null>;
+  changePassword: (currentPassword: string, nextPassword: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 };
 
@@ -70,6 +74,8 @@ const FamilyContext = createContext<FamilyContextValue>({
   reset: () => {},
   signIn: async () => null,
   signInWithPassword: async () => null,
+  requestPasswordReset: async () => null,
+  changePassword: async () => null,
   signOut: async () => {},
 });
 
@@ -97,6 +103,15 @@ function messageFor(error: unknown, context: 'connection' | 'write' = 'connectio
   }
   if (code.includes('operation-not-allowed')) {
     return 'Đăng nhập bằng email và mật khẩu chưa được bật trong Firebase Authentication.';
+  }
+  if (code.includes('weak-password')) {
+    return 'Mật khẩu mới cần có ít nhất 6 ký tự.';
+  }
+  if (code.includes('requires-recent-login')) {
+    return 'Nhập đúng mật khẩu hiện tại để xác thực trước khi đổi mật khẩu.';
+  }
+  if (code.includes('too-many-requests')) {
+    return 'Đã có quá nhiều lần thử. Vui lòng chờ ít phút rồi thử lại.';
   }
   return 'Không thể kết nối Firebase. Kiểm tra cấu hình, quyền truy cập và kết nối mạng.';
 }
@@ -293,6 +308,30 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function requestReset(email: string) {
+    if (!isFirebaseConfigured) {
+      return 'Firebase chưa được cấu hình trên môi trường này.';
+    }
+    try {
+      await requestPasswordReset(email.trim());
+      return null;
+    } catch (error) {
+      return messageFor(error);
+    }
+  }
+
+  async function changePassword(currentPassword: string, nextPassword: string) {
+    if (!isFirebaseConfigured) {
+      return 'Firebase chưa được cấu hình trên môi trường này.';
+    }
+    try {
+      await changeFirebasePassword(currentPassword, nextPassword);
+      return null;
+    } catch (error) {
+      return messageFor(error);
+    }
+  }
+
   async function signOut() {
     if (!isFirebaseConfigured) return;
     await signOutFromFirebase();
@@ -308,6 +347,8 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         reset: () => setMembers(seedMembers),
         signIn,
         signInWithPassword,
+        requestPasswordReset: requestReset,
+        changePassword,
         signOut,
       }}
     >

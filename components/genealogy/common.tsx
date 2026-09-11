@@ -57,6 +57,52 @@ export const generationOptions = [
     label: `Đời thứ ${i + 1}`,
   })),
 ];
+
+export const pageSizeOptions = [
+  { value: '5', label: '5 mỗi trang' },
+  { value: '10', label: '10 mỗi trang' },
+  { value: '20', label: '20 mỗi trang' },
+  { value: 'all', label: 'Tất cả' },
+];
+
+export function ResultsPagination({
+  page,
+  total,
+  onPageChange,
+}: {
+  page: number;
+  total: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (total <= 1) return null;
+
+  return (
+    <nav className="pagination" aria-label="Phân trang">
+      <Button
+        variant="outline"
+        className="icon-button"
+        disabled={page === 1}
+        aria-label="Trang trước"
+        onClick={() => onPageChange(page - 1)}
+      >
+        <HeritageIcon name="previous" size={18} />
+      </Button>
+      <span>
+        Trang {page} / {total}
+      </span>
+      <Button
+        variant="outline"
+        className="icon-button"
+        disabled={page === total}
+        aria-label="Trang sau"
+        onClick={() => onPageChange(page + 1)}
+      >
+        <HeritageIcon name="next" size={18} />
+      </Button>
+    </nav>
+  );
+}
+
 export function SearchBox({
   query,
   setQuery,

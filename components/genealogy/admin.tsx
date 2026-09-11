@@ -1,7 +1,8 @@
 'use client';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,6 +33,8 @@ import {
   EmptyState,
   branchOptions,
   generationOptions,
+  pageSizeOptions,
+  ResultsPagination,
 } from './common';
 import {
   UNKNOWN_MEMBER_NAME,
@@ -97,19 +100,21 @@ const lifeStatusOptions = [
 ];
 
 export function AdminPage() {
-  const { members, save, remove, connection, signIn } = useFamily();
+  const { members, save, remove, connection } = useFamily();
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [generationFilter, setGenerationFilter] = useState('all');
   const [branchFilter, setBranchFilter] = useState('all');
   const [genderFilter, setGenderFilter] = useState('all');
   const [lifeStatusFilter, setLifeStatusFilter] = useState('all');
+  const [pageSize, setPageSize] = useState('10');
+  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Member | null>(null);
   const [deleting, setDeleting] = useState<Member | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
   const [deletingPending, setDeletingPending] = useState(false);
-  const [authPending, setAuthPending] = useState(false);
   const maxGeneration = Math.max(1, ...members.map((member) => member.generation));
   const filtered = searchMembers(members, query).filter(
     (member) =>
@@ -124,6 +129,10 @@ export function AdminPage() {
           : member.gender === genderFilter)) &&
       (lifeStatusFilter === 'all' || memberLifeStatus(member) === lifeStatusFilter),
   );
+  const size = pageSize === 'all' ? Math.max(1, filtered.length) : Number(pageSize);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / size));
+  const currentPage = Math.min(page, totalPages);
+  const pageMembers = filtered.slice((currentPage - 1) * size, currentPage * size);
   const hasActiveFilters =
     !!query ||
     generationFilter !== 'all' ||
@@ -201,13 +210,6 @@ export function AdminPage() {
     setError('');
   }
 
-  async function login() {
-    setAuthPending(true);
-    const result = await signIn();
-    setAuthPending(false);
-    if (result) setError(result);
-  }
-
   async function confirmDelete() {
     if (!deleting) return;
 
@@ -235,12 +237,23 @@ export function AdminPage() {
     }
   }
 
+  const shouldRedirectHome = !connection.user && connection.mode !== 'loading';
+
+  useEffect(() => {
+    if (shouldRedirectHome) router.replace('/');
+  }, [router, shouldRedirectHome]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, generationFilter, branchFilter, genderFilter, lifeStatusFilter, pageSize]);
+
+  if (shouldRedirectHome) return null;
+
   if (!canManageFamily(connection.role)) {
-    const needsLogin = !connection.user;
     const checkingRole = connection.roleLoading;
 
     return (
-      <main id="main" className="container page-space">
+      <main id="main" className="container page-space admin-page">
         <div className="page-heading">
           <div>
             <div className="eyebrow">KHU VỰC RIÊNG</div>
@@ -252,14 +265,10 @@ export function AdminPage() {
           <HeritageIcon name="security" size={20} />
           <div>
             <p>
-              {connection.mode === 'demo'
-                ? 'Firebase chưa được cấu hình nên khu vực quản trị chưa thể sử dụng.'
-                : needsLogin
-                  ? 'Đăng nhập Google để xác thực quyền quản trị.'
-                  : checkingRole
-                    ? 'Đang kiểm tra quyền của tài khoản.'
-                    : connection.roleMessage ||
-                      'Tài khoản này chưa có quyền super admin.'}
+              {checkingRole
+                ? 'Đang kiểm tra quyền của tài khoản.'
+                : connection.roleMessage ||
+                  'Tài khoản này chưa có quyền super admin.'}
             </p>
             {connection.user && !checkingRole && (
               <p className="muted">
@@ -267,17 +276,6 @@ export function AdminPage() {
               </p>
             )}
           </div>
-          {needsLogin && connection.mode !== 'demo' && (
-            <Button
-              className="action-button"
-              variant="outline"
-              onClick={() => void login()}
-              disabled={authPending}
-            >
-              <HeritageIcon name="login" size={16} />
-              {authPending ? 'Đang mở...' : 'Đăng nhập Google'}
-            </Button>
-          )}
           {connection.user && !checkingRole && (
             <Button
               className="action-button"
@@ -301,7 +299,7 @@ export function AdminPage() {
   }
 
   return (
-    <main id="main" className="container page-space">
+    <main id="main" className="container page-space admin-page">
       <div className="page-heading">
         <div>
           <div className="eyebrow">SUPER ADMIN</div>
@@ -366,7 +364,6 @@ export function AdminPage() {
           onChange={setLifeStatusFilter}
           options={lifeStatusOptions}
         />
-        <span className="muted">{filtered.length} hồ sơ</span>
         {hasActiveFilters && (
           <Button
             variant="ghost"
@@ -382,6 +379,15 @@ export function AdminPage() {
             Xóa bộ lọc
           </Button>
         )}
+      </div>
+      <div className="admin-results-summary">
+        <span className="muted">{filtered.length} hồ sơ</span>
+        <Choice
+          label="Số hồ sơ mỗi trang"
+          value={pageSize}
+          onChange={setPageSize}
+          options={pageSizeOptions}
+        />
       </div>
       {!filtered.length ? (
         <EmptyState
@@ -406,7 +412,7 @@ export function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => (
+              {pageMembers.map((p) => (
                 <tr key={p.id}>
                   <td>
                     <div className="table-person">
@@ -476,6 +482,11 @@ export function AdminPage() {
           </table>
         </div>
       )}
+      <ResultsPagination
+        page={currentPage}
+        total={totalPages}
+        onPageChange={setPage}
+      />
       <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <SheetContent className="editor-sheet">
           <SheetHeader>

@@ -27,25 +27,62 @@ const navigation = [
   ['/lunar-calendar', 'Lịch âm & ngày giỗ'],
   ['/history', 'Lịch sử dòng họ'],
 ];
+
+type AuthMode = 'sign-in' | 'reset' | 'change';
+
 export function Header() {
   const path = usePathname();
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>('sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [nextPassword, setNextPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [authPending, setAuthPending] = useState(false);
   const [authError, setAuthError] = useState('');
-  const { connection, signIn, signInWithPassword, signOut } = useFamily();
+  const [authNotice, setAuthNotice] = useState('');
+  const {
+    connection,
+    signIn,
+    signInWithPassword,
+    requestPasswordReset,
+    changePassword,
+    signOut,
+  } = useFamily();
+
+  function clearAuthFeedback() {
+    setAuthError('');
+    setAuthNotice('');
+  }
+
+  function clearPasswordFields() {
+    setPassword('');
+    setCurrentPassword('');
+    setNextPassword('');
+    setConfirmPassword('');
+  }
+
+  function openAuth(mode: AuthMode) {
+    setNavigationOpen(false);
+    clearAuthFeedback();
+    clearPasswordFields();
+    setAuthMode(mode);
+    setLoginOpen(true);
+  }
 
   function openLogin() {
-    setNavigationOpen(false);
-    setAuthError('');
-    setLoginOpen(true);
+    openAuth('sign-in');
+  }
+
+  function openChangePassword() {
+    openAuth('change');
   }
 
   async function loginWithGoogle() {
     setAuthPending(true);
-    setAuthError('');
+    clearAuthFeedback();
     const result = await signIn();
     setAuthPending(false);
     if (result) {
@@ -62,21 +99,83 @@ export function Header() {
       return;
     }
     setAuthPending(true);
-    setAuthError('');
+    clearAuthFeedback();
     const result = await signInWithPassword(email, password);
     setAuthPending(false);
     if (result) {
       setAuthError(result);
       return;
     }
-    setPassword('');
+    clearPasswordFields();
     setLoginOpen(false);
+  }
+
+  async function sendPasswordReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!email.trim()) {
+      setAuthError('Nhập email để nhận liên kết đặt lại mật khẩu.');
+      return;
+    }
+
+    setAuthPending(true);
+    clearAuthFeedback();
+    const result = await requestPasswordReset(email);
+    setAuthPending(false);
+    if (result) {
+      setAuthError(result);
+      return;
+    }
+    setAuthNotice('Đã gửi liên kết đặt lại mật khẩu. Hãy kiểm tra hộp thư email.');
+  }
+
+  async function updatePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!currentPassword || !nextPassword || !confirmPassword) {
+      setAuthError('Nhập đủ mật khẩu hiện tại, mật khẩu mới và xác nhận mật khẩu.');
+      return;
+    }
+    if (nextPassword.length < 8) {
+      setAuthError('Mật khẩu mới cần có ít nhất 8 ký tự.');
+      return;
+    }
+    if (nextPassword !== confirmPassword) {
+      setAuthError('Xác nhận mật khẩu chưa khớp.');
+      return;
+    }
+
+    setAuthPending(true);
+    clearAuthFeedback();
+    const result = await changePassword(currentPassword, nextPassword);
+    setAuthPending(false);
+    if (result) {
+      setAuthError(result);
+      return;
+    }
+    clearPasswordFields();
+    setAuthNotice('Đã đổi mật khẩu thành công.');
   }
 
   async function logout() {
     setNavigationOpen(false);
-    await signOut();
+    try {
+      await signOut();
+    } finally {
+      window.location.assign('/');
+    }
   }
+
+  const dialogTitle =
+    authMode === 'change'
+      ? 'Đổi mật khẩu'
+      : authMode === 'reset'
+        ? 'Đặt lại mật khẩu'
+        : 'Đăng nhập';
+  const dialogDescription =
+    authMode === 'change'
+      ? 'Xác thực mật khẩu hiện tại trước khi cập nhật mật khẩu mới.'
+      : authMode === 'reset'
+        ? 'Chúng tôi sẽ gửi liên kết tạo mật khẩu mới về email của bạn.'
+        : 'Xác thực để quản lý dữ liệu gia phả.';
 
   return (
     <>
@@ -134,6 +233,14 @@ export function Header() {
                   <Button
                     className="mobile-account-entry"
                     variant="ghost"
+                    onClick={openChangePassword}
+                  >
+                    <HeritageIcon name="security" size={17} />
+                    Đổi mật khẩu
+                  </Button>
+                  <Button
+                    className="mobile-account-entry"
+                    variant="ghost"
                     onClick={() => void logout()}
                   >
                     <img className="logout-icon" src="/app-icons/logout.png" alt="" />
@@ -181,6 +288,13 @@ export function Header() {
                       <HeritageIcon name="settings" size={17} />
                       Quản trị
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="account-menu-item"
+                      onClick={openChangePassword}
+                    >
+                      <HeritageIcon name="security" size={17} />
+                      Đổi mật khẩu
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="account-menu-item account-menu-logout"
@@ -219,63 +333,146 @@ export function Header() {
         open={loginOpen}
         onOpenChange={(nextOpen) => {
           setLoginOpen(nextOpen);
-          if (!nextOpen) setAuthError('');
+          if (!nextOpen) {
+            clearAuthFeedback();
+            clearPasswordFields();
+            setAuthMode('sign-in');
+          }
         }}
       >
-        <DialogContent className="login-dialog">
+        <DialogContent
+          className="login-dialog"
+          closeIcon={
+            <img
+              className="login-close-icon"
+              src="/heritage-icons-3d/close.png"
+              alt=""
+            />
+          }
+        >
           <DialogHeader className="login-dialog-header">
-            <img className="login-dialog-icon" src="/app-icons/login.png" alt="" />
+            <BrandIcon className="login-dialog-icon" size={46} />
             <div>
-              <DialogTitle>Đăng nhập</DialogTitle>
-              <DialogDescription>
-                Xác thực để quản lý dữ liệu gia phả.
-              </DialogDescription>
+              <DialogTitle>{dialogTitle}</DialogTitle>
+              <DialogDescription>{dialogDescription}</DialogDescription>
             </div>
           </DialogHeader>
-          <form className="login-form" onSubmit={(event) => void loginWithPassword(event)}>
-            <label>
-              Tài khoản email
-              <Input
-                autoComplete="username"
+          {authMode === 'sign-in' && (
+            <>
+              <form className="login-form" onSubmit={(event) => void loginWithPassword(event)}>
+                <label>
+                  Tài khoản email
+                  <Input
+                    autoComplete="username"
+                    disabled={authPending}
+                    inputMode="email"
+                    onChange={(event) => setEmail(event.target.value)}
+                    type="email"
+                    value={email}
+                  />
+                </label>
+                <label>
+                  Mật khẩu
+                  <Input
+                    autoComplete="current-password"
+                    disabled={authPending}
+                    onChange={(event) => setPassword(event.target.value)}
+                    type="password"
+                    value={password}
+                  />
+                </label>
+                <button
+                  className="login-text-link"
+                  disabled={authPending}
+                  onClick={() => openAuth('reset')}
+                  type="button"
+                >
+                  Quên mật khẩu?
+                </button>
+                {authError && <p className="login-error" role="alert">{authError}</p>}
+                <Button className="action-button login-submit" disabled={authPending} type="submit">
+                  {authPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                </Button>
+              </form>
+              <div className="login-divider" aria-hidden="true">
+                <span />
+                <small>hoặc</small>
+                <span />
+              </div>
+              <Button
+                className="google-login-button"
                 disabled={authPending}
-                inputMode="email"
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                type="email"
-                value={email}
-              />
-            </label>
-            <label>
-              Mật khẩu
-              <Input
-                autoComplete="current-password"
-                disabled={authPending}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Nhập mật khẩu"
-                type="password"
-                value={password}
-              />
-            </label>
-            {authError && <p className="login-error" role="alert">{authError}</p>}
-            <Button className="action-button login-submit" disabled={authPending} type="submit">
-              {authPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
-            </Button>
-          </form>
-          <div className="login-divider" aria-hidden="true">
-            <span />
-            <small>hoặc</small>
-            <span />
-          </div>
-          <Button
-            className="google-login-button"
-            disabled={authPending}
-            onClick={() => void loginWithGoogle()}
-            type="button"
-            variant="outline"
-          >
-            <span className="google-mark" aria-hidden="true">G</span>
-            Đăng nhập nhanh với Google
-          </Button>
+                onClick={() => void loginWithGoogle()}
+                type="button"
+                variant="outline"
+              >
+                <img className="google-icon" src="/app-icons/google.svg" alt="" />
+                Đăng nhập nhanh với Google
+              </Button>
+            </>
+          )}
+          {authMode === 'reset' && (
+            <form className="login-form" onSubmit={(event) => void sendPasswordReset(event)}>
+              <label>
+                Tài khoản email
+                <Input
+                  autoComplete="email"
+                  disabled={authPending}
+                  inputMode="email"
+                  onChange={(event) => setEmail(event.target.value)}
+                  type="email"
+                  value={email}
+                />
+              </label>
+              {authError && <p className="login-error" role="alert">{authError}</p>}
+              {authNotice && <p className="login-success" role="status">{authNotice}</p>}
+              <Button className="action-button login-submit" disabled={authPending} type="submit">
+                {authPending ? 'Đang gửi...' : 'Gửi liên kết đặt lại'}
+              </Button>
+              <button className="login-text-link login-text-link-centered" onClick={() => openAuth('sign-in')} type="button">
+                Quay lại đăng nhập
+              </button>
+            </form>
+          )}
+          {authMode === 'change' && (
+            <form className="login-form" onSubmit={(event) => void updatePassword(event)}>
+              <label>
+                Mật khẩu hiện tại
+                <Input
+                  autoComplete="current-password"
+                  disabled={authPending}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  type="password"
+                  value={currentPassword}
+                />
+              </label>
+              <label>
+                Mật khẩu mới
+                <Input
+                  autoComplete="new-password"
+                  disabled={authPending}
+                  onChange={(event) => setNextPassword(event.target.value)}
+                  type="password"
+                  value={nextPassword}
+                />
+              </label>
+              <label>
+                Xác nhận mật khẩu mới
+                <Input
+                  autoComplete="new-password"
+                  disabled={authPending}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  type="password"
+                  value={confirmPassword}
+                />
+              </label>
+              {authError && <p className="login-error" role="alert">{authError}</p>}
+              {authNotice && <p className="login-success" role="status">{authNotice}</p>}
+              <Button className="action-button login-submit" disabled={authPending} type="submit">
+                {authPending ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
+              </Button>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </>
