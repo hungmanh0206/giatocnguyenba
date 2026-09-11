@@ -399,7 +399,11 @@ export function HomePage() {
                             <Avatar person={group.clanMember} />
                             <span>
                               <strong>{memberName(group.clanMember)}</strong>
-                              <small>{descendants} hậu duệ · {generations} thế hệ</small>
+                              <small className="home-family-summary">
+                                <span>Đời {group.generation}</span>
+                                <span>{descendants} hậu duệ</span>
+                                <span>{generations} thế hệ</span>
+                              </small>
                             </span>
                           </div>
                           <HeritageIcon name="next" size={16} />

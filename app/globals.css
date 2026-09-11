@@ -7839,6 +7839,17 @@ main#main .timeline-entry p {
   line-height: 1.35;
 }
 
+.home-family-summary {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.home-family-summary > span + span::before {
+  margin-right: 4px;
+  color: #b2a48f;
+  content: '·';
+}
+
 .home-family-person em {
   color: #9b7b5b;
   font-size: 11px;
@@ -8140,7 +8151,17 @@ main#main .timeline-entry p {
     display: block;
   }
 
-  .home-family-branch .home-family-person small {
+  .home-family-branch .home-family-person .home-family-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-top: 5px;
+    color: #897763;
+    font-size: 8px;
+    line-height: 1.25;
+  }
+
+  .home-family-branch .home-family-summary > span + span::before {
     display: none;
   }
 
