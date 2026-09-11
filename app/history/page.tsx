@@ -112,7 +112,7 @@ export default function Page() {
                 </span>
                 <HeritageIcon name="next" size={20} />
               </Link>
-              <Link href="/members">
+              <Link href="/family-tree?tab=members">
                 <HeritageIcon name="history" size={20} />
                 <span>
                   Danh sách thành viên

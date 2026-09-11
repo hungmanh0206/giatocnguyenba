@@ -43,7 +43,7 @@ import {
   searchMembers,
   type Member,
 } from '@/lib/family';
-export function MembersPage() {
+export function MembersPage({ embedded = false }: { embedded?: boolean }) {
   const { members, connection } = useFamily();
   const params = useSearchParams();
   const [query, setQuery] = useState(params.get('q') || '');
@@ -72,8 +72,10 @@ export function MembersPage() {
   ).size;
   const total = Math.ceil(filtered.length / 12);
   const pageMembers = filtered.slice((page - 1) * 12, page * 12);
+  const PageFrame = embedded ? 'section' : 'main';
+
   return (
-    <main id="main">
+    <PageFrame id={embedded ? undefined : 'main'} className={embedded ? 'members-tab' : undefined}>
       <div className="container page-space">
         <div className="page-heading">
           <div>
@@ -241,8 +243,8 @@ export function MembersPage() {
           </div>
         )}
       </div>
-      <Footer />
-    </main>
+      {!embedded && <Footer />}
+    </PageFrame>
   );
 }
 export function FamilyRelations({
@@ -370,7 +372,7 @@ export function MemberDetail({ id }: { id: string }) {
           title="Không tìm thấy hồ sơ"
           description="Hồ sơ có thể không tồn tại trong bản gia phả hiện tại."
         />
-        <Link className="text-link" href="/members">
+        <Link className="text-link" href="/family-tree?tab=members">
           <HeritageIcon name="previous" size={16} /> Về danh sách thành viên
         </Link>
       </main>
@@ -378,7 +380,7 @@ export function MemberDetail({ id }: { id: string }) {
   return (
     <main id="main">
       <div className="container page-space">
-        <Link className="back-link" href="/members">
+        <Link className="back-link" href="/family-tree?tab=members">
           <HeritageIcon name="previous" size={17} /> Thành viên dòng họ
         </Link>
         <div className="profile-hero">

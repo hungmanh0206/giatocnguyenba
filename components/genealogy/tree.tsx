@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   BaseEdge,
@@ -33,7 +34,7 @@ import {
 } from '@/lib/tree-layout';
 import { Avatar } from './home';
 import { HeritageIcon } from './heritage-icon';
-import { QuickView } from './members';
+import { MembersPage, QuickView } from './members';
 import { Choice, branchOptions, generationOptions, SearchBox } from './common';
 import { useFamily } from './provider';
 
@@ -249,10 +250,43 @@ const edgeTypes = {
 };
 
 export function TreePage() {
+  const params = useSearchParams();
+  const activeTab = params.get('tab') === 'members' ? 'members' : 'tree';
+
   return (
-    <ReactFlowProvider>
-      <TreeCanvas />
-    </ReactFlowProvider>
+    <main id="main" className="family-tree-page">
+      <div className="family-tree-tabs-band">
+        <div className="container">
+          <nav className="family-tree-tabs" role="tablist" aria-label="Xem gia phả">
+            <Link
+              className={activeTab === 'tree' ? 'is-active' : ''}
+              href="/family-tree"
+              role="tab"
+              aria-selected={activeTab === 'tree'}
+            >
+              <HeritageIcon name="tree" size={18} />
+              Cây gia phả
+            </Link>
+            <Link
+              className={activeTab === 'members' ? 'is-active' : ''}
+              href="/family-tree?tab=members"
+              role="tab"
+              aria-selected={activeTab === 'members'}
+            >
+              <HeritageIcon name="profile" size={18} />
+              Thành viên
+            </Link>
+          </nav>
+        </div>
+      </div>
+      {activeTab === 'members' ? (
+        <MembersPage embedded />
+      ) : (
+        <ReactFlowProvider>
+          <TreeCanvas />
+        </ReactFlowProvider>
+      )}
+    </main>
   );
 }
 
@@ -462,8 +496,7 @@ function TreeCanvas() {
   }
 
   return (
-    <main
-      id="main"
+    <section
       className={`tree-page ${full ? 'is-fullscreen' : ''}`}
       ref={container}
     >
@@ -658,6 +691,6 @@ function TreeCanvas() {
         onClose={() => setSelected(null)}
         onSelect={selectPerson}
       />
-    </main>
+    </section>
   );
 }

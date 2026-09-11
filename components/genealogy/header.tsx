@@ -9,7 +9,6 @@ import { useFamily } from './provider';
 const navigation = [
   ['/', 'Trang chủ'],
   ['/family-tree', 'Cây gia phả'],
-  ['/members', 'Thành viên'],
   ['/lunar-calendar', 'Lịch âm & ngày giỗ'],
   ['/history', 'Lịch sử dòng họ'],
 ];

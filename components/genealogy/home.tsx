@@ -285,7 +285,7 @@ export function HomePage() {
                 ) : (
                   <p>Không tìm thấy thành viên phù hợp.</p>
                 )}
-                <Link href={`/members?q=${encodeURIComponent(query)}`}>
+                <Link href={`/family-tree?tab=members&q=${encodeURIComponent(query)}`}>
                   Xem tất cả kết quả <HeritageIcon name="next" size={16} />
                 </Link>
               </div>

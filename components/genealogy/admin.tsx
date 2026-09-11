@@ -30,6 +30,8 @@ import {
   Choice,
   SearchBox,
   EmptyState,
+  branchOptions,
+  generationOptions,
 } from './common';
 import {
   UNKNOWN_MEMBER_NAME,
@@ -74,9 +76,33 @@ function deathFields(value: string) {
     ? { died: Number(text), diedText: undefined }
     : { died: undefined, diedText: text || undefined };
 }
+
+const adminBranchOptions = [
+  ...branchOptions,
+  { value: 'external', label: 'Nhánh ngoại' },
+];
+
+const genderOptions = [
+  { value: 'all', label: 'Tất cả giới tính' },
+  { value: 'male', label: 'Nam' },
+  { value: 'female', label: 'Nữ' },
+  { value: 'unknown', label: 'Chưa rõ giới tính' },
+];
+
+const lifeStatusOptions = [
+  { value: 'all', label: 'Tất cả tình trạng' },
+  { value: 'deceased', label: 'Đã mất' },
+  { value: 'living', label: 'Còn sống' },
+  { value: 'unknown', label: 'Chưa rõ tình trạng' },
+];
+
 export function AdminPage() {
   const { members, save, remove, connection, signIn } = useFamily();
   const [query, setQuery] = useState('');
+  const [generationFilter, setGenerationFilter] = useState('all');
+  const [branchFilter, setBranchFilter] = useState('all');
+  const [genderFilter, setGenderFilter] = useState('all');
+  const [lifeStatusFilter, setLifeStatusFilter] = useState('all');
   const [editing, setEditing] = useState<Member | null>(null);
   const [deleting, setDeleting] = useState<Member | null>(null);
   const [error, setError] = useState('');
@@ -84,7 +110,26 @@ export function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [deletingPending, setDeletingPending] = useState(false);
   const [authPending, setAuthPending] = useState(false);
-  const filtered = searchMembers(members, query);
+  const maxGeneration = Math.max(1, ...members.map((member) => member.generation));
+  const filtered = searchMembers(members, query).filter(
+    (member) =>
+      (generationFilter === 'all' || member.generation === Number(generationFilter)) &&
+      (branchFilter === 'all' ||
+        (branchFilter === 'external'
+          ? member.branch < 0
+          : member.branch === Number(branchFilter))) &&
+      (genderFilter === 'all' ||
+        (genderFilter === 'unknown'
+          ? !member.gender
+          : member.gender === genderFilter)) &&
+      (lifeStatusFilter === 'all' || memberLifeStatus(member) === lifeStatusFilter),
+  );
+  const hasActiveFilters =
+    !!query ||
+    generationFilter !== 'all' ||
+    branchFilter !== 'all' ||
+    genderFilter !== 'all' ||
+    lifeStatusFilter !== 'all';
   const membersById = new Map(members.map((member) => [member.id, member]));
   const birthYears = editing ? eligibleBirthYears(editing, members) : null;
   const existingEditing = editing
@@ -295,10 +340,59 @@ export function AdminPage() {
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="filter-bar">
         <SearchBox query={query} setQuery={setQuery} />
+        <Choice
+          label="Lọc theo đời"
+          value={generationFilter}
+          onChange={setGenerationFilter}
+          options={generationOptions.filter(
+            (option) => option.value === 'all' || Number(option.value) <= maxGeneration,
+          )}
+        />
+        <Choice
+          label="Lọc theo chi hoặc nhánh"
+          value={branchFilter}
+          onChange={setBranchFilter}
+          options={adminBranchOptions}
+        />
+        <Choice
+          label="Lọc theo giới tính"
+          value={genderFilter}
+          onChange={setGenderFilter}
+          options={genderOptions}
+        />
+        <Choice
+          label="Lọc theo tình trạng"
+          value={lifeStatusFilter}
+          onChange={setLifeStatusFilter}
+          options={lifeStatusOptions}
+        />
         <span className="muted">{filtered.length} hồ sơ</span>
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            className="filter-reset-button"
+            onClick={() => {
+              setQuery('');
+              setGenerationFilter('all');
+              setBranchFilter('all');
+              setGenderFilter('all');
+              setLifeStatusFilter('all');
+            }}
+          >
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
       {!filtered.length ? (
-        <EmptyState onReset={() => setQuery('')} />
+        <EmptyState
+          onReset={() => {
+            setQuery('');
+            setGenerationFilter('all');
+            setBranchFilter('all');
+            setGenderFilter('all');
+            setLifeStatusFilter('all');
+          }}
+        />
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">

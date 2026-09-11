@@ -8301,3 +8301,96 @@ main#main .timeline-entry p {
     min-height: 36px !important;
   }
 }
+
+/* The family directory is a second view of the tree, not a separate destination. */
+.family-tree-page {
+  min-height: calc(100dvh - 78px);
+  background: #edf0ea;
+}
+
+.family-tree-tabs-band {
+  border-bottom: 1px solid var(--border);
+  background: #fffdf8;
+}
+
+.family-tree-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 58px;
+}
+
+.family-tree-tabs > a {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 6px;
+  color: #766554;
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.family-tree-tabs > a:hover {
+  background: #7e24240d;
+  color: var(--primary);
+}
+
+.family-tree-tabs > a.is-active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 3px 8px #4e1d171c;
+}
+
+.family-tree-page .tree-page {
+  height: calc(100dvh - 136px);
+}
+
+.family-tree-page .tree-page:fullscreen {
+  height: 100dvh;
+}
+
+.members-tab {
+  background: var(--background);
+}
+
+.members-tab .page-space {
+  min-height: calc(100dvh - 136px);
+}
+
+.filter-reset-button {
+  min-height: 40px;
+  padding: 0 10px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .family-tree-tabs {
+    min-height: 54px;
+  }
+
+  .family-tree-page .tree-page {
+    height: calc(100dvh - 132px);
+  }
+
+  .members-tab .page-space {
+    min-height: calc(100dvh - 132px);
+  }
+}
+
+@media (max-width: 560px) {
+  .family-tree-tabs > a {
+    flex: 1;
+    justify-content: center;
+    padding-inline: 10px;
+  }
+
+  .filter-bar .filter-reset-button {
+    margin-left: auto;
+  }
+}
