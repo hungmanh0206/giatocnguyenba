@@ -2524,11 +2524,12 @@ h1 > span {
   width: 70px;
   min-width: 70px;
   border-radius: var(--radius-lg);
+  background: #fff;
 }
 
 .upcoming-event.is-clan-memorial .date-block {
   border-color: #d6aa63;
-  background: #fff4de;
+  background: #fff;
 }
 
 .upcoming-event.is-clan-memorial > span:nth-child(2) > strong {
