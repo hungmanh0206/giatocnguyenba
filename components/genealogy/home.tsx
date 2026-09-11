@@ -24,6 +24,11 @@ import {
   vietnamDate,
   vietnamToday,
 } from '@/lib/lunar';
+
+type QuickStat =
+  | { icon: HeritageIconName; image?: never; label: string; value: number }
+  | { icon?: never; image: string; label: string; value: number };
+
 export function Avatar({
   person,
   large = false,
@@ -201,10 +206,18 @@ export function HomePage() {
 
     return [
       { icon: 'members', value: members.length, label: 'Thành viên' },
-      { icon: 'generations', value: generations, label: 'Thế hệ' },
-      { icon: 'branch', value: branches || 3, label: 'Chi họ' },
+      {
+        image: '/app-icons/home-generations.png',
+        value: generations,
+        label: 'Thế hệ',
+      },
+      {
+        image: '/app-icons/home-branches.png',
+        value: branches || 3,
+        label: 'Chi họ',
+      },
       { icon: 'history', value: founderYear, label: 'Khởi nguồn' },
-    ] satisfies { icon: HeritageIconName; label: string; value: number }[];
+    ] satisfies QuickStat[];
   }, [members]);
   return (
     <main id="main" className="home-page">
@@ -269,7 +282,11 @@ export function HomePage() {
           <div className="home-quick-stats">
             {stats.map((stat) => (
               <div className="home-quick-stat" key={stat.label}>
-                <HeritageIcon name={stat.icon} size={18} />
+                {'image' in stat ? (
+                  <img className="home-quick-stat-icon" src={stat.image} alt="" />
+                ) : (
+                  <HeritageIcon name={stat.icon} size={18} />
+                )}
                 <div>
                   <strong>{stat.value}</strong>
                   <span>{stat.label}</span>

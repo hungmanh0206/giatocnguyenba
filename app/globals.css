@@ -5907,6 +5907,14 @@ main#main:not(.tree-page) {
   height: 22px;
 }
 
+.home-quick-stat-icon {
+  display: block;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
 .home-quick-stat > div {
   display: flex;
   min-width: 0;
@@ -6026,6 +6034,11 @@ main#main:not(.tree-page) {
   .home-quick-stat > .heritage-icon {
     width: 20px;
     height: 20px;
+  }
+
+  .home-quick-stat-icon {
+    width: 23px;
+    height: 23px;
   }
 
   .home-quick-stat strong {
@@ -7433,7 +7446,7 @@ main#main .timeline-entry p {
   inset: 0;
   border: 0;
   border-radius: 0;
-  background: url('/root-family-frame-v2.png') center / 100% 100% no-repeat;
+  background: url('/root-family-frame-pattern-v3.png') center / 100% 100% no-repeat;
   content: '';
   opacity: 1;
   pointer-events: none;
@@ -7611,7 +7624,7 @@ main#main .timeline-entry p {
   z-index: 0;
   border: 0;
   border-radius: 0;
-  background: url('/root-family-frame-v2.png') center / 100% 100% no-repeat;
+  background: url('/root-family-frame-pattern-v3.png') center / 100% 100% no-repeat;
   content: '';
   pointer-events: none;
 }
