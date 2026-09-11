@@ -33,8 +33,8 @@ export function memberName(person: Member) {
         ? 'Ông Tổ:'
         : 'Bà Tổ:'
       : person.gender === 'male'
-        ? 'Ông'
-        : 'Bà';
+        ? 'Ông:'
+        : 'Bà:';
 
   return `${honorific} ${name}`;
 }

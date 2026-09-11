@@ -77,8 +77,8 @@ test('seed stores the supplied five-generation genealogy', () => {
   assert.deepEqual(founder.anniversary, { day: 27, month: 11 });
   assert.equal(founderSpouse.nameKnown, false);
   assert.equal(memberName(founderSpouse), 'Bà Tổ: Chưa rõ tên');
-  assert.equal(memberName(member('g2-khang')), 'Bà Nguyễn Thị Khang');
-  assert.equal(memberName(member('g2-an')), 'Ông Nguyễn Bá Ân');
+  assert.equal(memberName(member('g2-khang')), 'Bà: Nguyễn Thị Khang');
+  assert.equal(memberName(member('g2-an')), 'Ông: Nguyễn Bá Ân');
   assert.equal(founderSpouse.styleName, 'Tư Hòa');
   assert.deepEqual(founderSpouse.anniversary, { day: 17, month: 4 });
 
