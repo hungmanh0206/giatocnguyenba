@@ -7483,6 +7483,24 @@ main#main .timeline-entry p {
   padding: 4px 0;
 }
 
+.root-family-unit .family-member-area:hover,
+.root-family-unit .family-member-area.is-selected {
+  background: transparent;
+  box-shadow: none;
+}
+
+.root-family-unit .family-member-area:hover .avatar,
+.root-family-unit .family-member-area.is-selected .avatar {
+  border-color: #a94b2d;
+  box-shadow: 0 0 0 2px #fff1dbcc, 0 2px 6px #5d271c45;
+  transform: scale(1.04);
+}
+
+.root-family-unit .family-member-area:hover .family-member-copy > strong,
+.root-family-unit .family-member-area.is-selected .family-member-copy > strong {
+  color: #8d3026;
+}
+
 .root-family-unit .family-member-area .avatar {
   width: 38px;
   height: 38px;
