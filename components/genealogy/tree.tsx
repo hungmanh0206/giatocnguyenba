@@ -58,7 +58,7 @@ type FamilyBranchEdgeData = {
 };
 type FamilyBranchEdgeType = Edge<FamilyBranchEdgeData, 'family-branch'>;
 
-const FAMILY_CONNECTOR_COLOR = '#211a15';
+const FAMILY_CONNECTOR_COLOR = '#74502f';
 
 function FamilyBranchEdge({
   sourceX,
