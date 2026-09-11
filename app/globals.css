@@ -7888,13 +7888,18 @@ main#main .timeline-entry p {
 }
 
 .home-family-branches[data-branch-count='2']::before {
-  right: 25%;
-  left: 25%;
+  right: calc(25% - 6.5px);
+  left: calc(25% - 6.5px);
+}
+
+.home-family-branches[data-branch-count='3']::before {
+  right: calc(16.667% - 8.667px);
+  left: calc(16.667% - 8.667px);
 }
 
 .home-family-branches[data-branch-count='4']::before {
-  right: 12.5%;
-  left: 12.5%;
+  right: calc(12.5% - 9.75px);
+  left: calc(12.5% - 9.75px);
 }
 
 .home-family-branch {
@@ -8072,13 +8077,18 @@ main#main .timeline-entry p {
   }
 
   .home-family-branches[data-branch-count='2']::before {
-    right: 25%;
-    left: 25%;
+    right: calc(25% - 1px);
+    left: calc(25% - 1px);
+  }
+
+  .home-family-branches[data-branch-count='3']::before {
+    right: calc(16.667% - 1.333px);
+    left: calc(16.667% - 1.333px);
   }
 
   .home-family-branches[data-branch-count='4']::before {
-    right: 12.5%;
-    left: 12.5%;
+    right: calc(12.5% - 1.5px);
+    left: calc(12.5% - 1.5px);
   }
 
   .home-family-branch::before {
@@ -8152,21 +8162,23 @@ main#main .timeline-entry p {
   .home-page .home-hero .hero-actions {
     display: flex !important;
     width: 100% !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 8px;
-    margin: 22px 0 16px;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px;
+    margin: 20px 0 16px;
   }
 
   .home-page .home-hero .hero-tree-link {
     display: flex !important;
-    width: 100% !important;
-    min-height: 46px !important;
-    padding-inline: 16px;
-  }
-
-  .home-page .home-hero .hero-tree-link {
+    width: auto !important;
+    min-width: 0;
+    min-height: 44px !important;
+    flex: 1 1 auto;
+    gap: 8px !important;
+    padding-inline: 12px !important;
+    font-size: 13px !important;
     justify-content: space-between !important;
+    white-space: nowrap;
   }
 
   .home-page .home-hero .hero-tree-link > .heritage-icon {
@@ -8176,11 +8188,14 @@ main#main .timeline-entry p {
   .home-page .home-hero .hero-history-link {
     display: inline-flex !important;
     width: auto !important;
-    min-height: 32px !important;
+    min-height: 44px !important;
+    flex: 0 0 auto;
     justify-content: flex-start !important;
-    padding: 0 !important;
+    gap: 7px;
+    padding: 0 4px !important;
     font-size: 13px;
     text-align: left;
+    white-space: nowrap;
   }
 
   .home-page .home-hero .hero-search {
@@ -8222,7 +8237,7 @@ main#main .timeline-entry p {
   }
 
   .home-page .home-hero .hero-date-compact {
-    display: inline;
+    display: inline !important;
   }
 
   .home-page .home-hero .hero-utility-date,
@@ -8268,5 +8283,21 @@ main#main .timeline-entry p {
   .home-page .home-hero .heritage-art {
     object-position: 86% center;
     opacity: 0.1;
+  }
+}
+
+@media (max-width: 370px) {
+  .home-page .home-hero .hero-actions {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px;
+  }
+
+  .home-page .home-hero .hero-tree-link {
+    width: 100% !important;
+  }
+
+  .home-page .home-hero .hero-history-link {
+    min-height: 36px !important;
   }
 }
