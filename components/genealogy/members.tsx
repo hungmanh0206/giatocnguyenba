@@ -46,6 +46,7 @@ import {
 } from '@/lib/family';
 export function MembersPage({ embedded = false }: { embedded?: boolean }) {
   const { members } = useFamily();
+  const isMobile = useIsMobile();
   const params = useSearchParams();
   const [query, setQuery] = useState(params.get('q') || '');
   const [branch, setBranch] = useState('all');
@@ -55,7 +56,7 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
   const [page, setPage] = useState(1);
   useEffect(() => {
     setPage(1);
-  }, [query, branch, generation, pageSize]);
+  }, [query, branch, generation, pageSize, view, isMobile]);
   const filtered = searchMembers(members, query)
     .filter(
       (p) =>
@@ -72,7 +73,13 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
   const branchCount = new Set(
     members.filter((member) => member.branch > 0).map((member) => member.branch),
   ).size;
-  const size = pageSize === 'all' ? Math.max(1, filtered.length) : Number(pageSize);
+  const cardPageSize = isMobile ? 10 : 12;
+  const size =
+    view === 'grid'
+      ? cardPageSize
+      : pageSize === 'all'
+        ? Math.max(1, filtered.length)
+        : Number(pageSize);
   const total = Math.max(1, Math.ceil(filtered.length / size));
   const currentPage = Math.min(page, total);
   const pageMembers = filtered.slice((currentPage - 1) * size, currentPage * size);
@@ -216,6 +223,7 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
           onPageChange={setPage}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}
+          showPageSize={view === 'list'}
         />
       </div>
       {!embedded && <Footer />}

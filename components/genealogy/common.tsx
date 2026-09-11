@@ -71,21 +71,25 @@ export function ResultsPagination({
   onPageChange,
   pageSize,
   onPageSizeChange,
+  showPageSize = true,
 }: {
   page: number;
   total: number;
   onPageChange: (page: number) => void;
   pageSize: string;
   onPageSizeChange: (pageSize: string) => void;
+  showPageSize?: boolean;
 }) {
   return (
     <nav className="pagination" aria-label="Phân trang">
-      <Choice
-        label="Số kết quả mỗi trang"
-        value={pageSize}
-        onChange={onPageSizeChange}
-        options={pageSizeOptions}
-      />
+      {showPageSize && (
+        <Choice
+          label="Số kết quả mỗi trang"
+          value={pageSize}
+          onChange={onPageSizeChange}
+          options={pageSizeOptions}
+        />
+      )}
       {total > 1 && (
         <div className="pagination-page-controls">
           <Button
