@@ -108,7 +108,7 @@ function PersonArea({
   onSelect,
 }: {
   person: Member;
-  role: string;
+  role?: string;
   selected: boolean;
   highlighted: boolean;
   dimmed: boolean;
@@ -122,11 +122,11 @@ function PersonArea({
         event.stopPropagation();
         onSelect(person);
       }}
-      aria-label={`${memberName(person)}, ${role}, đời ${person.generation}`}
+      aria-label={`${memberName(person)}${role ? `, ${role}` : ''}, đời ${person.generation}`}
     >
       <Avatar person={person} />
       <span className="family-member-copy">
-        <span className="family-member-role">{role}</span>
+        {role && <span className="family-member-role">{role}</span>}
         <strong>{memberName(person)}</strong>
         <span className="family-member-years">
           {memberYearRange(person)}
@@ -140,11 +140,14 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
   const { group } = data;
   const terminal = group.kind === 'terminal';
   const root = group.root;
-  const memberRole = group.wifeRoles[group.clanMember.id]
-    ? `${group.wifeRoles[group.clanMember.id]} · ${terminal ? 'Con trực tiếp' : 'Thành viên dòng họ'}`
-    : terminal
-      ? 'Con trực tiếp'
-      : 'Thành viên dòng họ';
+  const branchLabel =
+    !root &&
+    (group.lineageType === 'maternal-terminal'
+      ? 'Nhánh ngoại'
+      : group.clanMember.gender === 'male' && group.clanMember.isClanMember
+        ? memberBranchName(group.clanMember, data.members)
+        : undefined);
+  const memberRole = group.wifeRoles[group.clanMember.id] || (terminal ? 'Con trực tiếp' : undefined);
 
   return (
     <article
@@ -156,16 +159,9 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
         <span className="family-generation-label">
           {root
             ? 'KHỞI NGUỒN DÒNG HỌ'
-            : terminal
-              ? 'NHÁNH NGOẠI'
-              : `ĐỜI THỨ ${group.generation}`}
+            : `ĐỜI THỨ ${group.generation}`}
         </span>
-        {!terminal &&
-          !root &&
-          group.clanMember.gender === 'male' &&
-          group.clanMember.isClanMember && (
-          <small className="family-branch-label">{memberBranchName(group.clanMember, data.members)}</small>
-        )}
+        {branchLabel && <small className="family-branch-label">{branchLabel}</small>}
       </div>
       {group.parentageLabel && (
         <span className="family-parentage-label">{group.parentageLabel}</span>
@@ -203,9 +199,6 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
         group.spouses.length === 0 && (
           <div className="family-spouse-missing">Chưa ghi nhận con rể</div>
         )}
-      {group.lineageType === 'maternal-terminal' && !terminal && (
-        <span className="maternal-branch-badge">Nhánh ngoại</span>
-      )}
       {data.hasChildren && (
         <>
           <Handle type="source" position={Position.Bottom} id="family-out" />

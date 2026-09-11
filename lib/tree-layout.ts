@@ -1,4 +1,4 @@
-import { compareSiblingOrder, type Member } from './family.ts';
+import { compareSiblingOrder, memberName, type Member } from './family.ts';
 
 export const FAMILY_UNIT_WIDTH = 248;
 export const FAMILY_UNIT_HEIGHT = 164;
@@ -131,12 +131,12 @@ function parentageLabelFor(person: Member, lookup: Map<string, Member>) {
     .map((id) => lookup.get(id))
     .filter((parent): parent is Member => !!parent);
   const father = parents.find((parent) => parent.gender === 'male');
-  if (!father) return undefined;
+  const mother = parents.find((parent) => parent.gender === 'female');
+  if (!father) return mother ? `Con của ${memberName(mother)}` : undefined;
 
   const wives = wivesOf(father, lookup);
   if (wives.length < 2) return undefined;
 
-  const mother = parents.find((parent) => parent.gender === 'female');
   const wifeIndex = mother ? wives.findIndex((wife) => wife.id === mother.id) : -1;
   return wifeIndex >= 0 ? `Con của ${wifeOrdinal(wifeIndex)}` : 'Chưa ghi nhận mẹ';
 }

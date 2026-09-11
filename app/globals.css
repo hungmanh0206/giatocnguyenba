@@ -7470,18 +7470,6 @@ main#main .timeline-entry p {
   line-height: 1.35;
 }
 
-.maternal-branch-badge {
-  align-self: flex-start;
-  margin: 3px 4px 0;
-  border: 1px solid #d7c3a3;
-  border-radius: 999px;
-  padding: 1px 6px;
-  color: #876742;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
 .terminal-family-unit {
   border-style: dashed;
   padding-top: 10px;

@@ -405,6 +405,14 @@ test('tree preserves the full Bà Khang branch and compact empty maternal branch
   assert.equal(model.groupOf.get('g3-xum'), 'family-g3-xum');
   assert.equal(model.groupOf.get('g4-nghiem'), 'family-g4-nghiem');
   assert.equal(model.groupOf.get('g5-thong'), 'family-g5-thong');
+  assert.equal(
+    model.groups.find((group) => group.id === 'family-g4-con')?.parentageLabel,
+    'Con của Bà: Nguyễn Thị Giàng',
+  );
+  assert.equal(
+    model.groups.find((group) => group.id === 'terminal-g4-thap')?.parentageLabel,
+    'Con của Bà: Nguyễn Thị Út',
+  );
   assert.equal(model.visibleMemberIds.size, seedMembers.length);
   assert.equal(
     model.links.some(
