@@ -228,7 +228,11 @@ export function Header() {
               ) : (
                 <>
                   <Link href="/admin" onClick={() => setNavigationOpen(false)}>
-                    <HeritageIcon name="settings" size={17} />
+                    <img
+                      className="account-menu-icon"
+                      src="/app-icons/admin-dashboard.png"
+                      alt=""
+                    />
                     Quản trị
                   </Link>
                   <Button
@@ -236,7 +240,11 @@ export function Header() {
                     variant="ghost"
                     onClick={openChangePassword}
                   >
-                    <HeritageIcon name="security" size={17} />
+                    <img
+                      className="account-menu-icon"
+                      src="/app-icons/password-reset.png"
+                      alt=""
+                    />
                     Đổi mật khẩu
                   </Button>
                   <Button
@@ -286,14 +294,22 @@ export function Header() {
                         window.location.assign('/admin');
                       }}
                     >
-                      <HeritageIcon name="settings" size={17} />
+                      <img
+                        className="account-menu-icon"
+                        src="/app-icons/admin-dashboard.png"
+                        alt=""
+                      />
                       Quản trị
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="account-menu-item"
                       onClick={openChangePassword}
                     >
-                      <HeritageIcon name="security" size={17} />
+                      <img
+                        className="account-menu-icon"
+                        src="/app-icons/password-reset.png"
+                        alt=""
+                      />
                       Đổi mật khẩu
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

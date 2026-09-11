@@ -1112,6 +1112,9 @@ h1 > span {
   .header-actions {
     gap: 4px;
   }
+  .mobile-menu {
+    margin-right: 4px;
+  }
   .header-actions .admin-link {
     display: none;
   }
@@ -3374,7 +3377,15 @@ h1 > span {
     display: none;
   }
   .upcoming-event {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr) 28px;
+    gap: 14px;
+    width: 100%;
     padding: 15px 0;
+  }
+  .upcoming-event > svg {
+    margin-left: 0;
+    justify-self: end;
   }
   .calendar-policy {
     font-size: 11px;
@@ -8980,6 +8991,14 @@ main#main .timeline-entry p {
   object-fit: contain;
 }
 
+.account-menu-icon {
+  display: block;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  object-fit: contain;
+}
+
 .mobile-account-links {
   display: none;
 }
@@ -9198,7 +9217,8 @@ main#main .timeline-entry p {
   }
 
   .main-nav.is-open .mobile-account-entry .login-icon,
-  .main-nav.is-open .mobile-account-entry .logout-icon {
+  .main-nav.is-open .mobile-account-entry .logout-icon,
+  .main-nav.is-open .mobile-account-entry .account-menu-icon {
     width: 21px;
     height: 21px;
   }
