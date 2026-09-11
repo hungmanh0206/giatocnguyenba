@@ -58,6 +58,8 @@ type FamilyBranchEdgeData = {
 };
 type FamilyBranchEdgeType = Edge<FamilyBranchEdgeData, 'family-branch'>;
 
+const FAMILY_CONNECTOR_COLOR = '#211a15';
+
 function FamilyBranchEdge({
   sourceX,
   sourceY,
@@ -80,7 +82,7 @@ function FamilyBranchEdge({
         {...edge}
         id={`${edge.id}-trunk`}
         path={trunkPath}
-        style={{ ...edge.style, stroke: '#958d7d', strokeDasharray: undefined }}
+        style={{ ...edge.style, stroke: FAMILY_CONNECTOR_COLOR, strokeDasharray: undefined }}
       />
       {children.map((child, index) => (
         <BaseEdge
@@ -90,7 +92,7 @@ function FamilyBranchEdge({
           path={`M ${child.targetX},${busY} L ${child.targetX},${targetY}`}
           style={{
             ...edge.style,
-            stroke: child.maternal ? '#a47b51' : '#958d7d',
+            stroke: FAMILY_CONNECTOR_COLOR,
             strokeDasharray: child.maternal ? '5 5' : undefined,
           }}
         />
@@ -491,7 +493,7 @@ function TreeCanvas() {
           maternal: link.branchType === 'maternal-terminal',
         })),
       },
-      style: { stroke: '#958d7d', strokeWidth: 1.35 },
+      style: { stroke: FAMILY_CONNECTOR_COLOR, strokeWidth: 1.8 },
     });
   }
   const found = treeMembers.filter((member) => searchMatchIds.has(member.id)).slice(0, 6);

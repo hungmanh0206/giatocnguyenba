@@ -3651,8 +3651,9 @@ button:disabled,
 }
 
 .tree-canvas .react-flow__edge-path {
-  stroke: #aaa69a !important;
-  stroke-opacity: 0.62;
+  stroke: #211a15 !important;
+  stroke-opacity: 1;
+  stroke-width: 1.8px;
 }
 
 .household,
@@ -7876,9 +7877,9 @@ main#main .timeline-entry p {
 }
 
 .home-family-connector {
-  width: 1px;
+  width: 2px;
   height: 39px;
-  background: #b8a381;
+  background: #211a15;
 }
 
 .home-family-branches {
@@ -7895,7 +7896,7 @@ main#main .timeline-entry p {
   top: 0;
   right: 16.667%;
   left: 16.667%;
-  border-top: 1px solid #b8a381;
+  border-top: 2px solid #211a15;
   content: '';
 }
 
@@ -7929,7 +7930,7 @@ main#main .timeline-entry p {
   top: -24px;
   left: 50%;
   height: 24px;
-  border-left: 1px solid #b8a381;
+  border-left: 2px solid #211a15;
   content: '';
 }
 
@@ -7987,25 +7988,27 @@ main#main .timeline-entry p {
   width: 18px;
   height: 2px;
   border-radius: 999px;
-  background: #958d7d;
+  background: #211a15;
 }
 
 .tree-legend-line.is-dashed {
   background: repeating-linear-gradient(
     to right,
-    #a47b51 0 4px,
+    #211a15 0 4px,
     transparent 4px 7px
   );
 }
 
 .tree-canvas .react-flow__edge-path {
-  stroke-opacity: 0.82;
+  stroke: #211a15 !important;
+  stroke-opacity: 1;
+  stroke-width: 1.8px;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .react-flow__edge.maternal-tree-edge .react-flow__edge-path {
-  stroke: #a47b51 !important;
+  stroke: #211a15 !important;
   stroke-dasharray: 5 5;
 }
 
