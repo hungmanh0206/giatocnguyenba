@@ -152,7 +152,8 @@ export function Header() {
       return;
     }
     clearPasswordFields();
-    setAuthNotice('Đã đổi mật khẩu thành công.');
+    setLoginOpen(false);
+    setAuthMode('sign-in');
   }
 
   async function logout() {

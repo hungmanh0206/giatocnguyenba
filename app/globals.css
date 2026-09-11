@@ -6404,6 +6404,33 @@ main#main .branch-preview > .branch-preview-meta {
   margin: 16px 0 -2px;
 }
 
+.admin-table-wrap {
+  border: 1px solid #ded4c5;
+  background: #fffefa;
+  box-shadow: 0 8px 22px #3d2e1710;
+}
+
+.admin-table {
+  background: #fffefa;
+}
+
+.admin-table th {
+  background: #faf7f0;
+  color: #766856;
+}
+
+.admin-table tbody tr {
+  background: #fffefa;
+}
+
+.admin-table tbody tr:nth-child(even) {
+  background: #fffcf6;
+}
+
+.admin-table tbody tr:hover {
+  background: #f9f0e2;
+}
+
 .pagination {
   gap: 14px;
 }
