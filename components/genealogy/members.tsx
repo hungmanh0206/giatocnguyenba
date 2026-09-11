@@ -44,7 +44,7 @@ import {
   type Member,
 } from '@/lib/family';
 export function MembersPage({ embedded = false }: { embedded?: boolean }) {
-  const { members, connection } = useFamily();
+  const { members } = useFamily();
   const params = useSearchParams();
   const [query, setQuery] = useState(params.get('q') || '');
   const [branch, setBranch] = useState('all');
@@ -83,14 +83,6 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
             <h1>Thành viên dòng họ</h1>
             <p>{members.length} thành viên · {generationCount} thế hệ · {branchCount} chi</p>
           </div>
-          <Button
-            className="action-button"
-            render={<Link href="/family-tree" />}
-            nativeButton={false}
-          >
-            <HeritageIcon name="tree-cta" size={19} />
-            Xem cây gia phả
-          </Button>
         </div>
         <div className="filter-bar">
           <SearchBox query={query} setQuery={setQuery} />
@@ -108,6 +100,11 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
               (o) => o.value === 'all' || Number(o.value) <= 5,
             )}
           />
+        </div>
+        <div className="results-summary">
+          <span>
+            {filtered.length} thành viên{query && ` cho “${query}”`}
+          </span>
           <div className="view-toggle" role="group" aria-label="Kiểu hiển thị">
             <span className="view-toggle-label">Hiển thị</span>
             <Button
@@ -133,14 +130,6 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
               <HeritageIcon name="list" size={18} />
             </Button>
           </div>
-        </div>
-        <div className="results-summary">
-          <span>
-            {filtered.length} thành viên{query && ` cho “${query}”`}
-          </span>
-          <span>
-            {connection.mode === 'connected' ? 'Đã đồng bộ' : 'Dữ liệu mẫu'}
-          </span>
         </div>
         {!filtered.length ? (
           <EmptyState

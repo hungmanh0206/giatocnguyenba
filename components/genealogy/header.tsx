@@ -8,7 +8,7 @@ import { HeritageIcon } from './heritage-icon';
 import { useFamily } from './provider';
 const navigation = [
   ['/', 'Trang chủ'],
-  ['/family-tree', 'Cây gia phả'],
+  ['/family-tree', 'Gia phả'],
   ['/lunar-calendar', 'Lịch âm & ngày giỗ'],
   ['/history', 'Lịch sử dòng họ'],
 ];
