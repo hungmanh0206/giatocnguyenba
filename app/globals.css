@@ -7496,6 +7496,8 @@ main#main .timeline-entry p {
   font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 14px;
   font-weight: 700;
+  line-height: 1.4;
+  padding-top: 2px;
 }
 
 .root-family-unit .family-member-years {
