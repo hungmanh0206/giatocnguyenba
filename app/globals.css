@@ -8444,6 +8444,21 @@ main#main .timeline-entry p {
   .home-stats-band {
     background: transparent;
   }
+
+  .family-tree-page .tree-toolbar {
+    width: 100%;
+    max-width: 1380px;
+    margin: 0 auto;
+    padding-right: 48px;
+    padding-left: 48px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1200px) {
+  .family-tree-page .tree-toolbar {
+    padding-right: 32px;
+    padding-left: 32px;
+  }
 }
 
 @media (max-width: 767px) {
