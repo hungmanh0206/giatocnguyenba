@@ -7425,7 +7425,7 @@ main#main .timeline-entry p {
   border-radius: 0;
   padding: 29px 43px 20px;
   background: transparent;
-  box-shadow: 0 12px 26px #4b2c1920;
+  box-shadow: none;
 }
 
 .root-family-unit::before {
@@ -7433,7 +7433,7 @@ main#main .timeline-entry p {
   inset: 0;
   border: 0;
   border-radius: 0;
-  background: url('/root-family-frame.png') center / 100% 100% no-repeat;
+  background: url('/root-family-frame-v2.png') center / 100% 100% no-repeat;
   content: '';
   opacity: 1;
   pointer-events: none;
@@ -7595,14 +7595,14 @@ main#main .timeline-entry p {
 
 .home-family-card.is-root {
   isolation: isolate;
-  overflow: hidden;
+  overflow: visible;
   width: 340px;
   min-height: 212px;
   border: 0;
   border-radius: 0;
   padding: 30px 49px 20px;
   background: transparent;
-  box-shadow: 0 12px 26px #3d2e1720;
+  box-shadow: none;
 }
 
 .home-family-card.is-root::before {
@@ -7611,7 +7611,7 @@ main#main .timeline-entry p {
   z-index: 0;
   border: 0;
   border-radius: 0;
-  background: url('/root-family-frame.png') center / 100% 100% no-repeat;
+  background: url('/root-family-frame-v2.png') center / 100% 100% no-repeat;
   content: '';
   pointer-events: none;
 }
