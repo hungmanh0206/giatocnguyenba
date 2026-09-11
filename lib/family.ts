@@ -23,9 +23,20 @@ export type Member = {
 export const UNKNOWN_MEMBER_NAME = 'Chưa rõ tên';
 
 export function memberName(person: Member) {
-  return person.nameKnown === false || !person.name.trim()
+  const name = person.nameKnown === false || !person.name.trim()
     ? UNKNOWN_MEMBER_NAME
     : person.name;
+
+  const honorific =
+    person.generation === 1 && person.parents.length === 0
+      ? person.gender === 'male'
+        ? 'Ông Tổ:'
+        : 'Bà Tổ:'
+      : person.gender === 'male'
+        ? 'Ông'
+        : 'Bà';
+
+  return `${honorific} ${name}`;
 }
 
 export function memberLifeStatus(person: Member) {

@@ -71,10 +71,14 @@ test('seed stores the supplied five-generation genealogy', () => {
   const founder = member('p1');
   const founderSpouse = member('p2');
   assert.equal(founder.name, 'Nguyễn Bá Linh');
+  assert.equal(memberName(founder), 'Ông Tổ: Nguyễn Bá Linh');
   assert.equal(founder.tabooName, 'Sóc');
   assert.equal(founder.styleName, 'Thần Hy Phủ Quân');
   assert.deepEqual(founder.anniversary, { day: 27, month: 11 });
   assert.equal(founderSpouse.nameKnown, false);
+  assert.equal(memberName(founderSpouse), 'Bà Tổ: Chưa rõ tên');
+  assert.equal(memberName(member('g2-khang')), 'Bà Nguyễn Thị Khang');
+  assert.equal(memberName(member('g2-an')), 'Ông Nguyễn Bá Ân');
   assert.equal(founderSpouse.styleName, 'Tư Hòa');
   assert.deepEqual(founderSpouse.anniversary, { day: 17, month: 4 });
 
@@ -131,7 +135,7 @@ test('incomplete historical records retain unknown names and flexible death date
   };
 
   assert.equal(validateMember(unknownMember, seedMembers), null);
-  assert.equal(memberName(unknownMember), 'Chưa rõ tên');
+  assert.equal(memberName(unknownMember), 'Bà Tổ: Chưa rõ tên');
   assert.equal(memberDeathLabel(unknownMember), 'Mất vào tháng Chạp, chưa rõ năm');
   assert.equal(memberYearRange(unknownMember), 'Chưa rõ – Mất vào tháng Chạp, chưa rõ năm');
   assert.equal(searchMembers([unknownMember], 'tĩnh trai').length, 1);
