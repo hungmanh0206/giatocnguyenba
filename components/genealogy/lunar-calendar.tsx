@@ -74,7 +74,7 @@ export function LunarPage() {
           </div>
           <Button
             variant="outline"
-            className="action-button"
+            className="action-button calendar-today-button"
             onClick={() => {
               setMonth(today);
               setSelected(today);

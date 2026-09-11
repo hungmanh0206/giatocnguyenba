@@ -1113,7 +1113,7 @@ h1 > span {
     gap: 4px;
   }
   .mobile-menu {
-    margin-right: 4px;
+    margin-right: 14px;
   }
   .header-actions .admin-link {
     display: none;
@@ -1300,6 +1300,17 @@ h1 > span {
 }
 .lunar-page-heading {
   margin-bottom: 18px;
+}
+.calendar-today-button {
+  border-color: #d8c7b1 !important;
+  background: #fff !important;
+  color: var(--primary) !important;
+  box-shadow: 0 2px 7px #3d2e1708;
+}
+.calendar-today-button:hover {
+  border-color: #b88a59 !important;
+  background: #fffaf3 !important;
+  color: var(--primary) !important;
 }
 .page-heading h1 {
   font-size: 32px;
