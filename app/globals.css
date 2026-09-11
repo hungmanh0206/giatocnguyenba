@@ -7402,7 +7402,7 @@ main#main .timeline-entry p {
   inset: 0;
   border: 0;
   border-radius: 0;
-  background: url('/root-family-ornament.png') center / 100% 100% no-repeat;
+  background: url('/root-family-frame.png') center / 100% 100% no-repeat;
   content: '';
   opacity: 1;
   pointer-events: none;
@@ -7580,7 +7580,7 @@ main#main .timeline-entry p {
   z-index: 0;
   border: 0;
   border-radius: 0;
-  background: url('/root-family-ornament.png') center / 100% 100% no-repeat;
+  background: url('/root-family-frame.png') center / 100% 100% no-repeat;
   content: '';
   pointer-events: none;
 }
