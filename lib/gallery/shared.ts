@@ -16,7 +16,6 @@ export type GalleryPhoto = {
   albumName: string;
   year: number | null;
   takenAt: string | null;
-  featured: boolean;
   uploadedByName: string | null;
   createdAt: string | null;
   updatedAt: string | null;

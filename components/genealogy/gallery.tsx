@@ -546,13 +546,13 @@ export function GalleryPage() {
       </Dialog>
 
       <Dialog open={!!activePhoto} onOpenChange={(open) => { if (!open) { setViewerId(null); setEditing(false); setViewerError(null); } }}>
-        {activePhoto && <DialogContent className={`gallery-viewer-dialog${useMobileGalleryViewer ? ' gallery-mobile-dialog' : ''}`} closeIcon={<GalleryIcon name="close" size={18} />} showCloseButton={!useMobileGalleryViewer}>
-          {useMobileGalleryViewer && <div className="gallery-viewer-mobile-header"><span>Preview</span><DialogClose aria-label="Đóng preview ảnh" render={<Button size="icon-sm" variant="ghost" />}><GalleryIcon name="close" size={18} /></DialogClose></div>}
+        {activePhoto && <DialogContent className={`gallery-viewer-dialog${useMobileGalleryViewer ? ' gallery-mobile-dialog' : ''}${editing ? ' gallery-is-editing' : ''}`} closeIcon={<GalleryIcon name="close" size={18} />} showCloseButton={!useMobileGalleryViewer}>
+          {useMobileGalleryViewer && <div className="gallery-viewer-mobile-header"><span>{editing ? 'Chỉnh sửa ảnh' : 'Preview'}</span><DialogClose aria-label="Đóng preview ảnh" render={<Button size="icon-sm" variant="ghost" />}><GalleryIcon name="close" size={18} /></DialogClose></div>}
           <div className="gallery-viewer-layout">
             <div className="gallery-viewer-image-wrap">
-              {photos.length > 1 && <Button aria-label="Ảnh trước" className="gallery-viewer-arrow previous" onClick={() => moveViewer(-1)} size="icon" variant="outline"><GalleryIcon name="previous" size={22} /></Button>}
+              {!editing && photos.length > 1 && <Button aria-label="Ảnh trước" className="gallery-viewer-arrow previous" onClick={() => moveViewer(-1)} size="icon" variant="outline"><GalleryIcon name="previous" size={22} /></Button>}
               <Image alt={photoAlt(activePhoto)} className="gallery-viewer-image" height={activePhoto.height} sizes="(max-width: 720px) 100vw, 70vw" src={cloudinaryUrl(activePhoto.imageUrl, 1800)} width={activePhoto.width} />
-              {photos.length > 1 && <Button aria-label="Ảnh tiếp theo" className="gallery-viewer-arrow next" onClick={() => moveViewer(1)} size="icon" variant="outline"><GalleryIcon name="next" size={22} /></Button>}
+              {!editing && photos.length > 1 && <Button aria-label="Ảnh tiếp theo" className="gallery-viewer-arrow next" onClick={() => moveViewer(1)} size="icon" variant="outline"><GalleryIcon name="next" size={22} /></Button>}
             </div>
             <div className="gallery-viewer-copy">
               {editing ? <div className="gallery-edit-form">
@@ -565,7 +565,7 @@ export function GalleryPage() {
                 <DialogTitle>{activePhoto.title}</DialogTitle>
                 {activePhoto.caption && <DialogDescription>{activePhoto.caption}</DialogDescription>}
                 <dl className="gallery-viewer-details">{readableDate(activePhoto) && <div><dt>Thời gian</dt><dd>{readableDate(activePhoto)}</dd></div>}<div><dt>Định dạng</dt><dd>{activePhoto.format.toUpperCase()} · {readableBytes(activePhoto.bytes)}</dd></div>{activePhoto.uploadedByName && <div><dt>Người thêm</dt><dd>{activePhoto.uploadedByName}</dd></div>}</dl>
-                {canManageGallery && <div className="gallery-viewer-actions"><Button disabled={savingEdit} onClick={() => beginEdit(activePhoto)} variant="outline"><GalleryIcon name="edit" size={18} /> Chỉnh sửa</Button><Button aria-pressed={activePhoto.featured} className={activePhoto.featured ? 'is-featured' : ''} disabled={savingEdit} onClick={() => void updatePhoto({ featured: !activePhoto.featured })} variant="outline"><GalleryIcon className="gallery-featured-icon" name={activePhoto.featured ? 'featured-on' : 'featured-off'} size={20} /> {activePhoto.featured ? 'Bỏ nổi bật' : 'Đặt nổi bật'}</Button><Button className="gallery-delete-button" disabled={savingEdit} onClick={() => setDeleteTarget(activePhoto)} variant="outline"><GalleryIcon name="delete" size={18} /> Xóa ảnh</Button></div>}
+                {canManageGallery && <div className="gallery-viewer-actions"><Button disabled={savingEdit} onClick={() => beginEdit(activePhoto)} variant="outline"><GalleryIcon name="edit" size={18} /> Chỉnh sửa</Button><Button className="gallery-delete-button" disabled={savingEdit} onClick={() => setDeleteTarget(activePhoto)} variant="outline"><GalleryIcon name="delete" size={18} /> Xóa ảnh</Button></div>}
               </>}
               {viewerError && <p className="gallery-form-error" role="alert">{viewerError}</p>}
             </div>

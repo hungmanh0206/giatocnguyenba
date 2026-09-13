@@ -48,6 +48,14 @@ type GalleryDetails = {
   year: number | null;
 };
 
+type GalleryMetadata = {
+  caption: string | null;
+  takenAt: string | null;
+  title: string;
+  updatedAt: string;
+  year: number | null;
+};
+
 function configError(message: string) {
   const error = new Error(message);
   error.name = 'ConfigurationError';
@@ -180,7 +188,6 @@ function photoFromAsset(asset: CloudinaryAsset): GalleryPhoto | null {
     albumName: 'Kho ảnh dòng họ',
     year,
     takenAt: nullableDate(contextValue(asset, 'gallery_taken_at')),
-    featured: contextValue(asset, 'gallery_featured') === 'true',
     uploadedByName: contextValue(asset, 'gallery_uploaded_by'),
     createdAt,
     updatedAt: nullableString(asset.updated_at) || createdAt,
@@ -200,8 +207,72 @@ function contextForPhoto(details: GalleryDetails, uploadedByName: string | null)
     gallery_uploaded_by: uploadedByName || '',
   };
   return Object.entries(fields)
+    .filter(([, value]) => value)
     .map(([key, value]) => `${key}=${escapeContextValue(value)}`)
     .join('|');
+}
+
+function galleryMetadataRef(photoId: string) {
+  return getFirebaseAdminServices()
+    .db.collection('families')
+    .doc(familyId)
+    .collection('galleryMetadata')
+    .doc(photoId);
+}
+
+function galleryMetadataFromData(data: Record<string, unknown>): GalleryMetadata | null {
+  const title = nullableString(data.title);
+  if (!title) return null;
+
+  return {
+    title,
+    caption: nullableString(data.caption),
+    year: nullableYear(data.year),
+    takenAt: nullableDate(data.takenAt),
+    updatedAt: nullableString(data.updatedAt) || '',
+  };
+}
+
+function applyGalleryMetadata(photo: GalleryPhoto, metadata: GalleryMetadata | undefined): GalleryPhoto {
+  if (!metadata) return photo;
+  return {
+    ...photo,
+    title: metadata.title,
+    caption: metadata.caption,
+    year: metadata.year,
+    takenAt: metadata.takenAt,
+    updatedAt: metadata.updatedAt || photo.updatedAt,
+  };
+}
+
+async function galleryMetadataByPhotoId() {
+  try {
+    const snapshot = await getFirebaseAdminServices()
+      .db.collection('families')
+      .doc(familyId)
+      .collection('galleryMetadata')
+      .get();
+    return new Map(
+      snapshot.docs.flatMap((document) => {
+        const metadata = galleryMetadataFromData(document.data());
+        return metadata ? [[document.id, metadata] as const] : [];
+      }),
+    );
+  } catch {
+    // Existing Cloudinary context remains a read fallback while server metadata is unavailable.
+    return new Map<string, GalleryMetadata>();
+  }
+}
+
+async function saveGalleryMetadata(photo: GalleryPhoto) {
+  const metadata: GalleryMetadata = {
+    title: photo.title,
+    caption: photo.caption,
+    year: photo.year,
+    takenAt: photo.takenAt,
+    updatedAt: photo.updatedAt || new Date().toISOString(),
+  };
+  await galleryMetadataRef(photo.id).set(metadata, { merge: true });
 }
 
 function photoInput(input: Record<string, unknown>): GalleryDetails {
@@ -356,11 +427,15 @@ export async function listGalleryPhotos({
   search?: string | null;
   year?: number | null;
 }) {
-  const assets = await listAllCloudinaryAssets();
+  const [assets, metadataByPhotoId] = await Promise.all([
+    listAllCloudinaryAssets(),
+    galleryMetadataByPhotoId(),
+  ]);
   const normalizedSearch = normalizedText(search || '');
   const allPhotos = assets
     .map(photoFromAsset)
     .filter((photo): photo is GalleryPhoto => photo !== null)
+    .map((photo) => applyGalleryMetadata(photo, metadataByPhotoId.get(photo.id)))
     .filter((photo) => !year || photo.year === year)
     .filter((photo) =>
       !normalizedSearch ||
@@ -373,12 +448,17 @@ export async function listGalleryPhotos({
   };
 }
 
-export async function listFeaturedGalleryPhotos() {
-  const photos = (await listAllCloudinaryAssets())
+export async function listFamilyMomentPhotos() {
+  const [assets, metadataByPhotoId] = await Promise.all([
+    listAllCloudinaryAssets(),
+    galleryMetadataByPhotoId(),
+  ]);
+  return assets
     .map(photoFromAsset)
-    .filter((photo): photo is GalleryPhoto => photo !== null);
-  const featured = photos.filter((photo) => photo.featured);
-  return (featured.length ? featured : photos).slice(0, 18);
+    .filter((photo): photo is GalleryPhoto => photo !== null)
+    .map((photo) => applyGalleryMetadata(photo, metadataByPhotoId.get(photo.id)))
+    .sort((left, right) => (right.createdAt || '').localeCompare(left.createdAt || ''))
+    .slice(0, 18);
 }
 
 export function uploadSignature(input: Record<string, unknown>, admin: AuthenticatedAdmin) {
@@ -412,6 +492,7 @@ export async function createGalleryPhoto(input: Record<string, unknown>) {
   if (!photo || asset.resource_type !== 'image' || photo.bytes > GALLERY_MAX_FILE_BYTES) {
     throw requestError('Ảnh tải lên không đúng định dạng hỗ trợ hoặc quá dung lượng.');
   }
+  await saveGalleryMetadata(photo);
   return photo;
 }
 
@@ -427,22 +508,24 @@ export async function updateGalleryPhoto(photoId: string, input: Record<string, 
     year: input.year ?? current.year,
     takenAt: input.takenAt ?? current.takenAt,
   });
-  const featured = typeof input.featured === 'boolean' ? input.featured : current.featured;
-  const context = `${contextForPhoto(details, current.uploadedByName)}|gallery_featured=${featured ? 'true' : 'false'}`;
+  const context = contextForPhoto(details, current.uploadedByName);
   await updateCloudinaryContext(publicId, context);
 
-  return {
+  const updated: GalleryPhoto = {
     ...current,
     ...details,
-    featured,
+    title: details.title || current.title,
     updatedAt: new Date().toISOString(),
   };
+  await saveGalleryMetadata(updated);
+  return updated;
 }
 
 export async function deleteGalleryPhoto(photoId: string) {
   const publicId = publicIdFromPhotoId(photoId);
   await cloudinaryAsset(publicId);
   await destroyCloudinaryAsset(publicId);
+  await galleryMetadataRef(photoId).delete();
 }
 
 export function isExpectedGalleryError(error: unknown): error is Error {

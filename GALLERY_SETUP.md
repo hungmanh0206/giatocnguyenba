@@ -1,6 +1,6 @@
 # Thiết lập Kho ảnh dòng họ
 
-`/gallery` cho phép mọi người xem ảnh. Chỉ UID đang là `super_admin` trong `families/nguyen-ba` mới có thể tải ảnh lên, chỉnh sửa, đặt ảnh nổi bật hoặc xóa ảnh.
+`/gallery` cho phép mọi người xem ảnh. Chỉ UID đang là `super_admin` trong `families/nguyen-ba` mới có thể tải ảnh lên, chỉnh sửa hoặc xóa ảnh.
 
 ## 1. Cloudinary
 
@@ -45,6 +45,6 @@ Lệnh dùng `firestore.rules` và `firestore.indexes.json`. Index mới có th�
 1. Đăng nhập bằng tài khoản super admin.
 2. Mở `/gallery` và chọn **Thêm ảnh**.
 3. Chọn ảnh JPG, PNG hoặc WebP tối đa 10 MB, điền metadata rồi tải lên trực tiếp vào Cloudinary.
-4. Mở một ảnh để chỉnh sửa, xóa hoặc **Đặt nổi bật**. Ảnh nổi bật tự động được dùng cho slideshow ở trang chủ.
+4. Mở một ảnh để chỉnh sửa thông tin hoặc xóa ảnh. Slideshow ở trang chủ hiển thị những ảnh mới nhất trong kho.
 
 Ảnh đang có sẵn trong folder `Gia tộc nguyễn bá` trên Cloudinary cũng tự động xuất hiện trên website. Khi xóa, hệ thống xóa trực tiếp asset tương ứng trên Cloudinary.

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { listFeaturedGalleryPhotos } from '@/lib/gallery/server';
+import { listFamilyMomentPhotos } from '@/lib/gallery/server';
 import { cloudinaryUrl } from '@/lib/gallery/shared';
 
 export const dynamic = 'force-dynamic';
@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 
 export async function GET() {
   try {
-    const photos = await listFeaturedGalleryPhotos();
+    const photos = await listFamilyMomentPhotos();
     const moments = photos.map((photo) => ({
       id: photo.id,
       src: cloudinaryUrl(photo.imageUrl, 1600),

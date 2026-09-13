@@ -32,6 +32,16 @@ import {
 } from '@/lib/lunar-calendar/service';
 import type { UpcomingFamilyEvent } from '@/lib/lunar-calendar/types';
 
+const calendarMonthOptions = Array.from({ length: 12 }, (_, month) => ({
+  value: String(month),
+  label: `Tháng ${month + 1}`,
+}));
+
+const calendarYearOptions = Array.from({ length: 400 }, (_, offset) => {
+  const year = 1800 + offset;
+  return { value: String(year), label: `Năm ${year}` };
+});
+
 function LunarCalendarView() {
   const { members } = useFamily();
   const params = useSearchParams();
@@ -76,6 +86,16 @@ function LunarCalendarView() {
   );
   const lunarYear = info.supported ? info.lunar.year : month.getFullYear();
 
+  function changeCalendarPeriod(nextMonth: number, nextYear: number) {
+    const day = Math.min(
+      selected.getDate(),
+      new Date(nextYear, nextMonth + 1, 0).getDate(),
+    );
+    const nextDate = new Date(nextYear, nextMonth, day);
+    setMonth(nextDate);
+    setSelected(nextDate);
+  }
+
   return (
     <main id="main">
       <div className="container page-space">
@@ -104,12 +124,30 @@ function LunarCalendarView() {
               <span className="calendar-memorial-key">
                 <i /> Ngày giỗ
               </span>
-              <Choice
-                label="Lọc ngày giỗ theo chi"
-                value={branch}
-                onChange={setBranch}
-                options={branchOptions}
-              />
+              <div className="calendar-filter-controls">
+                <Choice
+                  label="Chọn tháng dương lịch"
+                  value={String(month.getMonth())}
+                  onChange={(value) =>
+                    changeCalendarPeriod(Number(value), month.getFullYear())
+                  }
+                  options={calendarMonthOptions}
+                />
+                <Choice
+                  label="Chọn năm dương lịch"
+                  value={String(month.getFullYear())}
+                  onChange={(value) =>
+                    changeCalendarPeriod(month.getMonth(), Number(value))
+                  }
+                  options={calendarYearOptions}
+                />
+                <Choice
+                  label="Lọc ngày giỗ theo chi"
+                  value={branch}
+                  onChange={setBranch}
+                  options={branchOptions}
+                />
+              </div>
             </div>
             <Calendar
               mode="single"

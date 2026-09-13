@@ -2170,6 +2170,12 @@ h1 > span {
 .calendar-filter .choice {
   min-width: 158px;
 }
+.calendar-filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
 .calendar-filter i,
 .event-dot {
   display: inline-block;
@@ -3440,7 +3446,7 @@ h1 > span {
     min-width: 135px;
     font-size: 12px;
   }
-  .calendar-filter > span {
+.calendar-filter > span {
     font-size: 10px;
     gap: 5px;
   }
@@ -10297,15 +10303,6 @@ main#main .timeline-entry p {
   width: 17px;
   height: 17px;
 }
-.gallery-viewer-actions .gallery-featured-icon {
-  width: 21px;
-  height: 21px;
-}
-.gallery-viewer-actions button.is-featured {
-  border-color: #b8894f !important;
-  background: #faf0dc !important;
-  color: #835621 !important;
-}
 .gallery-viewer-actions .gallery-delete-button {
   color: #9d3030 !important;
 }
@@ -10967,6 +10964,42 @@ main#main .timeline-entry p {
 
 .gallery-viewer-dialog.gallery-mobile-dialog .gallery-viewer-actions .gallery-delete-button {
   flex-basis: 100%;
+}
+
+/* Editing needs a shorter image area so all fields and actions stay reachable on phones. */
+.gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-viewer-image-wrap,
+.gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-viewer-image {
+  max-height: min(26dvh, 230px);
+}
+
+.gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-viewer-copy {
+  gap: 10px;
+  padding-top: 16px;
+}
+
+.gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-edit-form {
+  gap: 10px;
+}
+
+.gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-edit-form textarea {
+  min-height: 82px;
+  max-height: 112px;
+  resize: vertical;
+}
+
+.gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-dialog-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-bottom: calc(env(safe-area-inset-bottom) * -1);
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+  background: #fffefa;
 }
 
 .close-icon {
@@ -11764,5 +11797,27 @@ main#main .timeline-entry p {
 
   .memorial-detail-date strong {
     font-size: 11px;
+  }
+}
+
+@media (max-width: 767px) {
+  .calendar-filter {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .calendar-filter-controls {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    margin-left: 0;
+  }
+
+  .calendar-filter .choice {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 10px;
   }
 }

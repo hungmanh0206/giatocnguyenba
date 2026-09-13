@@ -21,7 +21,7 @@ Follow [FIREBASE_SETUP.md](FIREBASE_SETUP.md) to connect a Firebase project, sec
 
 ## Kho ảnh dòng họ
 
-Kho ảnh công khai tại `/gallery` đọc trực tiếp từ folder `Gia tộc nguyễn bá` trên Cloudinary. Ảnh upload từ web cũng được lưu thẳng vào folder này; không có ảnh nào được lưu trong source code. Chỉ tài khoản `super_admin` có thể tải ảnh lên, chỉnh sửa, chọn ảnh nổi bật hoặc xóa ảnh.
+Kho ảnh công khai tại `/gallery` đọc trực tiếp từ folder `Gia tộc nguyễn bá` trên Cloudinary. Ảnh upload từ web cũng được lưu thẳng vào folder này; không có ảnh nào được lưu trong source code. Chỉ tài khoản `super_admin` có thể tải ảnh lên, chỉnh sửa hoặc xóa ảnh.
 
 Thiết lập Cloudinary, Firebase Admin và deploy Firestore Rules/Indexes được hướng dẫn trong [GALLERY_SETUP.md](GALLERY_SETUP.md).
 

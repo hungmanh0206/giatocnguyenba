@@ -104,8 +104,8 @@ service cloud.firestore {
 
     function validGalleryPhoto() {
       let data = request.resource.data;
-      return data.keys().hasOnly(['title', 'caption', 'cloudinaryPublicId', 'imageUrl', 'width', 'height', 'format', 'bytes', 'albumId', 'albumName', 'year', 'takenAt', 'featured', 'uploadedByUid', 'uploadedByName', 'searchTerms', 'deletionPending', 'createdAt', 'updatedAt'])
-        && data.keys().hasAll(['title', 'caption', 'cloudinaryPublicId', 'imageUrl', 'width', 'height', 'format', 'bytes', 'albumId', 'albumName', 'year', 'takenAt', 'featured', 'uploadedByUid', 'uploadedByName', 'searchTerms', 'deletionPending', 'createdAt', 'updatedAt'])
+      return data.keys().hasOnly(['title', 'caption', 'cloudinaryPublicId', 'imageUrl', 'width', 'height', 'format', 'bytes', 'albumId', 'albumName', 'year', 'takenAt', 'uploadedByUid', 'uploadedByName', 'searchTerms', 'deletionPending', 'createdAt', 'updatedAt'])
+        && data.keys().hasAll(['title', 'caption', 'cloudinaryPublicId', 'imageUrl', 'width', 'height', 'format', 'bytes', 'albumId', 'albumName', 'year', 'takenAt', 'uploadedByUid', 'uploadedByName', 'searchTerms', 'deletionPending', 'createdAt', 'updatedAt'])
         && data.title is string && data.title.size() >= 1 && data.title.size() <= 150
         && (data.caption == null || (data.caption is string && data.caption.size() <= 1200))
         && data.cloudinaryPublicId is string && data.cloudinaryPublicId.size() >= 1 && data.cloudinaryPublicId.size() <= 300
@@ -117,7 +117,6 @@ service cloud.firestore {
         && data.albumName is string && data.albumName.size() >= 1 && data.albumName.size() <= 80
         && (data.year == null || (data.year is int && data.year >= 1000 && data.year <= 3000))
         && (data.takenAt == null || (data.takenAt is string && data.takenAt.matches('^\\d{4}-\\d{2}-\\d{2}$')))
-        && data.featured is bool
         && data.uploadedByUid is string && data.uploadedByUid.size() >= 1
         && (data.uploadedByName == null || (data.uploadedByName is string && data.uploadedByName.size() <= 150))
         && data.searchTerms is list && data.searchTerms.size() <= 40
