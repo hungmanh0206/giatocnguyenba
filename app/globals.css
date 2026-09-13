@@ -11172,6 +11172,14 @@ main#main .timeline-entry p {
   background: #fffdf8;
 }
 
+/* Calendar has four destinations, so visual markers help scanning from iPad
+   upward. On phones the labels are clearer without consuming tab width. */
+.lunar-tabs-band .family-tree-tabs > a .heritage-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
 .memorial-page {
   min-height: calc(100dvh - 128px);
   background-color: #f7f3e9;
@@ -12486,8 +12494,7 @@ main#main .timeline-entry p {
   }
 
   .lunar-tabs-band .family-tree-tabs > a .heritage-icon {
-    width: 20px;
-    height: 20px;
+    display: none;
   }
 
   .calendar-tools-page {
@@ -12599,7 +12606,6 @@ main#main .timeline-entry p {
 
 @media (max-width: 359px) {
   .lunar-tabs-band .family-tree-tabs > a {
-    gap: 5px;
     padding-inline: 5px;
     font-size: 11px;
   }
@@ -12614,5 +12620,45 @@ main#main .timeline-entry p {
 
   .fortune-focus-group > div {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Calendar tool layouts need strong visual grouping at every intermediate
+   viewport: they become a vertical workflow before their individual controls
+   become too narrow. */
+@media (min-width: 768px) and (max-width: 1100px) {
+  .activity-day-layout,
+  .fortune-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-option-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .lunar-tabs-band .family-tree-tabs > a {
+    gap: 0;
+  }
+
+  .activity-picker,
+  .activity-result,
+  .fortune-form-panel,
+  .fortune-reading-panel {
+    border-color: #ddd1bf;
+    background: #fffefa;
+    box-shadow: 0 6px 16px #48331b0d;
+  }
+
+  .activity-option-grid,
+  .fortune-focus-group > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .activity-option,
+  .fortune-focus-option {
+    align-content: center;
   }
 }
