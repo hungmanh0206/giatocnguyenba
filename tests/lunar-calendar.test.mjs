@@ -10,6 +10,8 @@ import {
   lunarToSolar,
   solarToLunar,
 } from '../lib/lunar-calendar/service.ts';
+import { getCalendarActivityAdvice } from '../lib/lunar-calendar/activity-advice.ts';
+import { buildFortuneFallback } from '../lib/lunar-calendar/fortune-advice.ts';
 
 const solarParts = (date) => [
   date.getDate(),
@@ -70,6 +72,31 @@ test('calendar day information includes Can Chi, solar terms, Trực, and hours'
   assert.ok(
     info.traditional.festivals.some((festival) => festival.id === 'tet'),
   );
+});
+
+test('day-by-activity guidance is derived from the selected lunar day', () => {
+  const info = getLunarDayInfo(new Date(2024, 1, 10));
+  assert.equal(info.supported, true);
+
+  const advice = getCalendarActivityAdvice(info, 'wedding');
+  assert.equal(advice.activity.id, 'wedding');
+  assert.ok(['favorable', 'neutral', 'caution'].includes(advice.tone));
+  assert.equal(advice.goodHours.length, 3);
+  assert.equal(advice.reasons.length, 3);
+});
+
+test('fortune fallback remains a short reference reading without a model response', () => {
+  const reading = buildFortuneFallback({
+    birthYear: 1988,
+    birthDate: '1988-04-18',
+    date: '2024-02-10',
+    focus: 'career',
+  });
+
+  assert.match(reading.title, /Công việc/);
+  assert.match(reading.overview, /Can Chi/);
+  assert.equal(reading.notes.length, 3);
+  assert.match(reading.notes[2].text, /Giờ Hoàng đạo/);
 });
 
 test('lunar month length reports both 29-day and 30-day months', () => {

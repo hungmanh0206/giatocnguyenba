@@ -7,6 +7,7 @@ import { isSameMonth } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFamily } from './provider';
 import { Footer } from './header';
@@ -31,6 +32,16 @@ import {
   getUpcomingFamilyEvents,
 } from '@/lib/lunar-calendar/service';
 import type { UpcomingFamilyEvent } from '@/lib/lunar-calendar/types';
+import {
+  calendarActivities,
+  getCalendarActivityAdvice,
+  type CalendarActivityId,
+} from '@/lib/lunar-calendar/activity-advice';
+import {
+  fortuneFocuses,
+  type FortuneFocus,
+  type FortuneReading,
+} from '@/lib/lunar-calendar/fortune-advice';
 
 const calendarMonthOptions = Array.from({ length: 12 }, (_, month) => ({
   value: String(month),
@@ -41,6 +52,19 @@ const calendarYearOptions = Array.from({ length: 400 }, (_, offset) => {
   const year = 1800 + offset;
   return { value: String(year), label: `Năm ${year}` };
 });
+
+function inputDateValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function inputDateToDate(value: string, fallback: Date) {
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? fallback : date;
+}
 
 function LunarCalendarView() {
   const { members } = useFamily();
@@ -113,7 +137,7 @@ function LunarCalendarView() {
               setSelected(today);
             }}
           >
-            <HeritageIcon name="today" size={20} />
+          <HeritageIcon name="today" size={20} />
             Hôm nay
           </Button>
         </div>
@@ -538,6 +562,363 @@ function LunarCalendarView() {
   );
 }
 
+function ActivityDayView() {
+  const [today] = useState(vietnamToday);
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [activityId, setActivityId] = useState<CalendarActivityId>('wedding');
+  const info = getLunarDayInfo(selectedDate);
+  const advice = info.supported
+    ? getCalendarActivityAdvice(info, activityId)
+    : null;
+
+  return (
+    <main id="main" className="calendar-tools-page">
+      <div className="container page-space">
+        <div className="page-heading calendar-tools-heading">
+          <div>
+            <div className="eyebrow">LỊCH TRUYỀN THỐNG</div>
+            <h1>Xem ngày theo việc</h1>
+            <p>Chọn một việc và ngày dương lịch để tham khảo Trực, sao, giờ và hướng.</p>
+          </div>
+          <Button
+            variant="outline"
+            className="action-button calendar-today-button"
+            onClick={() => setSelectedDate(today)}
+          >
+            <HeritageIcon name="today" size={20} />
+            Hôm nay
+          </Button>
+        </div>
+
+        <div className="activity-day-layout">
+          <section className="activity-picker" aria-labelledby="activity-picker-title">
+            <div className="calendar-tool-section-heading">
+              <div>
+                <span className="eyebrow">BƯỚC 1</span>
+                <h2 id="activity-picker-title">Việc cần xem</h2>
+              </div>
+              <label className="activity-date-field">
+                <span>Ngày dương</span>
+                <Input
+                  aria-label="Chọn ngày dương lịch"
+                  className="activity-date-input"
+                  type="date"
+                  value={inputDateValue(selectedDate)}
+                  onChange={(event) =>
+                    setSelectedDate(inputDateToDate(event.target.value, today))
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="activity-option-grid">
+              {calendarActivities.map((activity) => (
+                <button
+                  className="activity-option"
+                  data-active={activity.id === activityId}
+                  key={activity.id}
+                  type="button"
+                  aria-pressed={activity.id === activityId}
+                  onClick={() => setActivityId(activity.id)}
+                >
+                  <HeritageIcon name={activity.icon} size={20} />
+                  <span>
+                    <strong>{activity.label}</strong>
+                    <small>{activity.description}</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="activity-result" aria-live="polite">
+            {info.supported && advice ? (
+              <>
+                <div className="activity-result-heading">
+                  <div>
+                    <span className="eyebrow">BƯỚC 2 · {info.solar.weekday}</span>
+                    <h2>{advice.activity.label}</h2>
+                    <p>
+                      {info.solar.day}/{info.solar.month}/{info.solar.year} dương lịch · {info.lunar.day}/{info.lunar.month} âm lịch
+                    </p>
+                  </div>
+                  <span className="activity-tone" data-tone={advice.tone}>
+                    {advice.label}
+                  </span>
+                </div>
+
+                <p className="activity-result-summary">{advice.summary}</p>
+
+                <div className="activity-result-facts">
+                  <div>
+                    <span>Can Chi ngày</span>
+                    <strong>{info.canChi.day}</strong>
+                  </div>
+                  <div>
+                    <span>Trực ngày</span>
+                    <strong>{info.truc} · {info.dayClassification}</strong>
+                  </div>
+                  <div>
+                    <span>Tiết khí</span>
+                    <strong>{info.solarTerm}</strong>
+                  </div>
+                  <div>
+                    <span>28 Tú</span>
+                    <strong>{info.traditional.twentyEightMansion}</strong>
+                  </div>
+                </div>
+
+                <div className="activity-guidance">
+                  <div>
+                    <h3>
+                      <HeritageIcon name="auspicious-hour" size={17} /> Giờ Hoàng đạo
+                    </h3>
+                    <div className="chip-row">
+                      {advice.goodHours.map((hour) => (
+                        <span key={hour}>{hour}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3>
+                      <HeritageIcon name="departure-direction" size={17} /> Hướng xuất hành
+                    </h3>
+                    <p>
+                      Hỷ Thần: <b>{advice.directions.hyThan}</b>
+                      <br />
+                      Tài Thần: <b>{advice.directions.taiThan}</b>
+                    </p>
+                  </div>
+                </div>
+
+                <ul className="activity-reason-list">
+                  {advice.reasons.map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
+              </>
+            ) : !info.supported ? (
+              <p className="muted">{info.reason}</p>
+            ) : (
+              <p className="muted">Chưa thể tổng hợp thông tin cho ngày này.</p>
+            )}
+            <p className="calendar-policy activity-policy">
+              <span className="calendar-policy-info" aria-hidden="true">i</span>
+              <span>
+                Thông tin theo lịch truyền thống để tham khảo. Với việc hệ trọng,
+                gia đình nên cân nhắc hoàn cảnh thực tế và phong tục địa phương.
+              </span>
+            </p>
+          </section>
+        </div>
+      </div>
+      <Footer />
+    </main>
+  );
+}
+
+function FortuneView() {
+  const { members } = useFamily();
+  const [today] = useState(vietnamToday);
+  const [memberId, setMemberId] = useState('custom');
+  const [birthYear, setBirthYear] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [focus, setFocus] = useState<FortuneFocus>('overall');
+  const [reading, setReading] = useState<FortuneReading | null>(null);
+  const [source, setSource] = useState<'ai' | 'traditional' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const memberOptions = useMemo(
+    () => [
+      { value: 'custom', label: 'Tự nhập năm sinh' },
+      ...members
+        .filter((person) => person.born !== undefined)
+        .map((person) => ({
+          value: person.id,
+          label: `${memberName(person)} · ${person.born}`,
+        })),
+    ],
+    [members],
+  );
+
+  function selectMember(nextMemberId: string) {
+    setMemberId(nextMemberId);
+    setError(null);
+    if (nextMemberId === 'custom') return;
+    const member = members.find((person) => person.id === nextMemberId);
+    if (member?.born) setBirthYear(String(member.born));
+  }
+
+  async function requestReading() {
+    const year = Number(birthYear);
+    if (!Number.isInteger(year) || year < 1800 || year > today.getFullYear()) {
+      setError('Vui lòng nhập năm sinh hợp lệ.');
+      return;
+    }
+
+    setError(null);
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/fortune', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          birthYear: year,
+          birthDate: birthDate || undefined,
+          focus,
+          date: inputDateValue(today),
+        }),
+      });
+      const data = (await response.json()) as {
+        reading?: FortuneReading;
+        source?: 'ai' | 'traditional';
+        message?: string;
+      };
+      if (!response.ok || !data.reading) {
+        throw new Error(data.message || 'Chưa thể tạo luận giải.');
+      }
+      setReading(data.reading);
+      setSource(data.source || 'traditional');
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Chưa thể tạo luận giải. Vui lòng thử lại.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <main id="main" className="calendar-tools-page">
+      <div className="container page-space">
+        <div className="page-heading calendar-tools-heading">
+          <div>
+            <div className="eyebrow">THAM KHẢO CÁ NHÂN HÓA</div>
+            <h1>Tử vi AI</h1>
+            <p>Luận giải nhẹ nhàng theo Can Chi năm sinh và lịch truyền thống.</p>
+          </div>
+        </div>
+
+        <div className="fortune-layout">
+          <section className="fortune-form-panel" aria-labelledby="fortune-form-title">
+            <div className="calendar-tool-section-heading">
+              <div>
+                <span className="eyebrow">THÔNG TIN</span>
+                <h2 id="fortune-form-title">Lập luận giải</h2>
+              </div>
+            </div>
+
+            <div className="fortune-fields">
+              <div className="fortune-field fortune-member-field">
+                <span>Thành viên gia phả</span>
+                <Choice
+                  label="Chọn thành viên gia phả"
+                  value={memberId}
+                  onChange={selectMember}
+                  options={memberOptions}
+                />
+              </div>
+              <label className="fortune-field">
+                <span>Năm sinh</span>
+                <Input
+                  aria-label="Năm sinh"
+                  inputMode="numeric"
+                  max={today.getFullYear()}
+                  min="1800"
+                  placeholder="Ví dụ: 1988"
+                  type="number"
+                  value={birthYear}
+                  onChange={(event) => {
+                    setBirthYear(event.target.value);
+                    setError(null);
+                  }}
+                />
+              </label>
+              <label className="fortune-field">
+                <span>Ngày sinh (tùy chọn)</span>
+                <Input
+                  aria-label="Ngày sinh"
+                  className="activity-date-input"
+                  type="date"
+                  value={birthDate}
+                  onChange={(event) => setBirthDate(event.target.value)}
+                />
+              </label>
+            </div>
+
+            <div className="fortune-focus-group" aria-label="Chủ đề luận giải">
+              <span>Chủ đề</span>
+              <div>
+                {fortuneFocuses.map((item) => (
+                  <button
+                    className="fortune-focus-option"
+                    data-active={focus === item.id}
+                    key={item.id}
+                    type="button"
+                    aria-pressed={focus === item.id}
+                    onClick={() => setFocus(item.id)}
+                  >
+                    <strong>{item.label}</strong>
+                    <small>{item.description}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {error && <p className="fortune-error" role="alert">{error}</p>}
+            <Button
+              className="action-button fortune-submit"
+              disabled={isLoading}
+              onClick={() => void requestReading()}
+            >
+              <HeritageIcon name="fortune-ai" size={19} />
+              {isLoading ? 'Đang luận giải...' : 'Xem luận giải'}
+            </Button>
+            <p className="fortune-disclaimer">
+              Nội dung mang tính tham khảo và giải trí, không thay thế tư vấn
+              chuyên môn hay quyết định quan trọng.
+            </p>
+          </section>
+
+          <section className="fortune-reading-panel" aria-live="polite">
+            {reading ? (
+              <>
+                <div className="fortune-reading-heading">
+                  <div>
+                    <span className="eyebrow">
+                      {source === 'ai' ? 'LUẬN GIẢI AI' : 'GỢI Ý THEO LỊCH TRUYỀN THỐNG'}
+                    </span>
+                    <h2>{reading.title}</h2>
+                  </div>
+                  <HeritageIcon name={source === 'ai' ? 'message' : 'family-record'} size={24} />
+                </div>
+                <p className="fortune-overview">{reading.overview}</p>
+                <div className="fortune-reading-notes">
+                  {reading.notes.map((note) => (
+                    <section key={note.heading}>
+                      <h3>{note.heading}</h3>
+                      <p>{note.text}</p>
+                    </section>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="fortune-empty-state">
+                <HeritageIcon name="message" size={31} />
+                <h2>Luận giải của bạn</h2>
+                <p>Chọn chủ đề, điền năm sinh rồi xem gợi ý cho hôm nay.</p>
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+      <Footer />
+    </main>
+  );
+}
+
 function MemorialsView() {
   const { members } = useFamily();
   const [today] = useState(vietnamToday);
@@ -762,7 +1143,11 @@ function MemorialsView() {
 
 export function LunarPage() {
   const params = useSearchParams();
-  const activeTab = params.get('tab') === 'memorials' ? 'memorials' : 'calendar';
+  const tab = params.get('tab');
+  const activeTab =
+    tab === 'activities' || tab === 'fortune' || tab === 'memorials'
+      ? tab
+      : 'calendar';
 
   return (
     <>
@@ -777,6 +1162,20 @@ export function LunarPage() {
               Lịch âm
             </Link>
             <Link
+              className={activeTab === 'activities' ? 'is-active' : ''}
+              href="/lunar-calendar?tab=activities"
+            >
+              <HeritageIcon name="activity-calendar" size={18} />
+              Xem ngày
+            </Link>
+            <Link
+              className={activeTab === 'fortune' ? 'is-active' : ''}
+              href="/lunar-calendar?tab=fortune"
+            >
+              <HeritageIcon name="fortune-ai" size={18} />
+              Tử vi AI
+            </Link>
+            <Link
               className={activeTab === 'memorials' ? 'is-active' : ''}
               href="/lunar-calendar?tab=memorials"
             >
@@ -786,7 +1185,10 @@ export function LunarPage() {
           </nav>
         </div>
       </div>
-      {activeTab === 'memorials' ? <MemorialsView /> : <LunarCalendarView />}
+      {activeTab === 'calendar' && <LunarCalendarView />}
+      {activeTab === 'activities' && <ActivityDayView />}
+      {activeTab === 'fortune' && <FortuneView />}
+      {activeTab === 'memorials' && <MemorialsView />}
     </>
   );
 }

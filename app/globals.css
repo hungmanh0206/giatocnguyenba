@@ -6330,17 +6330,23 @@ main#main.admin-page {
 
 /* Motion is intentionally quiet: it marks hierarchy and feedback without distracting from family records. */
 @media (prefers-reduced-motion: no-preference) {
-  html.motion-ready [data-motion-reveal] {
-    opacity: 0;
-    transform: translateY(14px);
-    transition:
-      opacity 460ms ease-out var(--motion-delay, 0ms),
-      transform 520ms cubic-bezier(0.22, 1, 0.36, 1) var(--motion-delay, 0ms);
+  html.motion-ready main#main > *,
+  html.motion-ready .family-tree-tabs-band,
+  html.motion-ready .home-stats-band,
+  html.motion-ready .home-tree-band,
+  html.motion-ready .home-anniversary-band,
+  html.motion-ready .history-band {
+    animation: page-component-enter 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  html.motion-ready [data-motion-reveal].is-revealed {
-    opacity: 1;
-    transform: translateY(0);
+  html.motion-ready main#main > *:nth-child(2),
+  html.motion-ready .home-tree-band {
+    animation-delay: 45ms;
+  }
+
+  html.motion-ready main#main > *:nth-child(3),
+  html.motion-ready .home-anniversary-band {
+    animation-delay: 90ms;
   }
 
   .home-hero .heritage-art {
@@ -6379,6 +6385,17 @@ main#main.admin-page {
   .action-button:hover .heritage-icon:first-child,
   .icon-button:hover .heritage-icon {
     transform: scale(1.06);
+  }
+}
+
+@keyframes page-component-enter {
+  from {
+    opacity: 0.96;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -8988,6 +9005,32 @@ main#main .timeline-entry p {
 }
 
 @media (max-width: 370px) {
+  .home-page .home-hero .hero-utility {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 8px;
+    row-gap: 5px;
+  }
+
+  .home-page .home-hero .hero-utility-date {
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+  }
+
+  .home-page .home-hero .hero-utility-divider,
+  .home-page .home-hero .hero-utility-time::before {
+    display: none !important;
+  }
+
+  .home-page .home-hero .hero-utility-lunar {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  .home-page .home-hero .hero-utility-time {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+  }
+
   .home-page .home-hero .hero-actions {
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -11802,22 +11845,774 @@ main#main .timeline-entry p {
 
 @media (max-width: 767px) {
   .calendar-filter {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 8px;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .calendar-filter > .calendar-memorial-key {
+    display: none;
   }
 
   .calendar-filter-controls {
     display: grid;
     width: 100%;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 7px;
+    gap: 6px;
     margin-left: 0;
   }
 
   .calendar-filter .choice {
     width: 100%;
     min-width: 0;
-    padding-inline: 10px;
+    height: 38px !important;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+}
+
+/* Keep the in-dialog action bar above the mobile browser chrome. `svh` is
+   intentionally used here because it reserves space even while the browser
+   controls are expanded. */
+/* Both compact gallery dialogs own their scroll area. This deliberately
+   overrides the viewer's preview-only clipping rule when a form is shown. */
+.gallery-upload-dialog.gallery-mobile-dialog,
+.gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing {
+  max-height: calc(100svh - 24px) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+.gallery-upload-dialog.gallery-mobile-dialog .gallery-dialog-actions,
+.gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-dialog-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-bottom: 0;
+  padding: 10px 0 max(12px, env(safe-area-inset-bottom));
+  background: #fffefa;
+  box-shadow: 0 -8px 14px #fffefa;
+}
+
+/* Narrow 5.5-inch handsets keep controls tappable without forcing a horizontal
+   calendar or hiding form actions behind the browser controls. */
+@media (max-width: 359px) {
+  .memorial-detail-date {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .memorial-detail-date > span:nth-child(2) {
+    border-right: 0;
+  }
+
+  .memorial-detail-date > span:last-child {
+    grid-column: 1 / -1;
+    border-top: 1px solid #e9e1d6;
+  }
+
+  .memorial-detail-date strong {
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .calendar-main {
+    padding-inline: 8px;
+  }
+
+  .calendar-filter-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-filter-controls > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .calendar-filter .choice {
+    padding-inline: 7px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 767px) and (max-height: 760px) {
+  .gallery-upload-dialog.gallery-mobile-dialog,
+  .gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing {
+    max-height: calc(100svh - 16px) !important;
+  }
+
+  .gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-viewer-mobile-header {
+    height: 36px;
+  }
+
+  .gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-viewer-image-wrap,
+  .gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-viewer-image {
+    max-height: min(20svh, 160px);
+  }
+
+  .gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-viewer-copy {
+    gap: 8px;
+    padding: 12px 14px 14px;
+  }
+
+  .gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-edit-form textarea {
+    min-height: 58px;
+    max-height: 76px;
+  }
+
+  .gallery-viewer-dialog.gallery-mobile-dialog.gallery-is-editing .gallery-dialog-actions {
+    padding-top: 8px;
+  }
+}
+
+/* Calendar tools share the memorial page's calm paper canvas but keep their
+   own compact working surfaces. */
+.calendar-tools-page {
+  min-height: calc(100dvh - 128px);
+  background-color: #f7f3e9;
+  background-image:
+    linear-gradient(#f7f3e9d9, #f7f3e9d9),
+    url('/vietnamese-heritage-pattern.png');
+  background-repeat: repeat;
+  background-size: auto, 760px 760px;
+}
+
+.calendar-tools-page .page-space {
+  min-height: calc(100dvh - 178px);
+}
+
+.calendar-tools-heading {
+  align-items: flex-end;
+  margin-bottom: 22px;
+}
+
+.calendar-tools-heading h1 {
+  color: #342a22;
+}
+
+.calendar-tools-heading p {
+  max-width: 620px;
+}
+
+.activity-day-layout,
+.fortune-layout {
+  display: grid;
+  align-items: start;
+  gap: 18px;
+}
+
+.activity-day-layout {
+  grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.2fr);
+}
+
+.fortune-layout {
+  grid-template-columns: minmax(320px, 0.82fr) minmax(0, 1.18fr);
+}
+
+.activity-picker,
+.activity-result,
+.fortune-form-panel,
+.fortune-reading-panel {
+  min-width: 0;
+  border: 1px solid #e2d7c7;
+  border-radius: 8px;
+  background: #fffefa;
+  box-shadow: 0 7px 18px #48331b0b;
+}
+
+.activity-picker,
+.fortune-form-panel {
+  padding: 22px;
+}
+
+.activity-result,
+.fortune-reading-panel {
+  padding: 24px;
+}
+
+.calendar-tool-section-heading,
+.activity-result-heading,
+.fortune-reading-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.calendar-tool-section-heading h2,
+.activity-result-heading h2,
+.fortune-reading-heading h2,
+.fortune-empty-state h2 {
+  margin: 3px 0 0;
+  color: #392d24;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.activity-date-field,
+.fortune-field,
+.fortune-focus-group > span {
+  display: grid;
+  gap: 6px;
+  color: #746653;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.activity-date-field {
+  width: 170px;
+}
+
+.activity-date-input {
+  height: 40px !important;
+  border-color: #ddd1bf !important;
+  background: #fffefa !important;
+  color: #4a3c30 !important;
+}
+
+.activity-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.activity-option {
+  display: flex;
+  min-width: 0;
+  min-height: 74px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 1px solid #e4dacd;
+  border-radius: 6px;
+  background: #fffefa;
+  color: #4b3c30;
+  text-align: left;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.activity-option:hover,
+.activity-option[data-active='true'] {
+  border-color: #b8834e;
+  background: #fff8ee;
+}
+
+.activity-option[data-active='true'] {
+  box-shadow: inset 3px 0 #8d2d29;
+}
+
+.activity-option .heritage-icon {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  object-fit: contain;
+}
+
+.activity-option > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.activity-option strong {
+  color: #4a372b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.activity-option small {
+  overflow: hidden;
+  color: #887864;
+  font-size: 10px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-result-heading {
+  padding-bottom: 17px;
+  border-bottom: 1px solid #ebe2d6;
+}
+
+.activity-result-heading p,
+.fortune-overview {
+  margin: 6px 0 0;
+  color: #776958;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.activity-tone {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid #d9c4a3;
+  border-radius: 999px;
+  color: #7e5b32;
+  background: #fff6e6;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.activity-tone[data-tone='favorable'] {
+  border-color: #b9c7a3;
+  color: #516837;
+  background: #f4f8eb;
+}
+
+.activity-tone[data-tone='caution'] {
+  border-color: #e2beb1;
+  color: #963e35;
+  background: #fff0ec;
+}
+
+.activity-result-summary {
+  margin: 17px 0;
+  color: #4d3e32;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.activity-result-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid #ede5da;
+  border-left: 1px solid #ede5da;
+}
+
+.activity-result-facts > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding: 12px 13px;
+  border-right: 1px solid #ede5da;
+  border-bottom: 1px solid #ede5da;
+}
+
+.activity-result-facts span {
+  color: #927f69;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.activity-result-facts strong {
+  overflow: hidden;
+  color: #4e3b2f;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-guidance {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid #ebe2d6;
+}
+
+.activity-guidance > div + div {
+  padding-left: 14px;
+  border-left: 1px solid #ebe2d6;
+}
+
+.activity-guidance h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 9px;
+  color: #755733;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.activity-guidance h3 .heritage-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.activity-guidance p {
+  margin: 0;
+  color: #6e5f50;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.activity-guidance .chip-row {
+  gap: 5px;
+}
+
+.activity-guidance .chip-row span {
+  padding: 4px 7px;
+  font-size: 10px;
+}
+
+.activity-reason-list {
+  display: grid;
+  gap: 7px;
+  margin: 17px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-reason-list li {
+  position: relative;
+  padding-left: 14px;
+  color: #756654;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.activity-reason-list li::before {
+  position: absolute;
+  top: 7px;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #b68450;
+  content: '';
+}
+
+.activity-policy {
+  margin-top: 17px;
+}
+
+.fortune-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  margin-top: 20px;
+}
+
+.fortune-member-field {
+  grid-column: 1 / -1;
+}
+
+.fortune-field .choice {
+  width: 100%;
+  height: 40px !important;
+  border-color: #ddd1bf;
+  background: #fffefa;
+}
+
+.fortune-field input {
+  height: 40px !important;
+  border-color: #ddd1bf !important;
+  background: #fffefa !important;
+}
+
+.fortune-focus-group {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.fortune-focus-group > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fortune-focus-option {
+  display: grid;
+  min-width: 0;
+  min-height: 68px;
+  gap: 3px;
+  padding: 10px 11px;
+  border: 1px solid #e4dacd;
+  border-radius: 6px;
+  background: #fffefa;
+  color: #4a372b;
+  text-align: left;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.fortune-focus-option:hover,
+.fortune-focus-option[data-active='true'] {
+  border-color: #b8834e;
+  background: #fff8ee;
+}
+
+.fortune-focus-option[data-active='true'] {
+  box-shadow: inset 3px 0 #8d2d29;
+}
+
+.fortune-focus-option strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fortune-focus-option small {
+  color: #887864;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.fortune-submit {
+  width: 100%;
+  min-height: 43px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.fortune-submit .heritage-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.fortune-error {
+  margin: 16px 0 -3px;
+  padding: 10px 12px;
+  border: 1px solid #f0c5bc;
+  border-radius: 6px;
+  color: #a33e35;
+  background: #fff0ec;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fortune-disclaimer {
+  margin: 12px 0 0;
+  color: #8e7c66;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.fortune-reading-panel {
+  min-height: 388px;
+}
+
+.fortune-reading-heading {
+  align-items: center;
+  padding-bottom: 17px;
+  border-bottom: 1px solid #ebe2d6;
+}
+
+.fortune-reading-heading > .heritage-icon,
+.fortune-empty-state > .heritage-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.fortune-overview {
+  margin-top: 17px;
+  color: #4f4034;
+  font-size: 14px;
+}
+
+.fortune-reading-notes {
+  display: grid;
+  gap: 0;
+  margin-top: 16px;
+  border-top: 1px solid #ede5da;
+}
+
+.fortune-reading-notes section {
+  padding: 14px 0;
+  border-bottom: 1px solid #ede5da;
+}
+
+.fortune-reading-notes h3 {
+  margin: 0;
+  color: #79542f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fortune-reading-notes p {
+  margin: 6px 0 0;
+  color: #695b4c;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.fortune-empty-state {
+  display: grid;
+  min-height: 338px;
+  align-content: center;
+  justify-items: start;
+  gap: 8px;
+}
+
+.fortune-empty-state h2 {
+  margin: 2px 0 0;
+}
+
+.fortune-empty-state p {
+  max-width: 330px;
+  margin: 0;
+  color: #806f5d;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .activity-day-layout,
+  .fortune-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-option-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .activity-option {
+    min-height: 78px;
+  }
+}
+
+@media (max-width: 767px) {
+  .lunar-tabs-band .family-tree-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    min-height: 0;
+    padding: 7px 0;
+  }
+
+  .lunar-tabs-band .family-tree-tabs > a {
+    min-width: 0;
+    min-height: 40px;
+    justify-content: center;
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+
+  .lunar-tabs-band .family-tree-tabs > a .heritage-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .calendar-tools-page {
+    min-height: calc(100dvh - 132px);
+    background-size: auto, 560px 560px;
+  }
+
+  .calendar-tools-page .page-space {
+    min-height: calc(100dvh - 132px);
+    padding-top: 24px;
+    padding-bottom: 36px;
+  }
+
+  .calendar-tools-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 13px;
+    margin-bottom: 17px;
+  }
+
+  .calendar-tools-heading h1 {
+    font-size: 28px;
+  }
+
+  .calendar-tools-heading p {
+    font-size: 13px;
+  }
+
+  .calendar-tools-heading .calendar-today-button {
+    min-height: 39px;
+  }
+
+  .activity-picker,
+  .activity-result,
+  .fortune-form-panel,
+  .fortune-reading-panel {
+    padding: 16px;
+  }
+
+  .calendar-tool-section-heading h2,
+  .activity-result-heading h2,
+  .fortune-reading-heading h2,
+  .fortune-empty-state h2 {
+    font-size: 19px;
+  }
+
+  .activity-date-field {
+    width: 145px;
+  }
+
+  .activity-option-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .activity-option {
+    min-height: 68px;
+    padding: 9px;
+    gap: 8px;
+  }
+
+  .activity-option .heritage-icon {
+    width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+  }
+
+  .activity-result-heading {
+    gap: 10px;
+  }
+
+  .activity-tone {
+    min-height: 28px;
+    padding-inline: 8px;
+    font-size: 10px;
+  }
+
+  .activity-result-facts > div {
+    padding: 10px;
+  }
+
+  .activity-guidance {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  .activity-guidance > div + div {
+    padding-top: 13px;
+    padding-left: 0;
+    border-top: 1px solid #ebe2d6;
+    border-left: 0;
+  }
+
+  .fortune-fields {
+    grid-template-columns: 1fr;
+    gap: 11px;
+    margin-top: 16px;
+  }
+
+  .fortune-reading-panel {
+    min-height: 300px;
+  }
+
+  .fortune-empty-state {
+    min-height: 265px;
+  }
+}
+
+@media (max-width: 359px) {
+  .lunar-tabs-band .family-tree-tabs > a {
+    gap: 5px;
+    padding-inline: 5px;
+    font-size: 11px;
+  }
+
+  .activity-date-field {
+    width: 125px;
+  }
+
+  .activity-result-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .fortune-focus-group > div {
+    grid-template-columns: 1fr;
   }
 }

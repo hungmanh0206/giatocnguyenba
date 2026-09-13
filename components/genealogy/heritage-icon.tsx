@@ -2,6 +2,7 @@ import type { ImgHTMLAttributes } from 'react';
 
 export const heritageIconNames = [
   'add-member',
+  'activity-calendar',
   'analytics',
   'auspicious-hour',
   'avatar',
@@ -21,6 +22,7 @@ export const heritageIconNames = [
   'filter',
   'fit-view',
   'folder',
+  'fortune-ai',
   'generations',
   'grid',
   'help',
@@ -76,6 +78,7 @@ export type HeritageIconName = (typeof heritageIconNames)[number];
 
 const heritageIconAssets: Record<HeritageIconName, string> = {
   'add-member': 'add-member',
+  'activity-calendar': 'activity-calendar',
   analytics: 'grid',
   'auspicious-hour': 'auspicious-hour',
   avatar: 'profile',
@@ -95,6 +98,7 @@ const heritageIconAssets: Record<HeritageIconName, string> = {
   filter: 'filter',
   'fit-view': 'fit-view',
   folder: 'book',
+  'fortune-ai': 'fortune-ai',
   generations: 'hierarchy',
   grid: 'grid',
   help: 'book',
