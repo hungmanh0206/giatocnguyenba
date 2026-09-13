@@ -11,7 +11,8 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { ChevronDownIcon, XIcon, CheckIcon } from 'lucide-react';
+import { ChevronDownIcon, CheckIcon } from 'lucide-react';
+import { CloseIcon } from '@/components/ui/close-icon';
 
 const Combobox = ComboboxPrimitive.Root;
 
@@ -44,7 +45,7 @@ function ComboboxClear({ className, ...props }: ComboboxPrimitive.Clear.Props) {
       className={cn(className)}
       {...props}
     >
-      <XIcon className="pointer-events-none" />
+      <CloseIcon className="pointer-events-none" size={16} />
     </ComboboxPrimitive.Clear>
   );
 }
@@ -256,7 +257,7 @@ function ComboboxChip({
           className="-ml-1 opacity-50 hover:opacity-100"
           data-slot="combobox-chip-remove"
         >
-          <XIcon className="pointer-events-none" />
+          <CloseIcon className="pointer-events-none" size={16} />
         </ComboboxPrimitive.ChipRemove>
       )}
     </ComboboxPrimitive.Chip>

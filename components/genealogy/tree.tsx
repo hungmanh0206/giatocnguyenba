@@ -17,7 +17,6 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   branchName,
@@ -54,7 +53,12 @@ type FamilyUnitNode = Node<FamilyUnitData, 'family-unit' | 'root-family'>;
 type GenerationBandNode = Node<{ generation: number }, 'generation-band'>;
 
 type FamilyBranchEdgeData = {
-  children: Array<{ targetX: number; maternal: boolean }>;
+  children: Array<{
+    targetX: number;
+    maternal: boolean;
+    sourceContext: boolean;
+  }>;
+  sourceContext?: boolean;
 };
 type FamilyBranchEdgeType = Edge<FamilyBranchEdgeData, 'family-branch'>;
 
@@ -70,8 +74,13 @@ function FamilyBranchEdge({
 }: EdgeProps<FamilyBranchEdgeType>) {
   const children = data?.children.length
     ? data.children
-    : [{ targetX, maternal: false }];
-  const busY = sourceY + Math.max(32, Math.min(58, (targetY - sourceY) * 0.38));
+    : [{ targetX, maternal: false, sourceContext: false }];
+  const busY =
+    sourceY +
+    Math.max(
+      data?.sourceContext ? 46 : 32,
+      Math.min(data?.sourceContext ? 66 : 58, (targetY - sourceY) * 0.38),
+    );
   const left = Math.min(...children.map((child) => child.targetX));
   const right = Math.max(...children.map((child) => child.targetX));
   const trunkPath = `M ${sourceX},${sourceY} L ${sourceX},${busY} L ${left},${busY} L ${right},${busY}`;
@@ -82,7 +91,11 @@ function FamilyBranchEdge({
         {...edge}
         id={`${edge.id}-trunk`}
         path={trunkPath}
-        style={{ ...edge.style, stroke: FAMILY_CONNECTOR_COLOR, strokeDasharray: undefined }}
+        style={{
+          ...edge.style,
+          stroke: FAMILY_CONNECTOR_COLOR,
+          strokeDasharray: data?.sourceContext ? '5 5' : undefined,
+        }}
       />
       {children.map((child, index) => (
         <BaseEdge
@@ -93,7 +106,8 @@ function FamilyBranchEdge({
           style={{
             ...edge.style,
             stroke: FAMILY_CONNECTOR_COLOR,
-            strokeDasharray: child.maternal ? '5 5' : undefined,
+            strokeDasharray:
+              child.maternal || child.sourceContext ? '5 5' : undefined,
           }}
         />
       ))}
@@ -198,11 +212,6 @@ function FamilyUnitNodeCard({ data }: Pick<NodeProps<FamilyUnitNode>, 'data'>) {
           ))}
         </div>
       )}
-      {group.lineageType === 'maternal-terminal' &&
-        !terminal &&
-        group.spouses.length === 0 && (
-          <div className="family-spouse-missing">Chưa ghi nhận con rể</div>
-        )}
       {data.hasChildren && (
         <>
           <Handle type="source" position={Position.Bottom} id="family-out" />
@@ -296,6 +305,7 @@ function TreeCanvas() {
   const { members } = useFamily();
   const params = useSearchParams();
   const router = useRouter();
+  const selectedPersonParam = params.get('person');
   const [query, setQuery] = useState('');
   const [branch, setBranch] = useState('all');
   const [generation, setGeneration] = useState('all');
@@ -305,6 +315,7 @@ function TreeCanvas() {
   const [full, setFull] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   const dismissedPersonId = useRef<string | null>(null);
+  const handledPersonId = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
   const initialTreeLayout = useRef(false);
   const flow = useReactFlow();
@@ -340,10 +351,6 @@ function TreeCanvas() {
     () => model.groups.map((group) => ({ id: group.id })),
     [model.groups],
   );
-  const collapsibleGroupIds = useMemo(
-    () => new Set(model.links.map((link) => link.source)),
-    [model.links],
-  );
   const maxGeneration = Math.max(
     1,
     ...treeMembers.map((member) => member.generation),
@@ -354,9 +361,9 @@ function TreeCanvas() {
   );
 
   const focusPerson = useCallback(
-    (person: Member) => {
+    (person: Member, showQuickView = true) => {
       setCollapsed(new Set());
-      setSelected(person);
+      setSelected(showQuickView ? person : null);
       setQuery('');
       const group = model.groups.find(
         (candidate) => candidate.id === model.groupOf.get(person.id),
@@ -383,21 +390,40 @@ function TreeCanvas() {
 
   useEffect(() => {
     if (!ready) return;
-    const id = params.get('person');
+    const id = selectedPersonParam;
     if (!id) {
       dismissedPersonId.current = null;
+      handledPersonId.current = null;
       return;
     }
-    if (dismissedPersonId.current === id) return;
+    if (
+      dismissedPersonId.current === id ||
+      handledPersonId.current === id
+    ) {
+      return;
+    }
     const person = members.find((member) => member.id === id);
     if (!person || !model.visibleMemberIds.has(person.id)) return;
-    const frame = requestAnimationFrame(() => selectPerson(person));
+    const frame = requestAnimationFrame(() => {
+      if (
+        dismissedPersonId.current === id ||
+        handledPersonId.current === id
+      ) {
+        return;
+      }
+
+      handledPersonId.current = id;
+      focusPerson(person, false);
+    });
     return () => cancelAnimationFrame(frame);
-  }, [members, model.visibleMemberIds, params, ready, selectPerson]);
+  }, [focusPerson, members, model.visibleMemberIds, ready, selectedPersonParam]);
 
   const closeQuickView = useCallback(() => {
-    const id = params.get('person');
-    if (id) dismissedPersonId.current = id;
+    const id = selectedPersonParam;
+    if (id) {
+      dismissedPersonId.current = id;
+      handledPersonId.current = id;
+    }
     setSelected(null);
     if (!id) return;
 
@@ -407,11 +433,12 @@ function TreeCanvas() {
     router.replace(search ? `/family-tree?${search}` : '/family-tree', {
       scroll: false,
     });
-  }, [params, router]);
+  }, [params, router, selectedPersonParam]);
 
   useEffect(() => {
     if (!ready || initialTreeLayout.current) return;
     initialTreeLayout.current = true;
+    if (selectedPersonParam) return;
     const frame = requestAnimationFrame(() => {
       void flow.fitView({
         nodes: allTreeNodes,
@@ -425,6 +452,7 @@ function TreeCanvas() {
     allTreeNodes,
     flow,
     ready,
+    selectedPersonParam,
   ]);
 
   useEffect(() => {
@@ -474,7 +502,7 @@ function TreeCanvas() {
     (lane) => ({
       id: `generation-${lane.generation}`,
       type: 'generation-band',
-      position: { x: leftEdge - 146, y: lane.y + 14 },
+      position: { x: leftEdge - 178, y: lane.y + 12 },
       draggable: false,
       selectable: false,
       hidden: model.groups
@@ -491,30 +519,37 @@ function TreeCanvas() {
     linksBySource.set(link.source, links);
   }
   for (const [source, links] of linksBySource) {
-    const targets = links
-      .map((link) => ({ link, group: model.groups.find((group) => group.id === link.target) }))
-      .filter(
-        (entry): entry is { link: (typeof links)[number]; group: Household } =>
-          !!entry.group,
-      );
-    if (!targets.length) continue;
+    for (const sourceContext of [false, true]) {
+      const targets = links
+        .filter((link) => (link.branchType === 'source-context') === sourceContext)
+        .map((link) => ({ link, group: model.groups.find((group) => group.id === link.target) }))
+        .filter(
+          (entry): entry is { link: (typeof links)[number]; group: Household } =>
+            !!entry.group,
+        );
+      if (!targets.length) continue;
 
-    edges.push({
-      id: `${source}-family-bus`,
-      source,
-      target: targets[0].group.id,
-      sourceHandle: 'family-out',
-      targetHandle: 'family-in',
-      type: 'family-branch',
-      hidden: hidden.has(source) || targets.every(({ group }) => hidden.has(group.id)),
-      data: {
-        children: targets.map(({ link, group }) => ({
-          targetX: group.x + group.width / 2,
-          maternal: link.branchType === 'maternal-terminal',
-        })),
-      },
-      style: { stroke: FAMILY_CONNECTOR_COLOR, strokeWidth: 1.35 },
-    });
+      edges.push({
+        id: `${source}-family-bus-${sourceContext ? 'context' : 'direct'}`,
+        source,
+        target: targets[0].group.id,
+        sourceHandle: 'family-out',
+        targetHandle: 'family-in',
+        type: 'family-branch',
+        hidden:
+          hidden.has(source) ||
+          targets.every(({ group }) => hidden.has(group.id)),
+        data: {
+          sourceContext,
+          children: targets.map(({ link, group }) => ({
+            targetX: group.x + group.width / 2,
+            maternal: link.branchType === 'maternal-terminal',
+            sourceContext: link.branchType === 'source-context',
+          })),
+        },
+        style: { stroke: FAMILY_CONNECTOR_COLOR, strokeWidth: 1.35 },
+      });
+    }
   }
   const found = treeMembers.filter((member) => searchMatchIds.has(member.id)).slice(0, 6);
 
@@ -534,10 +569,6 @@ function TreeCanvas() {
     setQuery('');
     setSelected(null);
     requestAnimationFrame(() => void resetViewport());
-  }
-
-  function collapseAll() {
-    setCollapsed(new Set(collapsibleGroupIds));
   }
 
   return (
@@ -600,15 +631,6 @@ function TreeCanvas() {
                   option.value === 'all' || Number(option.value) <= maxGeneration,
               )}
             />
-            <Button
-              className="icon-button"
-              variant="ghost"
-              title="Đặt lại chế độ xem"
-              aria-label="Đặt lại chế độ xem"
-              onClick={reset}
-            >
-              <HeritageIcon name="reset" size={19} />
-            </Button>
           </div>
         </div>
       </div>
@@ -620,7 +642,7 @@ function TreeCanvas() {
               <i className="tree-legend-line" /> Thành viên dòng họ ở trên
             </span>
             <span>
-              <i className="tree-legend-line is-dashed" /> Nhánh ngoại được nối tiếp khi có hậu duệ
+              <i className="tree-legend-line is-dashed" /> Nhánh ngoại hoặc vợ hai theo gia phả
             </span>
           </div>
         </div>
@@ -692,30 +714,15 @@ function TreeCanvas() {
               alt=""
             />
           </Button>
-          <details className="tree-more-menu">
-            <summary title="Tùy chọn cây" aria-label="Tùy chọn cây">
-              <MoreHorizontal size={19} aria-hidden="true" />
-            </summary>
-            <div className="tree-more-menu-panel">
-              <Button
-                variant="ghost"
-                onClick={collapseAll}
-                disabled={
-                  !collapsibleGroupIds.size ||
-                  collapsed.size === collapsibleGroupIds.size
-                }
-              >
-                <ChevronUp size={17} /> Thu gọn toàn bộ hậu duệ
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setCollapsed(new Set())}
-                disabled={!collapsed.size}
-              >
-                <ChevronDown size={17} /> Mở toàn bộ hậu duệ
-              </Button>
-            </div>
-          </details>
+          <Button
+            variant="ghost"
+            className="icon-button"
+            onClick={reset}
+            title="Đặt lại chế độ xem"
+            aria-label="Đặt lại chế độ xem"
+          >
+            <HeritageIcon name="reset" size={19} />
+          </Button>
         </div>
         {(branch !== 'all' || generation !== 'all') && (
           <div className="active-filter">

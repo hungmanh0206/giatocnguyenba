@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Sheet,
   SheetContent,
+  SheetClose,
   SheetHeader,
   SheetTitle,
   SheetDescription,
@@ -224,6 +225,7 @@ export function MembersPage({ embedded = false }: { embedded?: boolean }) {
           pageSize={pageSize}
           onPageSizeChange={setPageSize}
           showPageSize={view === 'list'}
+          variant={view === 'list' ? 'standard' : 'cards'}
         />
       </div>
       {!embedded && <Footer />}
@@ -288,7 +290,13 @@ function Facts({ person, members }: { person: Member; members: Member[] }) {
     <dl className="person-facts">
       <div>
         <dt>Giới tính</dt>
-        <dd>{person.gender === 'male' ? 'Nam' : 'Nữ'}</dd>
+        <dd>
+          {person.gender === 'male'
+            ? 'Nam'
+            : person.gender === 'female'
+              ? 'Nữ'
+              : 'Chưa rõ'}
+        </dd>
       </div>
       <div>
         <dt>Năm sinh</dt>
@@ -330,7 +338,7 @@ function Facts({ person, members }: { person: Member; members: Member[] }) {
       </div>
       {memberLifeStatus(person) === 'deceased' && (
         <div>
-          <dt>Năm mất</dt>
+          <dt>{person.deathDate ? 'Ngày mất âm lịch' : 'Năm mất'}</dt>
           <dd>{memberDeathLabel(person)}</dd>
         </div>
       )}
@@ -449,7 +457,19 @@ export function QuickView({
 }) {
   const { members } = useFamily();
   const mobile = useIsMobile();
-  if (!person) return null;
+  if (!person) {
+    return mobile ? (
+      <Drawer
+        open={false}
+        onOpenChange={(open) => !open && onClose()}
+        snapPoints={[0.5, 0.9]}
+        defaultSnapPoint={0.5}
+        showSwipeHandle
+      />
+    ) : (
+      <Sheet open={false} onOpenChange={(open) => !open && onClose()} />
+    );
+  }
 
   const profile = (
     <div className="quick-profile">
@@ -492,6 +512,13 @@ export function QuickView({
     >
       <DrawerContent className="quick-drawer">
         <DrawerHeader>
+          <DrawerClose
+            aria-label="Đóng hồ sơ"
+            className="quick-drawer-close"
+            render={<Button size="icon-sm" variant="ghost" />}
+          >
+            <HeritageIcon name="close" size={18} />
+          </DrawerClose>
           <p className="sheet-kicker">Hồ sơ thành viên</p>
           <DrawerTitle>{person ? memberName(person) : ''}</DrawerTitle>
           <DrawerDescription>
@@ -517,16 +544,13 @@ export function QuickView({
   ) : (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="quick-sheet" showCloseButton={false}>
-        <Link
-          href="/family-tree"
-          replace
-          scroll={false}
+        <SheetClose
           className="quick-sheet-close"
-          onClick={onClose}
           aria-label="Đóng hồ sơ"
+          render={<Button size="icon-sm" variant="ghost" />}
         >
           <HeritageIcon name="close" size={18} />
-        </Link>
+        </SheetClose>
         <SheetHeader>
           <p className="sheet-kicker">Hồ sơ thành viên</p>
           <SheetTitle>{person ? memberName(person) : ''}</SheetTitle>

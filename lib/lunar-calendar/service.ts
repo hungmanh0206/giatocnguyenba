@@ -76,6 +76,13 @@ export function getUpcomingFamilyEvents(options: {
   return familyLunarEventService.getUpcomingFamilyEvents(options);
 }
 
+export function getMemorialEvents(options: {
+  members: Member[];
+  from?: Date;
+}) {
+  return familyLunarEventService.getMemorialEvents(options);
+}
+
 export function getLunarYearCanChi(year: number) {
   return lichtaAdapter.getYearCanChi(year);
 }

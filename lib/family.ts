@@ -1,32 +1,46 @@
+import { familySeedMembers } from './family-source.ts';
+
 export type Member = {
   id: string;
   name: string;
+  displayName?: string;
   nameKnown?: boolean;
   tabooName?: string;
   styleName?: string;
-  gender: 'male' | 'female';
+  gender: 'male' | 'female' | 'unknown';
   isClanMember: boolean;
   lineageType: 'direct' | 'maternal-terminal';
   generation: number;
   branch: number;
+  branchOrigin?: boolean;
+  sourceContextParentId?: string;
   siblingOrder?: number;
   born?: number;
   died?: number;
   diedText?: string;
+  // Dates supplied by the genealogy are lunar dates. `died` is retained for
+  // older records that only recorded a year.
+  deathDate?: { day: number; month: number; year?: number };
   lifeStatus?: 'living' | 'deceased' | 'unknown';
   parents: string[];
   spouses: string[];
   anniversary?: { day: number; month: number };
   biography?: string;
   hometown?: string;
+  needsVerification?: boolean;
+  sourceReference?: string;
 };
 
 export const UNKNOWN_MEMBER_NAME = 'Chưa biết tên';
 
 export function memberName(person: Member) {
+  if (person.displayName?.trim()) return person.displayName.trim();
+
   const name = person.nameKnown === false || !person.name.trim()
     ? UNKNOWN_MEMBER_NAME
     : person.name;
+
+  if (person.gender === 'unknown') return name;
 
   const honorific =
     person.generation === 1 && person.parents.length === 0
@@ -42,22 +56,26 @@ export function memberName(person: Member) {
 
 export function memberLifeStatus(person: Member) {
   if (person.lifeStatus) return person.lifeStatus;
-  return person.died !== undefined || !!person.diedText || !!person.anniversary
+  return person.died !== undefined || !!person.diedText || !!person.deathDate || !!person.anniversary
     ? 'deceased'
     : 'living';
 }
 
 export function memberDeathLabel(person: Member) {
+  if (person.deathDate) {
+    const { day, month, year } = person.deathDate;
+    return year === undefined ? `${day}/${month} âm lịch` : `${day}/${month}/${year}`;
+  }
   if (person.died !== undefined) return String(person.died);
   if (person.diedText) return person.diedText;
-  return memberLifeStatus(person) === 'living' ? 'nay' : 'Chưa rõ';
+  return memberLifeStatus(person) === 'deceased' ? 'Chưa rõ năm mất' : 'Nay';
 }
 
 export function memberYearRange(person: Member) {
   const birth = person.born === undefined ? 'Chưa rõ' : String(person.born);
   const death = memberDeathLabel(person);
-  return birth === 'Chưa rõ' && death === 'Chưa rõ'
-    ? 'Chưa rõ niên đại'
+  return birth === 'Chưa rõ' && death === 'Chưa rõ năm mất'
+    ? 'Chưa rõ năm sinh, năm mất'
     : `${birth} – ${death}`;
 }
 
@@ -124,6 +142,7 @@ function seedMember(
     born: details.born,
     died: details.died,
     diedText: details.diedText,
+    deathDate: details.deathDate,
     // All supplied genealogy records are historical. Missing dates remain unknown,
     // but their status is still recorded as deceased.
     lifeStatus: details.lifeStatus ?? 'deceased',
@@ -160,7 +179,7 @@ function withSiblingOrders(members: Member[]) {
   });
 }
 
-export const seedMembers: Member[] = withSiblingOrders([
+const legacySampleMembers: Member[] = withSiblingOrders([
   seedMember('p1', 'Nguyễn Bá Linh', 'male', 1, 0, {
     tabooName: 'Sóc',
     styleName: 'Thần Hy Phủ Quân',
@@ -442,6 +461,8 @@ export const seedMembers: Member[] = withSiblingOrders([
   }),
 ]);
 
+export const seedMembers = familySeedMembers;
+
 export const branchName = (branch: number) =>
   branch
     ? `Chi ${['', 'trưởng', 'hai', 'ba', 'tư', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'][branch] || branch}`
@@ -518,6 +539,10 @@ export function removeMemberAndLinks(members: Member[], memberId: string) {
       ...member,
       parents: member.parents.filter((id) => id !== memberId),
       spouses: member.spouses.filter((id) => id !== memberId),
+      sourceContextParentId:
+        member.sourceContextParentId === memberId
+          ? undefined
+          : member.sourceContextParentId,
     }));
 }
 
@@ -546,7 +571,11 @@ function areRegisteredSpouses(
 }
 
 export function memberDeletionError(person: Member, members: Member[]) {
-  const children = members.filter((member) => member.parents.includes(person.id));
+  const children = members.filter(
+    (member) =>
+      member.parents.includes(person.id) ||
+      member.sourceContextParentId === person.id,
+  );
   const spouses = linkedSpouseIds(person, members);
 
   if (person.generation === 1 && person.isClanMember && person.gender === 'male') {
@@ -652,7 +681,8 @@ export function eligibleParents(
       candidate.generation === person.generation - 1 &&
       (candidate.branch === 0 ||
         person.branch === 0 ||
-        candidate.branch === person.branch) &&
+        candidate.branch === person.branch ||
+        person.branchOrigin === true) &&
       (person.born === undefined ||
         candidate.born === undefined ||
         candidate.born < person.born) &&
@@ -709,6 +739,7 @@ export function eligibleGenerations(person: Member, members: Member[]) {
 export function eligibleBranches(person: Member, members: Member[]) {
   if (person.generation < 1) return [];
   if (person.generation === 1) return [0];
+  if (person.branchOrigin) return [person.branch];
 
   const parentBranches = new Set(
     person.parents
@@ -745,7 +776,11 @@ export function validateMember(
   person: Member,
   members: Member[],
 ): string | null {
-  if (person.gender !== 'male' && person.gender !== 'female') {
+  if (
+    person.gender !== 'male' &&
+    person.gender !== 'female' &&
+    person.gender !== 'unknown'
+  ) {
     return 'Vui lòng chọn giới tính.';
   }
   if (
@@ -794,8 +829,24 @@ export function validateMember(
   if (person.diedText && person.diedText.trim().length > 100)
     return 'Thông tin năm mất không quá 100 ký tự.';
   if (
+    person.deathDate &&
+    (!Number.isInteger(person.deathDate.day) ||
+      person.deathDate.day < 1 ||
+      person.deathDate.day > 30 ||
+      !Number.isInteger(person.deathDate.month) ||
+      person.deathDate.month < 1 ||
+      person.deathDate.month > 12 ||
+      (person.deathDate.year !== undefined &&
+        (!Number.isInteger(person.deathDate.year) ||
+          person.deathDate.year < 1600 ||
+          person.deathDate.year > new Date().getFullYear() ||
+          (person.born !== undefined && person.deathDate.year < person.born) ||
+          (person.died !== undefined && person.deathDate.year !== person.died))))
+  )
+    return 'Ngày mất âm lịch chưa hợp lệ.';
+  if (
     memberLifeStatus(person) !== 'deceased' &&
-    (person.died !== undefined || person.diedText || person.anniversary)
+    (person.died !== undefined || person.diedText || person.deathDate || person.anniversary)
   )
     return 'Hồ sơ có thông tin mất cần được ghi là Đã mất.';
   if (person.parents.includes(person.id) || person.spouses.includes(person.id))

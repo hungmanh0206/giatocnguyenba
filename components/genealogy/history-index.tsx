@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 
 const sections = [
   ['origin', '01', 'Cội nguồn'],
-  ['generations', '02', 'Các thế hệ'],
-  ['values', '03', 'Nếp nhà truyền lại'],
-  ['records', '04', 'Tư liệu gia phả'],
+  ['branches', '02', 'Bốn mạch gia đình'],
+  ['lines', '03', 'Hai chi ghi chép rõ'],
+  ['generations', '04', 'Mạch bảy đời'],
+  ['records', '05', 'Tư liệu gia phả'],
 ] as const;
 
 export function HistoryIndex() {

@@ -68,15 +68,14 @@ const blank = (): Member => ({
   spouses: [],
 });
 
-function deathFieldValue(person: Member) {
-  return person.died !== undefined ? String(person.died) : person.diedText || '';
-}
-
-function deathFields(value: string) {
-  const text = value.trim();
-  return /^\d{4}$/.test(text)
-    ? { died: Number(text), diedText: undefined }
-    : { died: undefined, diedText: text || undefined };
+function lunarDeathDate(person: Member) {
+  if (person.deathDate) return person.deathDate;
+  return person.anniversary
+    ? {
+        ...person.anniversary,
+        ...(person.died !== undefined ? { year: person.died } : {}),
+      }
+    : undefined;
 }
 
 const adminBranchOptions = [
@@ -114,6 +113,7 @@ export function AdminPage() {
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
   const [deletingPending, setDeletingPending] = useState(false);
+  const editingDeathDate = editing ? lunarDeathDate(editing) : undefined;
   const maxGeneration = Math.max(1, ...members.map((member) => member.generation));
   const filtered = searchMembers(members, query).filter(
     (member) =>
@@ -124,7 +124,7 @@ export function AdminPage() {
           : member.branch === Number(branchFilter))) &&
       (genderFilter === 'all' ||
         (genderFilter === 'unknown'
-          ? !member.gender
+          ? member.gender === 'unknown'
           : member.gender === genderFilter)) &&
       (lifeStatusFilter === 'all' || memberLifeStatus(member) === lifeStatusFilter),
   );
@@ -152,6 +152,49 @@ export function AdminPage() {
     : null;
   function update<K extends keyof Member>(key: K, value: Member[K]) {
     setEditing((p) => (p ? { ...p, [key]: value } : null));
+  }
+
+  function updateLunarDeathDate(
+    part: 'day' | 'month' | 'year',
+    rawValue: string,
+  ) {
+    setEditing((person) => {
+      if (!person) return null;
+      const value = rawValue ? Number(rawValue) : undefined;
+      if ((part === 'day' || part === 'month') && value === undefined) {
+        return {
+          ...person,
+          deathDate: undefined,
+          anniversary: undefined,
+        };
+      }
+
+      const current =
+        lunarDeathDate(person) || ({} as NonNullable<Member['deathDate']>);
+      if (
+        part === 'year' &&
+        (!Number.isInteger(current.day) || !Number.isInteger(current.month))
+      ) {
+        return {
+          ...person,
+          died: value,
+          deathDate: undefined,
+          anniversary: undefined,
+        };
+      }
+      const next = { ...current, [part]: value };
+      const hasDayAndMonth =
+        Number.isInteger(next.day) && Number.isInteger(next.month);
+
+      return {
+        ...person,
+        deathDate: next as Member['deathDate'],
+        died: next.year ?? person.died,
+        anniversary: hasDayAndMonth
+          ? { day: next.day as number, month: next.month as number }
+          : undefined,
+      };
+    });
   }
 
   function updateParent(index: number, value: string) {
@@ -184,6 +227,9 @@ export function AdminPage() {
     e.preventDefault();
     if (!editing) return;
     setSaving(true);
+    const date = lunarDeathDate(editing);
+    const hasCompleteLunarDeathDate =
+      date && Number.isInteger(date.day) && Number.isInteger(date.month);
     const person = {
       ...editing,
       name:
@@ -193,6 +239,11 @@ export function AdminPage() {
       tabooName: editing.tabooName?.trim() || undefined,
       styleName: editing.styleName?.trim() || undefined,
       diedText: editing.diedText?.trim() || undefined,
+      deathDate: hasCompleteLunarDeathDate ? date : editing.deathDate,
+      died: hasCompleteLunarDeathDate ? date.year ?? editing.died : editing.died,
+      anniversary: hasCompleteLunarDeathDate
+        ? { day: date.day, month: date.month }
+        : editing.anniversary,
     };
     const result = await save(person);
     setSaving(false);
@@ -405,17 +456,22 @@ export function AdminPage() {
             <tbody>
               {pageMembers.map((p) => (
                 <tr key={p.id}>
-                  <td>
+                  <td data-label="Thành viên">
                     <div className="table-person">
                       <Avatar person={p} />
-                      <Link href={`/members/${p.id}`}>{memberName(p)}</Link>
+                      <div className="table-person-copy">
+                        <Link href={`/members/${p.id}`}>{memberName(p)}</Link>
+                        <span className="table-person-meta">
+                          Đời {p.generation} · {memberBranchName(p, members)} · {memberBirthLabel(p)}
+                        </span>
+                      </div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Đời / nhánh">
                     Đời {p.generation} · {memberBranchName(p, members)}
                   </td>
-                  <td>{memberBirthLabel(p)}</td>
-                  <td>
+                  <td data-label="Năm sinh">{memberBirthLabel(p)}</td>
+                  <td data-label="Tình trạng">
                     <span
                       className={`status-label ${memberLifeStatus(p)}`}
                     >
@@ -426,7 +482,7 @@ export function AdminPage() {
                           : 'Chưa rõ'}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Thao tác">
                     <Button
                       variant="ghost"
                       className="icon-button"
@@ -592,6 +648,7 @@ export function AdminPage() {
                         { value: 'unselected', label: 'Chọn giới tính' },
                         { value: 'male', label: 'Nam' },
                         { value: 'female', label: 'Nữ' },
+                        { value: 'unknown', label: 'Chưa rõ' },
                       ]}
                       disabled={!!positionLock}
                     />
@@ -841,6 +898,7 @@ export function AdminPage() {
                                 ? {
                                     died: undefined,
                                     diedText: undefined,
+                                    deathDate: undefined,
                                     anniversary: undefined,
                                   }
                                 : {}),
@@ -857,69 +915,39 @@ export function AdminPage() {
                 </label>
                 {memberLifeStatus(editing) === 'deceased' && (
                   <>
-                    <label>
-                      Năm mất
-                      <Input
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={100}
-                        placeholder="Chưa rõ"
-                        value={deathFieldValue(editing)}
-                        onChange={(e) =>
-                          setEditing((p) =>
-                            p
-                              ? {
-                                  ...p,
-                                  ...deathFields(e.target.value),
-                                  lifeStatus: 'deceased',
-                                }
-                              : null,
-                          )
-                        }
-                      />
-                    </label>
                     <div className="form-columns">
                       <label>
-                        Ngày mất âm lịch
+                        Ngày mất / ngày giỗ âm lịch
                         <Input
                           type="number"
                           min={1}
                           max={30}
-                          value={editing.anniversary?.day || ''}
-                          onChange={(e) =>
-                            update(
-                              'anniversary',
-                              e.target.value
-                                ? {
-                                    day: Number(e.target.value),
-                                    month: editing.anniversary?.month || 1,
-                                  }
-                                : undefined,
-                            )
-                          }
+                          value={editingDeathDate?.day || ''}
+                          onChange={(e) => updateLunarDeathDate('day', e.target.value)}
                         />
                       </label>
                       <label>
-                        Tháng mất âm lịch
+                        Tháng mất / tháng giỗ âm lịch
                         <Input
                           type="number"
                           min={1}
                           max={12}
-                          value={editing.anniversary?.month || ''}
-                          onChange={(e) =>
-                            update(
-                              'anniversary',
-                              e.target.value
-                                ? {
-                                    day: editing.anniversary?.day || 1,
-                                    month: Number(e.target.value),
-                                  }
-                                : undefined,
-                            )
-                          }
+                          value={editingDeathDate?.month || ''}
+                          onChange={(e) => updateLunarDeathDate('month', e.target.value)}
                         />
                       </label>
                     </div>
+                    <label>
+                      Năm mất âm lịch (nếu rõ)
+                      <Input
+                        type="number"
+                        min={1600}
+                        max={new Date().getFullYear()}
+                        placeholder="Chưa rõ"
+                        value={editingDeathDate?.year ?? editing.died ?? ''}
+                        onChange={(e) => updateLunarDeathDate('year', e.target.value)}
+                      />
+                    </label>
                   </>
                 )}
                 <h3>Tiểu sử</h3>

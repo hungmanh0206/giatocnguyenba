@@ -25,6 +25,7 @@ import {
 const memberFields = [
   'id',
   'name',
+  'displayName',
   'nameKnown',
   'tabooName',
   'styleName',
@@ -33,16 +34,21 @@ const memberFields = [
   'lineageType',
   'generation',
   'branch',
+  'branchOrigin',
+  'sourceContextParentId',
   'siblingOrder',
   'born',
   'died',
   'diedText',
+  'deathDate',
   'lifeStatus',
   'parents',
   'spouses',
   'anniversary',
   'biography',
   'hometown',
+  'needsVerification',
+  'sourceReference',
 ] as const;
 
 function string(value: unknown, fallback = '') {
@@ -63,7 +69,13 @@ function ids(value: unknown) {
 
 export function firestoreMember(id: string, raw: DocumentData): Member | null {
   const gender =
-    raw.gender === 'female' ? 'female' : raw.gender === 'male' ? 'male' : null;
+    raw.gender === 'female'
+      ? 'female'
+      : raw.gender === 'male'
+        ? 'male'
+        : raw.gender === 'unknown'
+          ? 'unknown'
+          : null;
   const nameKnown = raw.nameKnown !== false;
   const name = nameKnown
     ? string(raw.name).trim()
@@ -73,14 +85,41 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
   if (!gender || !name || (born !== undefined && born < 1600)) return null;
 
   const anniversary = raw.anniversary;
-  const day =
+  const anniversaryDay =
     anniversary && typeof anniversary === 'object'
       ? integer(anniversary.day)
       : 0;
-  const month =
+  const anniversaryMonth =
     anniversary && typeof anniversary === 'object'
       ? integer(anniversary.month)
       : 0;
+  const deathDate = raw.deathDate;
+  const deathDay =
+    deathDate && typeof deathDate === 'object' ? integer(deathDate.day) : 0;
+  const deathMonth =
+    deathDate && typeof deathDate === 'object' ? integer(deathDate.month) : 0;
+  const deathYear =
+    deathDate && typeof deathDate === 'object' ? integer(deathDate.year) : 0;
+  const died = integer(raw.died) || undefined;
+  const legacyAnniversary =
+    anniversaryDay >= 1 && anniversaryDay <= 30 &&
+    anniversaryMonth >= 1 && anniversaryMonth <= 12
+      ? { day: anniversaryDay, month: anniversaryMonth }
+      : undefined;
+  const normalizedDeathDate =
+    deathDay >= 1 && deathDay <= 30 &&
+    deathMonth >= 1 && deathMonth <= 12
+      ? {
+          day: deathDay,
+          month: deathMonth,
+          ...(deathYear >= 1600 && deathYear <= 3000 ? { year: deathYear } : {}),
+        }
+      : legacyAnniversary
+        ? {
+            ...legacyAnniversary,
+            ...(died && died >= 1600 && died <= 3000 ? { year: died } : {}),
+          }
+        : undefined;
   const hasClanFamilyName = /^Nguyễn (Bá|Thị)(?:\s|$)/i.test(name);
   const isClanMember =
     typeof raw.isClanMember === 'boolean'
@@ -90,6 +129,7 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
   return {
     id,
     name,
+    displayName: string(raw.displayName).trim() || undefined,
     nameKnown,
     tabooName: string(raw.tabooName).trim() || undefined,
     styleName: string(raw.styleName).trim() || undefined,
@@ -104,34 +144,58 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
             : 'direct',
     generation: integer(raw.generation, 1),
     branch: integer(raw.branch),
+    branchOrigin: raw.branchOrigin === true || undefined,
+    sourceContextParentId: string(raw.sourceContextParentId).trim() || undefined,
     siblingOrder: integer(raw.siblingOrder) || undefined,
     born,
-    died: integer(raw.died) || undefined,
+    died,
     diedText: string(raw.diedText).trim() || undefined,
+    deathDate: normalizedDeathDate,
     lifeStatus:
       raw.lifeStatus === 'living' ||
       raw.lifeStatus === 'deceased' ||
       raw.lifeStatus === 'unknown'
-        ? raw.lifeStatus
-        : undefined,
+        ? raw.lifeStatus === 'unknown' && normalizedDeathDate
+          ? 'deceased'
+          : raw.lifeStatus
+        : normalizedDeathDate
+          ? 'deceased'
+          : undefined,
     parents: ids(raw.parents),
     spouses: ids(raw.spouses),
-    anniversary:
-      day >= 1 && day <= 30 && month >= 1 && month <= 12
-        ? { day, month }
-        : undefined,
+    anniversary: normalizedDeathDate
+      ? { day: normalizedDeathDate.day, month: normalizedDeathDate.month }
+      : legacyAnniversary,
     biography: string(raw.biography) || undefined,
     hometown: string(raw.hometown) || undefined,
+    needsVerification: raw.needsVerification === true || undefined,
+    sourceReference: string(raw.sourceReference) || undefined,
   };
 }
 
 function memberData(person: Member) {
+  const dateSource = person.deathDate || person.anniversary;
+  const normalizedDeathDate =
+    dateSource &&
+    Number.isInteger(dateSource.day) &&
+    Number.isInteger(dateSource.month)
+      ? {
+          day: dateSource.day,
+          month: dateSource.month,
+          ...(person.deathDate?.year !== undefined
+            ? { year: person.deathDate.year }
+            : person.died !== undefined
+              ? { year: person.died }
+              : {}),
+        }
+      : null;
   return {
     id: person.id,
     name:
       person.nameKnown === false
         ? UNKNOWN_MEMBER_NAME
         : person.name.trim(),
+    displayName: person.displayName?.trim() || null,
     nameKnown: person.nameKnown !== false,
     tabooName: person.tabooName?.trim() || null,
     styleName: person.styleName?.trim() || null,
@@ -140,16 +204,23 @@ function memberData(person: Member) {
     lineageType: person.lineageType,
     generation: person.generation,
     branch: person.branch,
+    branchOrigin: person.branchOrigin ?? false,
+    sourceContextParentId: person.sourceContextParentId?.trim() || null,
     siblingOrder: person.siblingOrder ?? null,
     born: person.born ?? null,
     died: person.died ?? null,
     diedText: person.diedText?.trim() || null,
+    deathDate: normalizedDeathDate,
     lifeStatus: person.lifeStatus ?? null,
     parents: [...new Set(person.parents)],
     spouses: [...new Set(person.spouses)],
-    anniversary: person.anniversary ?? null,
+    anniversary: normalizedDeathDate
+      ? { day: normalizedDeathDate.day, month: normalizedDeathDate.month }
+      : null,
     biography: person.biography?.trim() || null,
     hometown: person.hometown?.trim() || null,
+    needsVerification: person.needsVerification ?? false,
+    sourceReference: person.sourceReference?.trim() || null,
     updatedAt: serverTimestamp(),
   };
 }

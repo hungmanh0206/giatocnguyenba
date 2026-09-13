@@ -30,7 +30,7 @@ File `.firebaserc` trên máy đã trỏ đến đúng Firebase project. Nếu b
 
 1. Mở [khu vực quản trị](https://giatocnguyenba.vercel.app/admin) và đăng nhập bằng tài khoản Google sẽ quản lý gia phả.
 2. Vào Firebase Console > **Authentication > Users**, tìm tài khoản vừa đăng nhập và sao chép cột **User UID**.
-3. Vào **Project settings > Service accounts**, tạo khóa mới và tải file JSON service account về máy. Không gửi file này qua chat, GitHub hoặc Vercel.
+3. Vào **Project settings > Service accounts**, tạo khóa mới và tải file JSON service account về máy. Không gửi file này qua chat hoặc GitHub. Nếu dùng Kho ảnh, đặt nội dung JSON vào biến server-only `FIREBASE_SERVICE_ACCOUNT_JSON` trong Vercel; xem [GALLERY_SETUP.md](GALLERY_SETUP.md) để cấu hình an toàn.
 
 ## 4. Nạp dữ liệu gia phả mẫu
 

@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { FamilyMoments } from './family-moments';
 import { HeritageIcon, type HeritageIconName } from './heritage-icon';
+import { MemorialDetailDialog } from './memorial-detail-dialog';
+import { Avatar } from './member-avatar';
 import { useFamily } from './provider';
 import { Footer } from './header';
 import {
@@ -20,36 +22,17 @@ import { layoutFamily, type Household } from '@/lib/tree-layout';
 import {
   getYearCanChi,
   lunarOf,
-  upcomingAnniversaries,
   vietnamDate,
   vietnamToday,
 } from '@/lib/lunar';
+import { getMemorialEvents } from '@/lib/lunar-calendar/service';
+import type { UpcomingFamilyEvent } from '@/lib/lunar-calendar/types';
 
 type QuickStat =
   | { icon: HeritageIconName; image?: never; label: string; value: number }
   | { icon?: never; image: string; label: string; value: number };
 
-export function Avatar({
-  person,
-  large = false,
-}: {
-  person: Member;
-  large?: boolean;
-}) {
-  const avatarSource =
-    person.gender === 'female'
-      ? '/avatar-female-3d.png'
-      : '/avatar-male-3d.png';
-
-  return (
-    <span
-      aria-hidden="true"
-      className={`avatar ${person.gender} ${large ? 'large' : ''}`}
-    >
-      <img className="avatar-art" src={avatarSource} alt="" />
-    </span>
-  );
-}
+export { Avatar } from './member-avatar';
 export function MemberTile({
   person,
   members,
@@ -187,8 +170,12 @@ export function HomePage() {
   const [query, setQuery] = useState('');
   const found = searchMembers(members, query).slice(0, 4);
   const [today] = useState(vietnamToday);
+  const [activeMemorial, setActiveMemorial] =
+    useState<UpcomingFamilyEvent | null>(null);
   const upcoming = useMemo(
-    () => upcomingAnniversaries(members, today).slice(0, 3),
+    () =>
+      getMemorialEvents({ members, from: today })
+        .slice(0, 3),
     [members, today],
   );
   const familyPreview = useMemo(() => {
@@ -242,11 +229,11 @@ export function HomePage() {
       <section className="home-hero">
         <Image
           className="heritage-art"
-          src="/heritage-hero.png"
+          src="/home-hero-heritage-panorama.png"
           alt=""
           fill
           priority
-          sizes="(max-width: 900px) 100vw, 1200px"
+          sizes="(max-width: 900px) 100vw, (max-width: 1600px) 49vw, 1040px"
         />
         <div className="container hero-content">
           <div className="eyebrow">
@@ -428,31 +415,41 @@ export function HomePage() {
             </div>
           </div>
           <div className="anniversary-list">
-            {upcoming.map(({ person: p, daysAway }) => (
-              <Link
-                href={`/lunar-calendar?person=${p.id}`}
+            {upcoming.map((occurrence) => {
+              const { event } = occurrence;
+              const p = event.person;
+              return (
+              <button
                 className="anniversary-row"
-                key={p.id}
+                key={event.id}
+                aria-label={`Xem chi tiết ngày giỗ ${p ? memberName(p) : event.title}`}
+                onClick={() => setActiveMemorial(occurrence)}
+                type="button"
               >
                 <span className="date-block">
-                  <strong>{p.anniversary!.day}</strong>
-                  <small>Tháng {p.anniversary!.month}</small>
+                  <strong>{event.lunarDay}</strong>
+                  <small>Tháng {event.lunarMonth}</small>
                 </span>
-                <span className="anniversary-person">
-                  <strong>{memberName(p)}</strong>
+                <span className={`anniversary-person${p ? '' : ' is-clan-memorial'}`}>
+                  <strong>{p ? memberName(p) : event.title}</strong>
                   <small>
-                    Đời {p.generation} · {memberBranchName(p, members)}
+                    {p
+                      ? `Đời ${p.generation} · ${memberBranchName(p, members)}`
+                      : 'Ngày tưởng niệm chung của toàn dòng họ'}
                   </small>
                 </span>
                 <span className="anniversary-footer">
                   <span className="lunar-label">
                     Âm lịch ·{' '}
-                    {daysAway === 0 ? 'Hôm nay' : `Còn ${daysAway} ngày`}
+                    {occurrence.daysAway === 0
+                      ? 'Hôm nay'
+                      : `Còn ${occurrence.daysAway} ngày`}
                   </span>
                   <HeritageIcon name="next" size={17} />
                 </span>
-              </Link>
-            ))}
+              </button>
+              );
+            })}
           </div>
           <Link className="calendar-link" href="/lunar-calendar">
             Xem lịch âm & ngày giỗ <HeritageIcon name="next" size={17} />
@@ -465,6 +462,11 @@ export function HomePage() {
           </section>
         </div>
       </section>
+      <MemorialDetailDialog
+        activeEvent={activeMemorial}
+        members={members}
+        onOpenChange={(open) => !open && setActiveMemorial(null)}
+      />
       <FamilyMoments />
       <section className="history-band">
         <div className="container history-teaser">

@@ -19,6 +19,12 @@ Vietnamese genealogy website built with Next.js, React 19, Tailwind, Base UI / s
 
 Follow [FIREBASE_SETUP.md](FIREBASE_SETUP.md) to connect a Firebase project, secure Firestore, seed the family, and add the Vercel environment variables.
 
+## Kho ảnh dòng họ
+
+Kho ảnh công khai tại `/gallery` đọc trực tiếp từ folder `Gia tộc nguyễn bá` trên Cloudinary. Ảnh upload từ web cũng được lưu thẳng vào folder này; không có ảnh nào được lưu trong source code. Chỉ tài khoản `super_admin` có thể tải ảnh lên, chỉnh sửa, chọn ảnh nổi bật hoặc xóa ảnh.
+
+Thiết lập Cloudinary, Firebase Admin và deploy Firestore Rules/Indexes được hướng dẫn trong [GALLERY_SETUP.md](GALLERY_SETUP.md).
+
 ## Design inputs
 
 The supplied product document defines the genealogy workflows. DESIGN.md and token files inform flat surfaces, restrained borders, spacing and radii. The product-specific burgundy / bronze palette takes precedence over unrelated example content in design references.

@@ -5,8 +5,8 @@ import { Toast as ToastPrimitive } from '@base-ui/react/toast';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { CloseIcon } from '@/components/ui/close-icon';
 import {
-  XIcon,
   CircleCheckIcon,
   InfoIcon,
   TriangleAlertIcon,
@@ -132,7 +132,7 @@ function ToastClose({
       )}
       {...props}
     >
-      {children ?? <XIcon aria-hidden="true" />}
+      {children ?? <CloseIcon />}
     </ToastPrimitive.Close>
   );
 }

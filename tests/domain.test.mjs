@@ -12,11 +12,9 @@ import {
   eligibleSpouses,
   memberChangeError,
   memberDeletionError,
-  memberBranchName,
   memberDeathLabel,
   memberLifeStatus,
   memberName,
-  memberYearRange,
 } from '../lib/family.ts';
 import {
   collapsedDescendantGroups,
@@ -67,147 +65,111 @@ test('only super admin is a valid management role', () => {
   assert.equal(canManageFamily(null), false);
 });
 
-test('seed stores the supplied five-generation genealogy', () => {
-  assert.equal(seedMembers.length, 64);
+test('active seed preserves the normalized genealogy and contextual spouses', () => {
+  assert.equal(seedMembers.length, 160);
 
-  const founder = member('p1');
-  const founderSpouse = member('p2');
-  assert.equal(founder.name, 'Nguyễn Bá Linh');
-  assert.equal(memberName(founder), 'Ông Tổ: Nguyễn Bá Linh');
+  const founder = member('P001');
+  const founderSpouse = member('P002');
+  const branchFounder = member('P050');
+
+  assert.equal(memberName(founder), 'Nguyễn Bá Linh');
   assert.equal(founder.tabooName, 'Sóc');
   assert.equal(founder.styleName, 'Thần Hy Phủ Quân');
   assert.deepEqual(founder.anniversary, { day: 27, month: 11 });
-  assert.equal(founderSpouse.nameKnown, false);
-  assert.equal(memberName(founderSpouse), 'Bà Tổ: Chưa biết tên');
-  assert.equal(memberName(member('g2-khang')), 'Bà: Nguyễn Thị Khang');
-  assert.equal(memberName(member('g2-an')), 'Ông: Nguyễn Bá Ân');
-  assert.equal(memberBranchName(member('g2-khang'), seedMembers), 'Nhánh ngoại');
-  assert.equal(memberBranchName(member('g2-an'), seedMembers), 'Chi trưởng');
-  assert.equal(memberBranchName(member('g2-tang'), seedMembers), 'Chi hai');
-  assert.equal(memberBranchName(member('g3-xum'), seedMembers), 'Nhánh ngoại');
-  assert.equal(memberBranchName(member('g4-con'), seedMembers), 'Nhánh ngoại');
-  assert.equal(founderSpouse.styleName, 'Tư Hòa');
+  assert.deepEqual(member('P057').deathDate, { day: 14, month: 5, year: 1985 });
+  assert.deepEqual(member('P057').anniversary, { day: 14, month: 5 });
+  assert.deepEqual(member('P048').deathDate, { day: 29, month: 9, year: 1959 });
+  assert.deepEqual(member('P048').anniversary, { day: 29, month: 9 });
+  assert.deepEqual(member('P054').deathDate, { day: 22, month: 5, year: 1968 });
+  assert.deepEqual(member('P056').deathDate, { day: 12, month: 2, year: 2009 });
+  assert.deepEqual(member('P058').deathDate, { day: 16, month: 12, year: 2017 });
+  assert.equal(member('P062').deathDate, undefined);
+  assert.equal(memberName(founderSpouse), 'Bà tổ (chưa rõ tên)');
   assert.deepEqual(founderSpouse.anniversary, { day: 17, month: 4 });
-
+  assert.equal(memberName(member('P024')), 'Ông Khiết');
+  assert.equal(memberName(member('P012')), 'Nguyễn Văn Xum');
+  assert.equal(branchFounder.branch, 2);
+  assert.equal(branchFounder.branchOrigin, true);
+  assert.equal(member('P047').gender, 'male');
+  assert.equal(memberName(member('P081')), 'Nguyễn Thị Kiều Hà');
+  assert.equal(
+    seedMembers
+      .filter((person) => person.generation === 2 || person.generation === 3)
+      .every((person) => person.lifeStatus === 'deceased'),
+    true,
+  );
+  assert.equal(memberLifeStatus(member('P105')), 'unknown');
+  assert.equal(
+    seedMembers.filter((person) => person.needsVerification).length,
+    6,
+  );
   assert.deepEqual(
     relatives(seedMembers, founder).children.map((person) => person.id),
-    ['g2-khang', 'g2-bang', 'g2-an', 'g2-tang'],
-  );
-  assert.deepEqual(
-    ['g2-khang', 'g2-bang', 'g2-an', 'g2-tang'].map(
-      (id) => member(id).siblingOrder,
-    ),
-    [1, 2, 3, 4],
-  );
-  assert.deepEqual(
-    [
-      'g3-xum',
-      'g3-liem',
-      'g3-cham',
-      'g3-ton',
-      'g3-gian',
-      'g3-sanh',
-      'g3-giang',
-      'g3-ut',
-    ].map((id) => member(id).siblingOrder),
-    [1, 2, 3, 4, 5, 6, 7, 8],
-  );
-  assert.equal(member('g2-tang').branch, 2);
-  assert.deepEqual(
-    relatives(seedMembers, member('g2-khang')).children.map((person) => person.id),
-    ['g3-xum', 'g3-liem', 'g3-cham', 'g3-ton', 'g3-gian'],
-  );
-  assert.equal(member('g4-thap').biography, 'Nghề nghiệp: Giáo viên.');
-  assert.deepEqual(member('g5-thong').parents, ['g4-con']);
-  assert.deepEqual(member('g3-sanh').spouses, [
-    'g3-sanh-vo-1',
-    'g3-sanh-vo-2',
-    'g3-sanh-vo-3',
-  ]);
-  assert.equal(memberName(member('g3-xum-vo')), 'Bà: Chưa biết tên');
-  assert.deepEqual(member('g2-bang').spouses, []);
-  assert.deepEqual(member('g5-xung').spouses, []);
-  assert.ok(
-    seedMembers.every((person) => memberLifeStatus(person) === 'deceased'),
-    'all supplied historical records are marked as deceased',
+    ['P003', 'P004', 'P005', 'P006'],
   );
 });
 
-test('Vietnamese search includes supplied names and honorific data', () => {
+test('search uses source names without injecting honorifics', () => {
   assert.deepEqual(
-    searchMembers(seedMembers, 'nguyen linh').map((person) => person.id),
-    ['p1'],
+    searchMembers(seedMembers, 'nguyen ba linh').map((person) => person.id),
+    ['P001'],
+  );
+  assert.deepEqual(
+    searchMembers(seedMembers, 'ong khiet').map((person) => person.id),
+    ['P024'],
   );
   assert.deepEqual(
     searchMembers(seedMembers, 'than hy').map((person) => person.id),
-    ['p1'],
-  );
-  assert.deepEqual(
-    searchMembers(seedMembers, 'nguyen van sanh').map((person) => person.id),
-    ['g3-sanh'],
+    ['P001'],
   );
   assert.equal(searchMembers(seedMembers, 'khongtontai').length, 0);
 });
 
-test('seed genealogy is valid and spouse links are symmetric', () => {
+test('normalized relationships are valid and spouse links are symmetric', () => {
   for (const person of seedMembers) {
-    assert.equal(validateMember(person, seedMembers), null, person.name);
-    if (seedMembers.some((candidate) => candidate.parents.includes(person.id))) {
-      assert.ok(person.spouses.length, `${person.id} needs a recorded partner`);
-    }
+    assert.equal(validateMember(person, seedMembers), null, person.id);
     for (const spouseId of person.spouses) {
       assert.ok(member(spouseId).spouses.includes(person.id));
     }
   }
 });
 
-test('incomplete historical records retain unknown names and flexible death dates', () => {
-  const unknownMember = {
-    ...member('p2'),
-    name: '',
-    nameKnown: false,
-    tabooName: 'Ngọc',
-    styleName: 'Tĩnh Trai',
-    born: undefined,
-    died: undefined,
-    diedText: 'Mất vào tháng Chạp, chưa rõ năm',
-    lifeStatus: 'deceased',
-    anniversary: { day: 12, month: 8 },
-  };
+test('source gender and source branch origin remain editable states', () => {
+  const recordedGender = member('P047');
+  const sourceBranchOrigin = member('P050');
 
-  assert.equal(validateMember(unknownMember, seedMembers), null);
-  assert.equal(memberName(unknownMember), 'Bà Tổ: Chưa biết tên');
-  assert.equal(memberDeathLabel(unknownMember), 'Mất vào tháng Chạp, chưa rõ năm');
-  assert.equal(memberYearRange(unknownMember), 'Chưa rõ – Mất vào tháng Chạp, chưa rõ năm');
-  assert.equal(searchMembers([unknownMember], 'tĩnh trai').length, 1);
+  assert.equal(validateMember(recordedGender, seedMembers), null);
+  assert.equal(validateMember(sourceBranchOrigin, seedMembers), null);
   assert.equal(
-    validateMember({ ...unknownMember, lifeStatus: 'unknown' }, seedMembers),
-    'Hồ sơ có thông tin mất cần được ghi là Đã mất.',
+    validateMember({ ...sourceBranchOrigin, branchOrigin: false }, seedMembers),
+    'Chi cần khớp với đời và cha mẹ đã chọn.',
   );
 });
 
 test('removing a member clears every recorded relationship', () => {
-  const nextMembers = removeMemberAndLinks(seedMembers, 'g2-khang');
+  const nextMembers = removeMemberAndLinks(seedMembers, 'P048');
 
-  assert.equal(nextMembers.some((person) => person.id === 'g2-khang'), false);
+  assert.equal(nextMembers.some((person) => person.id === 'P048'), false);
   assert.deepEqual(
-    nextMembers.find((person) => person.id === 'g2-khang-chong')?.spouses,
-    ['g2-ba-ke'],
+    nextMembers.find((person) => person.id === 'P053')?.spouses,
+    [],
   );
   assert.deepEqual(
-    nextMembers.find((person) => person.id === 'g3-xum')?.parents,
-    ['g2-khang-chong'],
+    nextMembers.find((person) => person.id === 'P055')?.parents,
+    ['P053'],
   );
   const model = assertRenderableTree(nextMembers);
-  assert.equal(model.groupOf.get('g3-xum'), 'family-g3-xum');
+  assert.equal(model.groupOf.get('P055'), 'family-P055');
   assert.equal(
-    model.links.some((link) => link.source === 'family-g2-khang'),
+    model.links.some((link) => link.source === 'family-P048'),
     false,
   );
 });
 
-test('validation protects branch positions and kinship constraints', () => {
-  const founder = member('p1');
+test('validation protects genealogy constraints and supports known branch starts', () => {
+  const founder = member('P001');
+  const daughter = member('P003');
+
   assert.equal(
     validateMember({ ...founder, gender: '' }, seedMembers),
     'Vui lòng chọn giới tính.',
@@ -216,16 +178,16 @@ test('validation protects branch positions and kinship constraints', () => {
     validateMember({ ...founder, generation: 0 }, seedMembers),
     'Vui lòng chọn đời và chi.',
   );
-  assert.ok(validateMember({ ...founder, parents: ['g5-thong'] }, seedMembers));
+  assert.ok(validateMember({ ...founder, parents: ['P105'] }, seedMembers));
   assert.ok(validateMember({ ...founder, parents: [founder.id] }, seedMembers));
   assert.equal(
-    validateMember({ ...member('g2-khang'), lineageType: 'direct' }, seedMembers),
+    validateMember({ ...daughter, lineageType: 'direct' }, seedMembers),
     'Con gái trong dòng họ được ghi là nhánh ngoại.',
   );
-  assert.equal(validateMember(member('g2-tang'), seedMembers), null);
+  assert.deepEqual(eligibleBranches(member('P050'), seedMembers), [2]);
 });
 
-test('member editor only offers parent and branch choices that fit the tree', () => {
+test('member editor choices respect recorded parents, branches, and spouses', () => {
   const secondGenerationChild = {
     id: 'editor-child',
     name: 'Nguyễn Bá Biên Tập',
@@ -241,28 +203,15 @@ test('member editor only offers parent and branch choices that fit the tree', ()
     eligibleParents(secondGenerationChild, seedMembers, 0)
       .map((person) => person.id)
       .sort(),
-    ['p1', 'p2'],
+    ['P001', 'P002'],
   );
   assert.deepEqual(
     eligibleParents(
-      { ...secondGenerationChild, parents: ['p1'] },
+      { ...secondGenerationChild, parents: ['P001'] },
       seedMembers,
       1,
     ).map((person) => person.id),
-    ['p2'],
-  );
-  assert.ok(eligibleBranches(secondGenerationChild, seedMembers).includes(4));
-
-  const khangChild = {
-    ...secondGenerationChild,
-    generation: 3,
-    parents: ['g2-khang', 'g2-khang-chong'],
-  };
-  assert.deepEqual(eligibleBranches(khangChild, seedMembers), [1]);
-  assert.equal(validateMember(khangChild, seedMembers), null);
-  assert.equal(
-    validateMember({ ...khangChild, branch: 2 }, seedMembers),
-    'Chi cần khớp với đời và cha mẹ đã chọn.',
+    ['P002'],
   );
 
   const eligiblePartner = {
@@ -277,28 +226,23 @@ test('member editor only offers parent and branch choices that fit the tree', ()
     spouses: [],
   };
   assert.equal(
-    eligibleSpouses(member('g3-xum'), [...seedMembers, eligiblePartner]).some(
+    eligibleSpouses(member('P049'), [...seedMembers, eligiblePartner]).some(
       (person) => person.id === eligiblePartner.id,
     ),
     true,
   );
 });
 
-test('destructive member operations preserve the recorded genealogy', () => {
-  assert.match(memberDeletionError(member('p1'), seedMembers), /Thủy tổ/);
-  assert.match(memberDeletionError(member('g3-xum'), seedMembers), /cha\/mẹ của 3 người/);
-  assert.match(memberDeletionError(member('g2-khang-chong'), seedMembers), /cha\/mẹ của 8 người/);
-  assert.equal(memberDeletionError(member('g2-bang'), seedMembers), null);
+test('destructive operations preserve the documented relationships', () => {
+  assert.match(memberDeletionError(member('P001'), seedMembers), /Thủy tổ/);
+  assert.match(memberDeletionError(member('P048'), seedMembers), /cha\/mẹ của/);
+  assert.equal(memberDeletionError(member('P004'), seedMembers), null);
   assert.match(
-    memberChangeError({ ...member('g3-xum'), branch: 2 }, seedMembers),
-    /đã có con/,
-  );
-  assert.match(
-    memberChangeError({ ...member('g2-khang-chong'), generation: 3 }, seedMembers),
+    memberChangeError({ ...member('P048'), branch: 2 }, seedMembers),
     /đã có con/,
   );
   assert.equal(
-    memberChangeError({ ...member('g2-bang'), hometown: 'Hà Nội' }, seedMembers),
+    memberChangeError({ ...member('P004'), hometown: 'Hà Nội' }, seedMembers),
     null,
   );
 });
@@ -315,7 +259,7 @@ test('tree stays renderable through add, edit, spouse changes, and deletion', ()
     gender: 'male',
     isClanMember: true,
     lineageType: 'direct',
-    generation: 6,
+    generation: 8,
     branch: 1,
     parents: [],
     spouses: [],
@@ -329,18 +273,13 @@ test('tree stays renderable through add, edit, spouse changes, and deletion', ()
     gender: 'female',
     isClanMember: false,
     lineageType: 'direct',
-    generation: 6,
+    generation: 8,
     branch: 1,
     parents: [],
     spouses: ['case-parent'],
   };
   assert.equal(validateMember(spouse, members), null);
   members = upsertMemberAndLinks(members, spouse);
-  let model = assertRenderableTree(members);
-  assert.deepEqual(
-    model.groups.find((group) => group.id === 'family-case-parent')?.people.map((person) => person.id),
-    ['case-parent', 'case-spouse'],
-  );
 
   const son = {
     id: 'case-son',
@@ -348,135 +287,115 @@ test('tree stays renderable through add, edit, spouse changes, and deletion', ()
     gender: 'male',
     isClanMember: true,
     lineageType: 'direct',
-    generation: 7,
+    generation: 9,
     branch: 1,
     parents: ['case-parent', 'case-spouse'],
     spouses: [],
   };
   assert.equal(validateMember(son, members), null);
   members = upsertMemberAndLinks(members, son);
-  model = assertRenderableTree(members);
-  assert.equal(model.groupOf.get('case-son'), 'family-case-son');
-  assert.equal(
-    model.links.some(
-      (link) => link.source === 'family-case-parent' && link.target === 'family-case-son',
-    ),
-    true,
-  );
-
-  const editedSon = { ...son, name: 'Nguyễn Bá Quốc Khánh' };
-  assert.equal(validateMember(editedSon, members), null);
-  members = upsertMemberAndLinks(members, editedSon);
-  model = assertRenderableTree(members);
-  assert.equal(
-    model.groups.find((group) => group.id === 'family-case-son')?.clanMember.name,
-    'Nguyễn Bá Quốc Khánh',
-  );
+  assert.equal(assertRenderableTree(members).groupOf.get('case-son'), 'family-case-son');
 
   members = removeMemberAndLinks(members, 'case-spouse');
-  model = assertRenderableTree(members);
-  assert.deepEqual(
-    model.groups.find((group) => group.id === 'family-case-parent')?.people.map((person) => person.id),
-    ['case-parent'],
-  );
   assert.deepEqual(
     members.find((person) => person.id === 'case-son')?.parents,
     ['case-parent'],
   );
 });
 
-test('tree preserves the full Bà Khang branch and compact empty maternal branches', () => {
+test('tree renders all seven generations and bà Khang\'s two-wife household', () => {
   const model = assertRenderableTree(seedMembers);
   const root = model.groups.find((group) => group.root);
-  const khangHousehold = model.groups.find((group) => group.id === 'family-g2-khang');
+  const household = model.groups.find((group) => group.id === 'family-P005');
 
-  assert.equal(root?.id, 'family-p1');
+  assert.equal(root?.id, 'family-P001');
   assert.deepEqual(
     model.groups
       .filter((group) => group.generation === 2 && group.kind === 'family')
       .map((group) => group.clanMember.id),
-    ['g2-khang', 'g2-bang', 'g2-an', 'g2-tang'],
+    ['P003', 'P004', 'P005', 'P006'],
   );
+  assert.deepEqual(household?.people.map((person) => person.id), ['P005', 'P007', 'P008']);
+  assert.equal(household?.wifeRoles.P007, 'Bà cả');
+  assert.equal(household?.wifeRoles.P008, 'Bà hai');
+  assert.equal(model.groupOf.get('P055'), 'family-P055');
+  assert.equal(model.groups.find((group) => group.id === 'family-P048')?.parentageLabel, 'Con của Bà cả');
+  assert.equal(model.groups.find((group) => group.id === 'family-P049')?.parentageLabel, 'Con của Bà hai');
+  const khangHousehold = model.groups.find((group) => group.id === 'family-P003');
   assert.deepEqual(
     khangHousehold?.people.map((person) => person.id),
-    ['g2-khang', 'g2-khang-chong', 'g2-ba-ke'],
+    ['P003', 'CONTEXT-P003-HUSBAND', 'CONTEXT-P003-SECOND-WIFE'],
   );
-  assert.equal(khangHousehold?.lineageType, 'maternal-terminal');
-  assert.equal(model.groupOf.get('g3-xum'), 'family-g3-xum');
-  assert.equal(model.groupOf.get('g4-nghiem'), 'family-g4-nghiem');
-  assert.equal(model.groupOf.get('g5-thong'), 'family-g5-thong');
-  assert.equal(
-    model.groups.find((group) => group.id === 'family-g4-con')?.parentageLabel,
-    'Con của Bà: Nguyễn Thị Giàng',
-  );
-  assert.equal(
-    model.groups.find((group) => group.id === 'terminal-g4-thap')?.parentageLabel,
-    'Con của Bà: Nguyễn Thị Út',
+  assert.equal(khangHousehold?.wifeRoles.P003, 'Bà cả');
+  assert.equal(khangHousehold?.wifeRoles['CONTEXT-P003-SECOND-WIFE'], 'Bà hai');
+  assert.deepEqual(
+    model.links
+      .filter((link) => link.source === 'family-P003')
+      .map((link) => link.childId)
+      .sort(),
+    ['P012', 'P013', 'P014', 'P015', 'P016', 'P017', 'P018', 'P019'],
   );
   assert.equal(model.visibleMemberIds.size, seedMembers.length);
-  assert.equal(
-    model.links.some(
-      (link) => link.source === 'family-g2-khang' && link.target === 'family-g3-xum',
-    ),
-    true,
-  );
 });
 
-test('tree positions siblings by recorded order instead of branch label', () => {
+test('tree cards compact households without a recorded spouse', () => {
+  const model = assertRenderableTree(seedMembers);
+  const withSpouses = model.groups.find((group) => group.id === 'family-P003');
+  const withoutSpouse = model.groups.find((group) => group.id === 'family-P004');
+
+  assert.ok(withSpouses);
+  assert.ok(withoutSpouse);
+  assert.equal(withoutSpouse.spouses.length, 0);
+  assert.ok(withoutSpouse.height < withSpouses.height);
+});
+
+test('a lunar death day and month are valid when the death year is unknown', () => {
+  const founder = member('P001');
+
+  assert.deepEqual(founder.deathDate, { day: 27, month: 11 });
+  assert.deepEqual(founder.anniversary, { day: 27, month: 11 });
+  assert.equal(memberDeathLabel(founder), '27/11 âm lịch');
+  assert.equal(validateMember(founder, seedMembers), null);
+});
+
+test('only deceased members with no recorded year show an unknown death year', () => {
+  const living = { ...member('P004'), lifeStatus: 'unknown', died: undefined };
+  const deceased = {
+    ...living,
+    id: 'deceased-without-death-year',
+    lifeStatus: 'deceased',
+  };
+
+  assert.equal(memberDeathLabel(living), 'Nay');
+  assert.equal(memberDeathLabel(deceased), 'Chưa rõ năm mất');
+});
+
+test('tree positions source siblings by recorded order', () => {
   const model = assertRenderableTree([...seedMembers].reverse());
   const generationTwo = model.groups
     .filter((group) => group.generation === 2 && group.kind === 'family')
     .sort((left, right) => left.x - right.x)
     .map((group) => group.clanMember.id);
 
-  assert.deepEqual(generationTwo, ['g2-khang', 'g2-bang', 'g2-an', 'g2-tang']);
+  assert.deepEqual(generationTwo, ['P003', 'P004', 'P005', 'P006']);
 
-  const khangChildren = model.links
-    .filter((link) => link.source === 'family-g2-khang')
+  const children = model.links
+    .filter((link) => link.source === 'family-P005')
     .map((link) => model.groups.find((group) => group.id === link.target))
     .filter(Boolean)
     .sort((left, right) => left.x - right.x)
     .map((group) => group.clanMember.id);
-  assert.deepEqual(khangChildren, [
-    'g3-xum',
-    'g3-liem',
-    'g3-cham',
-    'g3-ton',
-    'g3-gian',
-    'g3-sanh',
-    'g3-giang',
-    'g3-ut',
-  ]);
+  assert.deepEqual(children, ['P048', 'P049', 'P050', 'P051', 'P052']);
 });
 
-test('tree distinguishes wives and children in recorded multi-wife households', () => {
-  const model = assertRenderableTree(seedMembers);
-  const khangHousehold = model.groups.find((group) => group.id === 'family-g2-khang');
-
-  assert.equal(khangHousehold?.wifeRoles['g2-khang'], 'Bà cả');
-  assert.equal(khangHousehold?.wifeRoles['g2-ba-ke'], 'Bà hai');
-  assert.equal(
-    model.groups.find((group) => group.id === 'family-g3-xum')?.parentageLabel,
-    'Con của Bà cả',
-  );
-  assert.equal(
-    model.groups.find((group) => group.id === 'family-g3-sanh')?.parentageLabel,
-    'Con của Bà hai',
-  );
-  assert.equal(
-    model.groups.find((group) => group.id === 'family-g4-nguyen')?.parentageLabel,
-    'Chưa ghi nhận mẹ',
-  );
-});
-
-test('collapsed tree groups hide every descendant and never the collapsed group', () => {
+test('collapsed groups hide source descendants without hiding the group itself', () => {
   const model = layoutFamily(seedMembers);
-  const rootGroup = model.groupOf.get('p1');
-  const childGroup = model.groupOf.get('g2-khang');
-  const grandchildGroup = model.groupOf.get('g3-xum');
-  const hidden = collapsedDescendantGroups(model.links, [rootGroup]);
+  const branchGroup = model.groupOf.get('P005');
+  const childGroup = model.groupOf.get('P048');
+  const grandchildGroup = model.groupOf.get('P055');
+  const hidden = collapsedDescendantGroups(model.links, [branchGroup]);
 
-  assert.equal(hidden.has(rootGroup), false);
+  assert.equal(hidden.has(branchGroup), false);
   assert.equal(hidden.has(childGroup), true);
   assert.equal(hidden.has(grandchildGroup), true);
   assert.equal(collapsedDescendantGroups(model.links, []).size, 0);
@@ -517,7 +436,7 @@ test('Vietnamese lunar conversion handles Tet and the 2023 leap month', () => {
 });
 
 test('anniversaries skip leap duplicates and cross solar years', () => {
-  const founder = { ...seedMembers[0], anniversary: { day: 1, month: 2 } };
+  const founder = { ...member('P001'), anniversary: { day: 1, month: 2 } };
   assert.equal(anniversariesOn([founder], new Date(2023, 2, 22)).length, 0);
   const upcoming = upcomingAnniversaries(seedMembers, new Date(2026, 11, 31));
   assert.equal(

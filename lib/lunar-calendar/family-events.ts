@@ -1,5 +1,5 @@
 import { addDays, startOfDay } from 'date-fns';
-import { memberName, type Member } from '../family.ts';
+import { memberLifeStatus, memberName, type Member } from '../family.ts';
 import { lichtaAdapter } from './lichta-adapter.ts';
 import type {
   FamilyCalendarEvent,
@@ -137,6 +137,25 @@ export class FamilyLunarEventService {
       }
     }
     return upcoming;
+  }
+
+  getMemorialEvents({
+    members,
+    from = new Date(),
+  }: {
+    members: Member[];
+    from?: Date;
+  }): UpcomingFamilyEvent[] {
+    const deceasedMembers = members.filter(
+      (person) =>
+        memberLifeStatus(person) === 'deceased' && Boolean(person.anniversary),
+    );
+
+    return this.getUpcomingFamilyEvents({
+      members: deceasedMembers,
+      from,
+      limit: deceasedMembers.length,
+    });
   }
 }
 

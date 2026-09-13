@@ -24,6 +24,7 @@ import { useFamily } from './provider';
 const navigation = [
   ['/', 'Trang chủ'],
   ['/family-tree', 'Gia phả'],
+  ['/gallery', 'Kho ảnh'],
   ['/lunar-calendar', 'Lịch âm & ngày giỗ'],
   ['/history', 'Lịch sử dòng họ'],
 ];

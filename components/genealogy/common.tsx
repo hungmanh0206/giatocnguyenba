@@ -59,9 +59,9 @@ export const generationOptions = [
 ];
 
 export const pageSizeOptions = [
-  { value: '5', label: '5 mỗi trang' },
-  { value: '10', label: '10 mỗi trang' },
-  { value: '20', label: '20 mỗi trang' },
+  { value: '5', label: '5/trang' },
+  { value: '10', label: '10/trang' },
+  { value: '20', label: '20/trang' },
   { value: 'all', label: 'Tất cả' },
 ];
 
@@ -72,6 +72,7 @@ export function ResultsPagination({
   pageSize,
   onPageSizeChange,
   showPageSize = true,
+  variant = 'standard',
 }: {
   page: number;
   total: number;
@@ -79,9 +80,10 @@ export function ResultsPagination({
   pageSize: string;
   onPageSizeChange: (pageSize: string) => void;
   showPageSize?: boolean;
+  variant?: 'standard' | 'cards';
 }) {
   return (
-    <nav className="pagination" aria-label="Phân trang">
+    <nav className={`pagination pagination-${variant}`} aria-label="Phân trang">
       {showPageSize && (
         <Choice
           label="Số kết quả mỗi trang"

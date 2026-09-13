@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { HeritageIcon } from './heritage-icon';
 
 type FamilyMoment = {
@@ -35,6 +35,7 @@ export function FamilyMoments() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const swipeStart = useRef<{ pointerId: number; x: number; y: number } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -77,6 +78,44 @@ export function FamilyMoments() {
     setIsPaused(true);
   }
 
+  function showPreviousMoment() {
+    selectMoment((activeIndex - 1 + moments.length) % moments.length);
+  }
+
+  function showNextMoment() {
+    selectMoment((activeIndex + 1) % moments.length);
+  }
+
+  function handleStagePointerDown(event: PointerEvent<HTMLElement>) {
+    if (event.pointerType === 'mouse') return;
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    swipeStart.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+  }
+
+  function handleStagePointerUp(event: PointerEvent<HTMLElement>) {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!start || start.pointerId !== event.pointerId) return;
+
+    const distanceX = event.clientX - start.x;
+    const distanceY = event.clientY - start.y;
+    if (Math.abs(distanceX) < 42 || Math.abs(distanceX) <= Math.abs(distanceY)) return;
+
+    if (distanceX < 0) {
+      showNextMoment();
+    } else {
+      showPreviousMoment();
+    }
+  }
+
   if (!isReady || !moments.length) return null;
 
   const active = moments[activeIndex] || moments[0];
@@ -96,7 +135,15 @@ export function FamilyMoments() {
             </span>
           </div>
 
-          <figure className="family-moment-stage">
+          <figure
+            aria-label="Khoảnh khắc gia đình. Vuốt ngang để đổi ảnh."
+            className="family-moment-stage"
+            onPointerCancel={() => {
+              swipeStart.current = null;
+            }}
+            onPointerDown={handleStagePointerDown}
+            onPointerUp={handleStagePointerUp}
+          >
             <img
               alt={active.alt}
               className="family-moment-image"
@@ -117,11 +164,7 @@ export function FamilyMoments() {
                   <button
                     aria-label="Ảnh trước"
                     className="family-moment-control"
-                    onClick={() =>
-                      selectMoment(
-                        (activeIndex - 1 + moments.length) % moments.length,
-                      )
-                    }
+                    onClick={showPreviousMoment}
                     title="Ảnh trước"
                     type="button"
                   >
@@ -150,9 +193,7 @@ export function FamilyMoments() {
                   <button
                     aria-label="Ảnh tiếp theo"
                     className="family-moment-control"
-                    onClick={() =>
-                      selectMoment((activeIndex + 1) % moments.length)
-                    }
+                    onClick={showNextMoment}
                     title="Ảnh tiếp theo"
                     type="button"
                   >

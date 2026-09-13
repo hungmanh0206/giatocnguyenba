@@ -2,6 +2,7 @@ import { compareSiblingOrder, memberName, type Member } from './family.ts';
 
 export const FAMILY_UNIT_WIDTH = 248;
 export const FAMILY_UNIT_HEIGHT = 164;
+export const COMPACT_FAMILY_UNIT_HEIGHT = 118;
 export const ROOT_FAMILY_WIDTH = 310;
 export const ROOT_FAMILY_HEIGHT = 202;
 export const TERMINAL_NODE_WIDTH = 212;
@@ -9,9 +10,9 @@ export const TERMINAL_NODE_HEIGHT = 118;
 // Kept for consumers that only need a typical tree-card measurement.
 export const PERSON_WIDTH = FAMILY_UNIT_WIDTH;
 export const PERSON_HEIGHT = FAMILY_UNIT_HEIGHT;
-export const PERSON_GAP = 48;
-const SIBLING_GAP = 76;
-const ROOT_GAP = 168;
+export const PERSON_GAP = 36;
+const SIBLING_GAP = 48;
+const ROOT_GAP = 104;
 const GENERATION_GAP = 148;
 
 export type Household = {
@@ -36,7 +37,7 @@ export type FamilyLink = {
   source: string;
   target: string;
   childId: string;
-  branchType: 'direct' | 'maternal-terminal';
+  branchType: 'direct' | 'maternal-terminal' | 'source-context';
 };
 
 export type GenerationLane = {
@@ -146,7 +147,11 @@ function familyHeight(
   root: boolean,
   hasParentageLabel = false,
 ) {
-  const base = root ? ROOT_FAMILY_HEIGHT : FAMILY_UNIT_HEIGHT;
+  const base = root
+    ? ROOT_FAMILY_HEIGHT
+    : spouseCount > 0
+      ? FAMILY_UNIT_HEIGHT
+      : COMPACT_FAMILY_UNIT_HEIGHT;
   return base + Math.max(0, spouseCount - 1) * 52 + (hasParentageLabel ? 18 : 0);
 }
 
@@ -257,7 +262,9 @@ export function layoutFamily(
   function childrenOf(group: Household) {
     const parentIds = new Set(group.people.map((person) => person.id));
     return members.filter((person) =>
-      person.parents.some((parentId) => parentIds.has(parentId)),
+      person.parents.some((parentId) => parentIds.has(parentId)) ||
+      (person.sourceContextParentId !== undefined &&
+        parentIds.has(person.sourceContextParentId)),
     );
   }
 
@@ -302,9 +309,14 @@ export function layoutFamily(
         target,
         childId: child.id,
         branchType:
-          family.lineageType === 'maternal-terminal'
-            ? 'maternal-terminal'
-            : 'direct',
+          child.sourceContextParentId !== undefined &&
+          family.people.some(
+            (person) => person.id === child.sourceContextParentId,
+          )
+            ? 'source-context'
+            : family.lineageType === 'maternal-terminal'
+              ? 'maternal-terminal'
+              : 'direct',
       });
     }
   }

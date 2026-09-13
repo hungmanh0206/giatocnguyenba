@@ -11,24 +11,37 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFamily } from './provider';
 import { Footer } from './header';
 import { HeritageIcon } from './heritage-icon';
-import { Avatar } from './home';
-import { Choice, branchOptions } from './common';
-import { memberBranchName, memberName } from '@/lib/family';
+import { Avatar } from './member-avatar';
+import {
+  MemorialDetailDialog,
+  memorialRelationship,
+} from './memorial-detail-dialog';
+import { Choice, branchOptions, ResultsPagination } from './common';
+import {
+  memberBranchName,
+  memberName,
+  type Member,
+} from '@/lib/family';
 import { dateLabel, vietnamToday } from '@/lib/lunar';
 import {
   getFamilyEventsForDate,
   getLunarDayInfo,
   getLunarYearCanChi,
+  getMemorialEvents,
   getUpcomingFamilyEvents,
 } from '@/lib/lunar-calendar/service';
+import type { UpcomingFamilyEvent } from '@/lib/lunar-calendar/types';
 
-export function LunarPage() {
+function LunarCalendarView() {
   const { members } = useFamily();
   const params = useSearchParams();
   const [today] = useState(vietnamToday);
   const [month, setMonth] = useState(today);
   const [selected, setSelected] = useState(today);
   const [branch, setBranch] = useState('all');
+  const [activeEvent, setActiveEvent] = useState<UpcomingFamilyEvent | null>(
+    null,
+  );
   const filtered = useMemo(
     () =>
       members.filter((person) =>
@@ -193,9 +206,25 @@ export function LunarPage() {
                     {events.length > 0 && `(${events.length})`}
                   </h3>
                   {events.length ? (
-                    events.map(({ event, isApproximate }) =>
-                      event.person ? (
-                        <div className="day-event" key={event.id}>
+                    events.map(({ event, isApproximate }) => {
+                      const nextOccurrence = getUpcomingFamilyEvents({
+                        members: filtered,
+                        from: today,
+                        limit: filtered.length,
+                      }).find((occurrence) => occurrence.event.id === event.id);
+                      const occurrence = nextOccurrence || {
+                        event,
+                        date: selected,
+                        isApproximate,
+                        daysAway: 0,
+                      };
+                      return event.person ? (
+                        <button
+                          className="day-event"
+                          key={event.id}
+                          onClick={() => setActiveEvent(occurrence)}
+                          type="button"
+                        >
                           <Avatar person={event.person} />
                           <div className="day-event-copy">
                             <strong>{memberName(event.person)}</strong>
@@ -209,16 +238,18 @@ export function LunarPage() {
                               {isApproximate ? ' · Điều chỉnh tháng thiếu' : ''}
                             </small>
                           </div>
-                          <Link
-                            className="day-event-link"
-                            href={`/members/${event.person.id}`}
-                          >
-                            Xem hồ sơ
+                          <span className="day-event-link">
+                            Chi tiết
                             <HeritageIcon name="next" size={15} />
-                          </Link>
-                        </div>
+                          </span>
+                        </button>
                       ) : (
-                        <div className="day-event clan-memorial-event" key={event.id}>
+                        <button
+                          className="day-event clan-memorial-event"
+                          key={event.id}
+                          onClick={() => setActiveEvent(occurrence)}
+                          type="button"
+                        >
                           <span className="clan-memorial-mark" aria-hidden="true">
                             <HeritageIcon name="memorial" size={20} />
                           </span>
@@ -230,9 +261,13 @@ export function LunarPage() {
                               {isApproximate ? ' · Điều chỉnh tháng thiếu' : ''}
                             </small>
                           </div>
-                        </div>
-                      ),
-                    )
+                          <span className="day-event-link">
+                            Chi tiết
+                            <HeritageIcon name="next" size={15} />
+                          </span>
+                        </button>
+                      );
+                    })
                   ) : (
                     <p className="muted">
                       Không có ngày giỗ được ghi nhận trong ngày này.
@@ -418,16 +453,10 @@ export function LunarPage() {
               <button
                 className={`upcoming-event ${event.person ? '' : 'is-clan-memorial'}`}
                 key={event.id}
-                onClick={() => {
-                  setSelected(date);
-                  setMonth(date);
-                  document
-                    .querySelector('.calendar-layout')
-                    ?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'start',
-                    });
-                }}
+                onClick={() =>
+                  setActiveEvent({ event, date, daysAway, isApproximate })
+                }
+                type="button"
               >
                 <span className="date-block">
                   <strong>{event.lunarDay}</strong>
@@ -461,7 +490,265 @@ export function LunarPage() {
           </p>
         </section>
       </div>
+      <MemorialDetailDialog
+        activeEvent={activeEvent}
+        members={members}
+        onOpenChange={(open) => !open && setActiveEvent(null)}
+      />
       <Footer />
     </main>
+  );
+}
+
+function MemorialsView() {
+  const { members } = useFamily();
+  const [today] = useState(vietnamToday);
+  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [pageSize, setPageSize] = useState('10');
+  const [page, setPage] = useState(1);
+  const [activeEvent, setActiveEvent] = useState<UpcomingFamilyEvent | null>(
+    null,
+  );
+  const { clanMemorial, memberMemorials } = useMemo(() => {
+    const events = getMemorialEvents({ members, from: today });
+    return {
+      clanMemorial: events.find((occurrence) => !occurrence.event.person) ?? null,
+      memberMemorials: events.filter((occurrence) => Boolean(occurrence.event.person)),
+    };
+  }, [members, today]);
+  const size =
+    pageSize === 'all' ? Math.max(1, memberMemorials.length) : Number(pageSize);
+  const total = Math.max(1, Math.ceil(memberMemorials.length / size));
+  const currentPage = Math.min(page, total);
+  const pageEvents = memberMemorials.slice(
+    (currentPage - 1) * size,
+    currentPage * size,
+  );
+
+  return (
+    <main id="main" className="memorial-page">
+      <div className="container page-space">
+        <div className="page-heading memorial-page-heading">
+          <div>
+            <div className="eyebrow">THÀNH KÍNH TƯỞNG NHỚ</div>
+            <h1>Ngày giỗ</h1>
+            <p>
+              {memberMemorials.length} ngày giỗ thành viên được ghi nhận trong gia phả
+            </p>
+          </div>
+        </div>
+
+        <div className="results-summary memorial-results-summary">
+          <span>{memberMemorials.length} ngày giỗ thành viên</span>
+          <div className="view-toggle" aria-label="Kiểu hiển thị">
+            <span className="view-toggle-label">Hiển thị</span>
+            <Button
+              variant="ghost"
+              className="view-toggle-button"
+              data-active={view === 'grid'}
+              aria-label="Dạng thẻ"
+              aria-pressed={view === 'grid'}
+              title="Dạng thẻ"
+              onClick={() => {
+                setView('grid');
+                setPage(1);
+              }}
+            >
+              <HeritageIcon name="grid" size={18} />
+            </Button>
+            <Button
+              variant="ghost"
+              className="view-toggle-button"
+              data-active={view === 'list'}
+              aria-label="Danh sách"
+              aria-pressed={view === 'list'}
+              title="Danh sách"
+              onClick={() => {
+                setView('list');
+                setPage(1);
+              }}
+            >
+              <HeritageIcon name="list" size={18} />
+            </Button>
+          </div>
+        </div>
+
+        {clanMemorial && (
+          <button
+            className="clan-memorial-feature"
+            type="button"
+            aria-label={`Xem chi tiết ${clanMemorial.event.title}`}
+            onClick={() => setActiveEvent(clanMemorial)}
+          >
+            <span className="clan-memorial-feature-icon" aria-hidden="true">
+              <HeritageIcon name="memorial" size={27} />
+            </span>
+            <span className="clan-memorial-feature-copy">
+              <span className="eyebrow">NGÀY GIỖ HỌ</span>
+              <strong>{clanMemorial.event.title}</strong>
+              <small>
+                {clanMemorial.event.lunarDay} tháng {clanMemorial.event.lunarMonth} âm lịch
+                {' · '}
+                {dateLabel(clanMemorial.date)} dương lịch
+              </small>
+            </span>
+            <span className="clan-memorial-feature-action">
+              {clanMemorial.daysAway === 0
+                ? 'Hôm nay'
+                : `Còn ${clanMemorial.daysAway} ngày`}
+              <HeritageIcon name="next" size={18} />
+            </span>
+          </button>
+        )}
+
+        {view === 'grid' ? (
+          <section className="memorial-card-grid" aria-label="Thẻ ngày giỗ">
+            {pageEvents.map((occurrence) => {
+              const { event, date, daysAway, isApproximate } = occurrence;
+              return (
+                <button
+                  className={`memorial-event-card${event.person ? '' : ' is-clan-memorial'}`}
+                  key={event.id}
+                  aria-label={`Xem chi tiết ngày giỗ ${event.person ? memberName(event.person) : event.title}`}
+                  onClick={() => setActiveEvent(occurrence)}
+                  type="button"
+                >
+                  <span className="memorial-date-block">
+                    <strong>{event.lunarDay}</strong>
+                    <small>Tháng {event.lunarMonth} âm</small>
+                  </span>
+                  <span className="memorial-card-copy">
+                    <span className="memorial-card-person">
+                      {event.person ? (
+                        <Avatar person={event.person} />
+                      ) : (
+                        <span className="memorial-clan-mark" aria-hidden="true">
+                          <HeritageIcon name="memorial" size={20} />
+                        </span>
+                      )}
+                      <span>
+                        <strong>{event.person ? memberName(event.person) : event.title}</strong>
+                        <small>{memorialRelationship(occurrence, members)}</small>
+                      </span>
+                    </span>
+                    <span className="memorial-card-footer">
+                      <small>
+                        {dateLabel(date)} dương lịch
+                        {isApproximate ? ' · Tháng thiếu' : ''}
+                      </small>
+                      <em>
+                        {daysAway === 0 ? 'Hôm nay' : `Còn ${daysAway} ngày`}
+                      </em>
+                      <HeritageIcon name="next" size={17} />
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </section>
+        ) : (
+          <section className="memorial-directory" aria-label="Danh sách ngày giỗ">
+            <div className="memorial-directory-heading" aria-hidden="true">
+              <span>Ngày âm</span>
+              <span>Người được tưởng niệm</span>
+              <span>Quan hệ gia phả</span>
+              <span>Ngày dương</span>
+              <span />
+            </div>
+            {pageEvents.map((occurrence) => {
+              const { event, date, isApproximate } = occurrence;
+              return (
+                <button
+                  className={`memorial-list-row${event.person ? '' : ' is-clan-memorial'}`}
+                  key={event.id}
+                  onClick={() => setActiveEvent(occurrence)}
+                  type="button"
+                >
+                  <span className="memorial-list-date">
+                    <strong>{event.lunarDay}</strong>
+                    <small>Tháng {event.lunarMonth} âm</small>
+                  </span>
+                  <span className="memorial-list-person">
+                    {event.person ? (
+                      <Avatar person={event.person} />
+                    ) : (
+                      <span className="memorial-clan-mark" aria-hidden="true">
+                        <HeritageIcon name="memorial" size={19} />
+                      </span>
+                    )}
+                    <span>
+                      <strong>{event.person ? memberName(event.person) : event.title}</strong>
+                      <small>
+                        {event.person
+                          ? `Đời ${event.person.generation} · ${memberBranchName(event.person, members)}`
+                          : 'Lễ giỗ chung của dòng họ'}
+                      </small>
+                    </span>
+                  </span>
+                  <span className="memorial-list-relation">
+                    {memorialRelationship(occurrence, members)}
+                  </span>
+                  <span className="memorial-list-solar">
+                    {dateLabel(date)}
+                    {isApproximate ? ' · Tháng thiếu' : ''}
+                  </span>
+                  <HeritageIcon name="next" size={17} />
+                </button>
+              );
+            })}
+          </section>
+        )}
+
+        <ResultsPagination
+          page={currentPage}
+          total={total}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={(value) => {
+            setPageSize(value);
+            setPage(1);
+          }}
+          variant={view === 'grid' ? 'cards' : 'standard'}
+        />
+      </div>
+
+      <MemorialDetailDialog
+        activeEvent={activeEvent}
+        members={members}
+        onOpenChange={(open) => !open && setActiveEvent(null)}
+      />
+      <Footer />
+    </main>
+  );
+}
+
+export function LunarPage() {
+  const params = useSearchParams();
+  const activeTab = params.get('tab') === 'memorials' ? 'memorials' : 'calendar';
+
+  return (
+    <>
+      <div className="family-tree-tabs-band lunar-tabs-band">
+        <div className="container">
+          <nav className="family-tree-tabs" aria-label="Xem lịch gia phả">
+            <Link
+              className={activeTab === 'calendar' ? 'is-active' : ''}
+              href="/lunar-calendar"
+            >
+              <HeritageIcon name="calendar" size={18} />
+              Lịch âm
+            </Link>
+            <Link
+              className={activeTab === 'memorials' ? 'is-active' : ''}
+              href="/lunar-calendar?tab=memorials"
+            >
+              <HeritageIcon name="memorial" size={18} />
+              Ngày giỗ
+            </Link>
+          </nav>
+        </div>
+      </div>
+      {activeTab === 'memorials' ? <MemorialsView /> : <LunarCalendarView />}
+    </>
   );
 }

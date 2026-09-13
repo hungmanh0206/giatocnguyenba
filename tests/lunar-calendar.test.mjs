@@ -4,6 +4,7 @@ import { seedMembers } from '../lib/family.ts';
 import {
   getFamilyEventsForDate,
   getLunarDayInfo,
+  getMemorialEvents,
   getMonthCalendar,
   getUpcomingFamilyEvents,
   lunarToSolar,
@@ -146,6 +147,30 @@ test('family lunar events recur yearly and explicitly mark 30th-day adjustments'
     upcoming.filter((item) => item.event.kind === 'anniversary').length,
     seedMembers.filter((person) => person.anniversary).length,
   );
+});
+
+test('memorial events include the clan memorial and only deceased members', () => {
+  const [first] = seedMembers;
+  const deceased = {
+    ...first,
+    id: 'deceased-with-anniversary',
+    lifeStatus: 'deceased',
+    anniversary: { day: 12, month: 3 },
+  };
+  const living = {
+    ...first,
+    id: 'living-with-anniversary',
+    lifeStatus: 'living',
+    anniversary: { day: 13, month: 3 },
+  };
+  const events = getMemorialEvents({
+    members: [deceased, living],
+    from: new Date(2026, 0, 1),
+  });
+
+  assert.equal(events.some((item) => item.event.id === 'clan-memorial-nguyen-ba'), true);
+  assert.equal(events.some((item) => item.event.person?.id === deceased.id), true);
+  assert.equal(events.some((item) => item.event.person?.id === living.id), false);
 });
 
 test('month calendar exposes a stable six-week grid', () => {
