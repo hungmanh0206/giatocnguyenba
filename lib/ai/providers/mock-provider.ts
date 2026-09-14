@@ -21,18 +21,46 @@ function personWarning(person: AIGenealogyPerson) {
     : '';
 }
 
+function founderAnswer(question: string, founder: AIGenealogyPerson) {
+  const query = normalise(question);
+  if (!/thuy to|khai to|ong to|ba to|nguon goc dong ho/.test(query)) return null;
+
+  const { person, spouses, children } = founder;
+  const spouseText = spouses.length ? ` Phối ngẫu được ghi nhận là ${spouses.map((item) => item.name).join(', ')}.` : '';
+  const childrenText = children.length ? ` Gia phả ghi nhận ${children.length} người con: ${children.map((item) => item.name).join(', ')}.` : '';
+  return `${person.name} là thủy tổ được ghi nhận của dòng họ, thuộc đời ${person.generation}.${spouseText}${childrenText}${personWarning(founder)}`;
+}
+
+export function structuredGenealogyAnswer(input: AIProviderRequest) {
+  const genealogy = input.context.genealogy;
+  if (!genealogy) return null;
+
+  const founder = genealogy.founder ? founderAnswer(input.message, genealogy.founder) : null;
+  if (founder) return founder;
+  if (genealogy.relationship) return genealogy.relationship.description;
+
+  const person = genealogy.people[0];
+  if (!person) return null;
+  const query = normalise(input.message);
+  if (/con ai|cha me|bo me|phu mau|ai la cha|ai la me/.test(query)) return relationAnswer(input.message, person);
+  if (/ai la con cua|con cua|con chau cua|may nguoi con/.test(query)) return relationAnswer(input.message, person);
+  if (/vo chong|phoi ngau|anh chi em|anh em|ngay gio|huy ky|doi|chi/.test(query)) return relationAnswer(input.message, person);
+  if (/la ai|thong tin|gioi thieu/.test(query)) return relationAnswer(input.message, person);
+  return null;
+}
+
 function relationAnswer(question: string, person: AIGenealogyPerson) {
   const query = normalise(question);
   const { children, parents, siblings, spouses } = person;
   const name = person.person.name;
   const list = (items: Array<{ name: string }>) => items.map((item) => item.name).join(', ');
 
-  if (query.includes('con ai') || query.includes('cha me')) {
+  if (/con ai|cha me|bo me|phu mau|ai la cha|ai la me/.test(query)) {
     return parents.length
       ? `${name} là con của ${list(parents)}.${personWarning(person)}`
       : `Hiện gia phả chưa có dữ liệu cha mẹ của ${name}.`;
   }
-  if (query.includes('may nguoi con') || query.includes('con chau')) {
+  if (/ai la con cua|con cua|con chau cua|may nguoi con/.test(query)) {
     return children.length
       ? `${name} có ${children.length} người con được ghi nhận: ${list(children)}.${personWarning(person)}`
       : `Hiện gia phả chưa có dữ liệu con của ${name}.`;
@@ -112,9 +140,8 @@ export class MockProvider implements AIProvider {
     if (input.context.mode === 'horoscope') {
       return { answer: horoscopeAnswer(input), provider: 'mock' };
     }
-    if (input.context.genealogy?.relationship) {
-      return { answer: input.context.genealogy.relationship.description, provider: 'mock' };
-    }
+    const structuredAnswer = structuredGenealogyAnswer(input);
+    if (structuredAnswer) return { answer: structuredAnswer, provider: 'mock' };
     if (input.context.genealogy?.matches?.length) {
       const matches = input.context.genealogy.matches;
       return {

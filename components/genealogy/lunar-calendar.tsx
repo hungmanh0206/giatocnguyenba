@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -52,7 +53,6 @@ import {
   type CalendarActivityId,
 } from '@/lib/lunar-calendar/activity-advice';
 import type {
-  AstrologyCalendarType,
   AstrologyGender,
   AstrologyInput,
   AstrologyInterpretation,
@@ -747,7 +747,7 @@ function ActivityDayView() {
 
         <div className="activity-day-layout">
           <section className="activity-picker" aria-labelledby="activity-picker-title">
-            <div className="calendar-tool-section-heading">
+            <div className="calendar-tool-section-heading activity-picker-heading">
               <h2 id="activity-picker-title">Việc cần xem</h2>
               <label className="activity-date-field">
                 <span>Ngày dương</span>
@@ -952,16 +952,17 @@ function ActivityDayView() {
 }
 
 function FortuneView() {
+  const fortuneFormRef = useRef<HTMLFormElement>(null);
+  const fortuneFollowUpRef = useRef<HTMLDivElement>(null);
   const [fullName, setFullName] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [calendarType, setCalendarType] = useState<AstrologyCalendarType>('solar');
-  const [isLeapMonth, setIsLeapMonth] = useState(false);
   const [gender, setGender] = useState<AstrologyGender | ''>('');
   const [birthTime, setBirthTime] = useState('');
   const [unknownBirthTime, setUnknownBirthTime] = useState(false);
   const [birthTimeAccuracy, setBirthTimeAccuracy] = useState<BirthTimeAccuracy>('exact');
   const [focus, setFocus] = useState<AstrologyFocus>('overall');
   const [modelPreference, setModelPreference] = useState<AIModelPreference>('auto');
+  const [submittedInput, setSubmittedInput] = useState<AstrologyInput | null>(null);
   const [profile, setProfile] = useState<AstrologyProfile | null>(null);
   const [reading, setReading] = useState<AstrologyInterpretation | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -971,6 +972,53 @@ function FortuneView() {
   const [followUpAnswer, setFollowUpAnswer] = useState<string | null>(null);
   const [followUpHistory, setFollowUpHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [isFollowingUp, setIsFollowingUp] = useState(false);
+  const [fortuneFormHeight, setFortuneFormHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const form = fortuneFormRef.current;
+    if (!form) return;
+
+    const updateHeight = () => {
+      setFortuneFormHeight(Math.ceil(form.getBoundingClientRect().height));
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(form);
+    return () => observer.disconnect();
+  }, []);
+
+  const fortuneLayoutStyle = fortuneFormHeight
+    ? ({ '--fortune-panel-height': `${fortuneFormHeight}px` } as CSSProperties)
+    : undefined;
+
+  const birthDatePreview = useMemo(() => {
+    const birthday = parseBirthDateInput(birthDate);
+    if (!birthday) return null;
+
+    const solarDate = new Date(birthday.year, birthday.month - 1, birthday.day, 12);
+    if (
+      solarDate.getFullYear() !== birthday.year ||
+      solarDate.getMonth() !== birthday.month - 1 ||
+      solarDate.getDate() !== birthday.day
+    ) {
+      return null;
+    }
+
+    const lunarInfo = getLunarDayInfo(solarDate);
+    if (!lunarInfo.supported) return null;
+
+    return {
+      solar: `${String(birthday.day).padStart(2, '0')}/${String(birthday.month).padStart(2, '0')}/${birthday.year}`,
+      lunar: `${String(lunarInfo.lunar.day).padStart(2, '0')}/${String(lunarInfo.lunar.month).padStart(2, '0')}/${lunarInfo.lunar.year}`,
+      isLeapMonth: lunarInfo.lunar.leapMonth,
+    };
+  }, [birthDate]);
+
+  useEffect(() => {
+    if (!isFollowingUp && !followUpAnswer && !followUpError) return;
+    fortuneFollowUpRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [followUpAnswer, followUpError, isFollowingUp]);
 
   function inputFromForm(): AstrologyInput | null {
     const birthday = parseBirthDateInput(birthDate);
@@ -982,7 +1030,7 @@ function FortuneView() {
       return {
         fullName: name,
         gender,
-        birthDate: { ...birthday, calendar: calendarType, ...(calendarType === 'lunar' && isLeapMonth ? { isLeapMonth: true } : {}) },
+        birthDate: { ...birthday, calendar: 'solar' },
         birthTime: null,
         unknownBirthTime: true,
       };
@@ -992,7 +1040,7 @@ function FortuneView() {
     return {
       fullName: name,
       gender,
-      birthDate: { ...birthday, calendar: calendarType, ...(calendarType === 'lunar' && isLeapMonth ? { isLeapMonth: true } : {}) },
+      birthDate: { ...birthday, calendar: 'solar' },
       birthTime: { hour: Number(match[1]), minute: Number(match[2]), accuracy: birthTimeAccuracy },
       unknownBirthTime: false,
     };
@@ -1011,6 +1059,7 @@ function FortuneView() {
     setFollowUpAnswer(null);
     setFollowUpError(null);
     setFollowUpHistory([]);
+    setSubmittedInput(input);
     setLoadingStage('calendar');
     try {
       const profileResponse = await fetch('/api/astrology/profile', {
@@ -1055,8 +1104,15 @@ function FortuneView() {
 
   async function requestFollowUp(prompt = followUp) {
     const question = prompt.trim();
-    const input = inputFromForm();
-    if (!question || !input || !profile || isFollowingUp) return;
+    if (isFollowingUp) return;
+    if (!question) {
+      setFollowUpError('Hãy nhập một câu hỏi để gửi AI.');
+      return;
+    }
+    if (!submittedInput || !profile) {
+      setFollowUpError('Hồ sơ này chưa sẵn sàng để hỏi thêm. Hãy luận giải lại trước.');
+      return;
+    }
     setFollowUpError(null);
     setFollowUpAnswer(null);
     setIsFollowingUp(true);
@@ -1064,7 +1120,7 @@ function FortuneView() {
       const response = await fetch('/api/astrology/interpretation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input, focus, question, interpretation: reading, history: followUpHistory, modelPreference }),
+        body: JSON.stringify({ input: submittedInput, focus, question, interpretation: reading, history: followUpHistory, modelPreference }),
       });
       const data = (await response.json()) as { answer?: string; message?: string };
       if (!response.ok || !data.answer) throw new Error(data.message || 'Chưa thể nhận câu trả lời.');
@@ -1085,7 +1141,7 @@ function FortuneView() {
   const isLoading = loadingStage !== null;
   const fullNameLabel = profile?.identity.fullName || 'Luận giải của bạn';
   const dateLabel = profile
-    ? `${String(profile.birth.solarDate).split('-').reverse().join('/')} dương lịch`
+    ? `${String(profile.birth.solarDate).split('-').reverse().join('/')} dương lịch · ${String(profile.birth.lunarDate.day).padStart(2, '0')}/${String(profile.birth.lunarDate.month).padStart(2, '0')}/${profile.birth.lunarDate.year} âm lịch${profile.birth.lunarDate.isLeapMonth ? ' (tháng nhuận)' : ''}`
     : '';
 
   return (
@@ -1099,10 +1155,11 @@ function FortuneView() {
           </div>
         </div>
 
-        <div className="fortune-layout">
+        <div className="fortune-layout" style={fortuneLayoutStyle}>
           <form
             className="fortune-form-panel"
             aria-labelledby="fortune-form-title"
+            ref={fortuneFormRef}
             onSubmit={(event) => {
               event.preventDefault();
               void requestReading();
@@ -1130,7 +1187,7 @@ function FortuneView() {
                 />
               </label>
               <div className="fortune-field fortune-birth-date fortune-date-field">
-                <span>Ngày sinh</span>
+                <span>Ngày sinh dương lịch</span>
                 <span className="tool-date-control">
                   <Input
                     aria-label="Ngày sinh, tháng sinh, năm sinh"
@@ -1146,18 +1203,18 @@ function FortuneView() {
                   <HeritageIcon className="tool-date-icon" name="today" size={18} />
                 </span>
               </div>
-              <div className="fortune-field fortune-calendar-type">
-                <span>Loại lịch</span>
-                <div role="group" aria-label="Loại lịch">
-                  <button aria-pressed={calendarType === 'solar'} data-active={calendarType === 'solar'} onClick={() => { setCalendarType('solar'); setIsLeapMonth(false); }} type="button">Dương lịch</button>
-                  <button aria-pressed={calendarType === 'lunar'} data-active={calendarType === 'lunar'} onClick={() => setCalendarType('lunar')} type="button">Âm lịch</button>
+              {birthDatePreview ? (
+                <div className="fortune-birth-calendar-preview" aria-live="polite">
+                  <div>
+                    <small>Dương lịch</small>
+                    <strong>{birthDatePreview.solar}</strong>
+                  </div>
+                  <div>
+                    <small>Âm lịch</small>
+                    <strong>{birthDatePreview.lunar}</strong>
+                    <em>{birthDatePreview.isLeapMonth ? 'Tháng nhuận' : 'Tháng thường'}</em>
+                  </div>
                 </div>
-              </div>
-              {calendarType === 'lunar' ? (
-                <label className="fortune-leap-month">
-                  <Checkbox checked={isLeapMonth} onCheckedChange={(checked) => setIsLeapMonth(checked === true)} />
-                  <span>Tháng nhuận</span>
-                </label>
               ) : null}
               <label className="fortune-field">
                 <span>Giới tính</span>
@@ -1279,24 +1336,24 @@ function FortuneView() {
                 </section>
                 {reading ? <FortuneInterpretation reading={reading} /> : <p className="fortune-pending-reading">{loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : 'Đang luận giải bằng AI...'}</p>}
                 {reading ? (
-                  <div className="fortune-follow-up">
+                  <div className="fortune-follow-up" ref={fortuneFollowUpRef}>
                     <span className="eyebrow">HỎI THÊM VỀ HỒ SƠ NÀY</span>
                     <div className="fortune-quick-actions">
-                      {['Công việc năm nay', 'Tài lộc', 'Tình duyên', 'Gia đạo', 'Điểm mạnh của tôi', '3 năm tới'].map((prompt) => <button key={prompt} onClick={() => void requestFollowUp(prompt)} type="button">{prompt}</button>)}
+                      {['Công việc năm nay', 'Tài lộc', 'Tình duyên', 'Gia đạo', 'Điểm mạnh của tôi', '3 năm tới'].map((prompt) => <button disabled={isFollowingUp} key={prompt} onClick={() => void requestFollowUp(prompt)} type="button">{prompt}</button>)}
                     </div>
-                    <div className="fortune-follow-up-form">
+                    <form className="fortune-follow-up-form" onSubmit={(event) => { event.preventDefault(); void requestFollowUp(); }}>
                       <Input aria-label="Câu hỏi thêm về tử vi" disabled={isFollowingUp} onChange={(event) => setFollowUp(event.target.value)} value={followUp} />
                       <Button
                         aria-label={isFollowingUp ? 'Đang hỏi AI' : 'Hỏi AI'}
                         className="fortune-follow-up-send"
                         disabled={isFollowingUp || !followUp.trim()}
-                        onClick={() => void requestFollowUp()}
                         title={isFollowingUp ? 'Đang hỏi AI' : 'Hỏi AI'}
-                        type="button"
+                        type="submit"
                       >
                         <Image alt="" aria-hidden="true" className="fortune-follow-up-send-icon" height={25} src="/app-icons/ai-send-paper-plane.png" width={25} />
                       </Button>
-                    </div>
+                    </form>
+                    {isFollowingUp ? <p className="fortune-follow-up-status" role="status"><AIButtonIcon size={15} variant="light" /> AI đang chuẩn bị câu trả lời...</p> : null}
                     {followUpError ? <p className="fortune-error" role="alert">{followUpError}</p> : null}
                     {followUpAnswer ? <p className="fortune-follow-up-answer">{followUpAnswer}</p> : null}
                   </div>

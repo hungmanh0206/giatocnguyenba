@@ -31,22 +31,20 @@ function personFact(person: Member, members: Member[]): AIPersonFact {
 }
 
 function mentionedPeople(members: Member[], message: string) {
-  const normalisedQuestion = message
+  const normalise = (value: string) => value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd')
     .replace(/Đ/g, 'd')
     .toLocaleLowerCase('vi');
+  const normalisedQuestion = normalise(message);
   return members
     .filter((person) => {
-      const name = memberName(person)
-        .replace(/^(Ông|Bà|Anh|Chị)(?:\s+Tổ)?\s*:\s*/i, '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/đ/g, 'd')
-        .replace(/Đ/g, 'd')
-        .toLocaleLowerCase('vi');
-      return name.length >= 5 && normalisedQuestion.includes(name);
+      const names = [person.name, person.displayName, person.tabooName, person.styleName, memberName(person)]
+        .filter((name): name is string => Boolean(name?.trim()))
+        .map((name) => normalise(name.replace(/^(Ông|Bà|Anh|Chị)(?:\s+Tổ)?\s*:\s*/i, '')))
+        .filter((name) => name.length >= 3);
+      return names.some((name) => normalisedQuestion.includes(name));
     })
     .sort((left, right) => memberName(right).length - memberName(left).length)
     .slice(0, 2);
@@ -79,27 +77,58 @@ function matchedPeople(members: Member[], message: string) {
   return [];
 }
 
-function relationshipOf(people: Member[]): AIGenealogyContext['relationship'] {
+function ancestorDistance(ancestorId: string, descendant: Member, members: Member[]) {
+  const peopleById = new Map(members.map((person) => [person.id, person]));
+  const visited = new Set<string>();
+  const queue = descendant.parents.map((parentId) => ({ id: parentId, distance: 1 }));
+
+  while (queue.length) {
+    const current = queue.shift()!;
+    if (visited.has(current.id)) continue;
+    visited.add(current.id);
+    if (current.id === ancestorId) return current.distance;
+    const person = peopleById.get(current.id);
+    person?.parents.forEach((parentId) => queue.push({ id: parentId, distance: current.distance + 1 }));
+  }
+
+  return null;
+}
+
+function ancestorLabel(gender: Member['gender'], distance: number) {
+  if (distance === 1) return gender === 'male' ? 'cha' : gender === 'female' ? 'mẹ' : 'cha/mẹ';
+  if (distance === 2) return gender === 'male' ? 'ông' : gender === 'female' ? 'bà' : 'ông/bà';
+  if (distance === 3) return gender === 'male' ? 'cụ ông' : gender === 'female' ? 'cụ bà' : 'cụ';
+  return `tổ tiên cách ${distance} đời`;
+}
+
+function relationshipOf(people: Member[], members: Member[]): AIGenealogyContext['relationship'] {
   if (people.length < 2) return undefined;
   const [first, second] = people;
   const firstName = memberName(first);
   const secondName = memberName(second);
-  const firstIsParent = second.parents.includes(first.id);
-  const secondIsParent = first.parents.includes(second.id);
+  const firstAncestorDistance = ancestorDistance(first.id, second, members);
+  const secondAncestorDistance = ancestorDistance(second.id, first, members);
   const isSpouse = first.spouses.includes(second.id) || second.spouses.includes(first.id);
   const sharedParents = first.parents.filter((id) => second.parents.includes(id));
 
   let description = `Hiện gia phả chưa ghi nhận quan hệ trực tiếp giữa ${firstName} và ${secondName}.`;
-  if (firstIsParent) {
-    description = `${firstName} là ${first.gender === 'male' ? 'cha' : first.gender === 'female' ? 'mẹ' : 'cha/mẹ'} của ${secondName}.`;
-  } else if (secondIsParent) {
-    description = `${secondName} là ${second.gender === 'male' ? 'cha' : second.gender === 'female' ? 'mẹ' : 'cha/mẹ'} của ${firstName}.`;
+  if (firstAncestorDistance) {
+    description = `${firstName} là ${ancestorLabel(first.gender, firstAncestorDistance)} của ${secondName}.`;
+  } else if (secondAncestorDistance) {
+    description = `${secondName} là ${ancestorLabel(second.gender, secondAncestorDistance)} của ${firstName}.`;
   } else if (isSpouse) {
     description = `${firstName} và ${secondName} là phối ngẫu được ghi nhận trong gia phả.`;
   } else if (sharedParents.length) {
     description = `${firstName} và ${secondName} là anh/chị/em cùng cha/mẹ được ghi nhận trong gia phả.`;
   }
   return { first: firstName, second: secondName, description };
+}
+
+function clanFounder(members: Member[]) {
+  const roots = members
+    .filter((person) => person.isClanMember && person.parents.length === 0)
+    .sort((left, right) => left.generation - right.generation || left.branch - right.branch);
+  return roots.find((person) => person.branchOrigin || person.gender === 'male') || roots[0];
 }
 
 export function buildGenealogyContext({
@@ -121,11 +150,13 @@ export function buildGenealogyContext({
     .map((person) => contextualPerson(person, members));
   const matched = matchedPeople(members, message);
   const mentioned = people.map((item) => members.find((person) => person.id === item.person.id)).filter((person): person is Member => Boolean(person));
+  const founder = clanFounder(members);
 
   return {
     people,
+    ...(founder ? { founder: contextualPerson(founder, members) } : {}),
     ...(matched.length ? { matches: matched.map((person) => personFact(person, members)) } : {}),
-    ...(relationshipOf(mentioned) ? { relationship: relationshipOf(mentioned) } : {}),
+    ...(relationshipOf(mentioned, members) ? { relationship: relationshipOf(mentioned, members) } : {}),
     ...(includeMemorials
       ? {
           upcomingMemorials: getMemorialEvents({ members, from: vietnamToday() })

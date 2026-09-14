@@ -57,6 +57,30 @@ test('genealogy resolver only returns the matched family subset and direct facts
   assert.ok(branch.matches.length <= 16);
 });
 
+test('genealogy assistant resolves the clan founder and family graph before using an AI provider', async () => {
+  const founderContext = buildGenealogyContext({
+    members: seedMembers,
+    message: 'Thủy tổ là ai?',
+  });
+  assert.equal(founderContext.founder?.person.id, 'P001');
+
+  const provider = new MockProvider();
+  const founderAnswer = await provider.generate({
+    message: 'Thủy tổ là ai?',
+    history: [],
+    context: resolvedContext({ genealogy: founderContext }),
+    systemInstruction: buildSystemPrompt(resolvedContext({ genealogy: founderContext })),
+  });
+  assert.match(founderAnswer.answer, /Nguyễn Bá Linh/);
+  assert.match(founderAnswer.answer, /thủy tổ/i);
+
+  const relationshipContext = buildGenealogyContext({
+    members: seedMembers,
+    message: 'Nguyễn Bá Linh và Nguyễn Văn Xum có quan hệ gì?',
+  });
+  assert.match(relationshipContext.relationship?.description || '', /ông|bà/i);
+});
+
 test('calendar assistant context comes from the existing lunar calendar engine', () => {
   const calendar = buildCalendarContext({
     source: 'activity',

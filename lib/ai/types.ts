@@ -61,6 +61,7 @@ export type AIGenealogyPerson = {
 
 export type AIGenealogyContext = {
   people: AIGenealogyPerson[];
+  founder?: AIGenealogyPerson;
   matches?: AIPersonFact[];
   relationship?: {
     first: string;

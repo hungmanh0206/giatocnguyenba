@@ -46,8 +46,9 @@ export function getAIProvider(preference: AIModelPreference = 'auto'): AIProvide
 
   const primary = provider === 'openai' ? openai : gemini;
   const fallback = provider === 'openai' ? gemini : openai;
-  if (primary && fallback) return new FallbackProvider(primary, fallback);
-  if (primary) return primary;
-  if (fallback) return fallback;
-  throw new AIProviderError('configuration');
+  const localFallback = new MockProvider();
+  if (primary && fallback) return new FallbackProvider(new FallbackProvider(primary, fallback), localFallback);
+  if (primary) return new FallbackProvider(primary, localFallback);
+  if (fallback) return new FallbackProvider(fallback, localFallback);
+  return localFallback;
 }

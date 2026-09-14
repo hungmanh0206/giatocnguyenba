@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { buildAIContext } from '@/lib/ai/context';
 import { getAIProvider } from '@/lib/ai/providers';
+import { structuredGenealogyAnswer } from '@/lib/ai/providers/mock-provider';
 import { buildSystemPrompt } from '@/lib/ai/system-prompt';
 import { AIProviderError, type AIChatResponse } from '@/lib/ai/types';
 import { parseAIChatRequest } from '@/lib/ai/validation';
@@ -50,6 +51,24 @@ export async function POST(request: Request) {
 
   try {
     const context = await buildAIContext(parsed);
+    const localAnswer = structuredGenealogyAnswer({
+      message: parsed.message,
+      history: parsed.history,
+      context,
+      systemInstruction: buildSystemPrompt(context),
+    });
+    if (localAnswer) {
+      return NextResponse.json({
+        answer: localAnswer,
+        provider: 'mock',
+        contextUsed: {
+          ...(parsed.context.personId ? { personId: parsed.context.personId } : {}),
+          ...(parsed.context.selectedDate ? { selectedDate: parsed.context.selectedDate } : {}),
+          ...(parsed.context.activity ? { activity: parsed.context.activity } : {}),
+        },
+        ...(context.warnings.length ? { warnings: context.warnings } : {}),
+      } satisfies AIChatResponse, { headers: { 'Cache-Control': 'no-store' } });
+    }
     const result = await getAIProvider().generate({
       message: parsed.message,
       history: parsed.history,
