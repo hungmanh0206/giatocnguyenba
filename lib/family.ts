@@ -1,5 +1,25 @@
 import { familySeedMembers } from './family-source.ts';
 
+export const parentageKinds = ['biological', 'adoptive', 'step'] as const;
+export type ParentageKind = (typeof parentageKinds)[number];
+
+export type ParentRelation = {
+  parentId: string;
+  kind: ParentageKind;
+};
+
+export const marriageStatuses = ['current', 'divorced', 'widowed', 'deceased', 'unknown'] as const;
+export type MarriageStatus = (typeof marriageStatuses)[number];
+
+export type SpouseRelation = {
+  spouseId: string;
+  order?: number;
+  status?: MarriageStatus;
+  startDate?: string;
+  endDate?: string;
+  notes?: string;
+};
+
 export type Member = {
   id: string;
   name: string;
@@ -24,12 +44,46 @@ export type Member = {
   lifeStatus?: 'living' | 'deceased' | 'unknown';
   parents: string[];
   spouses: string[];
+  // Legacy records only contain `parents` and `spouses`. These optional
+  // links refine them without changing the existing Firestore shape.
+  parentRelations?: ParentRelation[];
+  spouseRelations?: SpouseRelation[];
   anniversary?: { day: number; month: number };
   biography?: string;
   hometown?: string;
   needsVerification?: boolean;
   sourceReference?: string;
 };
+
+export function parentRelationsOf(person: Pick<Member, 'parents' | 'parentRelations'>) {
+  const saved = new Map(
+    (person.parentRelations || []).map((relation) => [relation.parentId, relation]),
+  );
+  return [...new Set(person.parents)].map((parentId) => {
+    const relation = saved.get(parentId);
+    return {
+      parentId,
+      kind: relation?.kind || 'biological',
+    } satisfies ParentRelation;
+  });
+}
+
+export function spouseRelationsOf(person: Pick<Member, 'spouses' | 'spouseRelations'>) {
+  const saved = new Map(
+    (person.spouseRelations || []).map((relation) => [relation.spouseId, relation]),
+  );
+  return [...new Set(person.spouses)].map((spouseId, index) => {
+    const relation = saved.get(spouseId);
+    return {
+      spouseId,
+      ...(relation?.order !== undefined ? { order: relation.order } : { order: index + 1 }),
+      ...(relation?.status ? { status: relation.status } : {}),
+      ...(relation?.startDate ? { startDate: relation.startDate } : {}),
+      ...(relation?.endDate ? { endDate: relation.endDate } : {}),
+      ...(relation?.notes ? { notes: relation.notes } : {}),
+    } satisfies SpouseRelation;
+  });
+}
 
 export const UNKNOWN_MEMBER_NAME = 'Chưa biết tên';
 

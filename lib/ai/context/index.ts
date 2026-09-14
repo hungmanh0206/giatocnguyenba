@@ -9,7 +9,7 @@ import { vietnamToday } from '../../lunar.ts';
 
 function requiresGenealogy(request: AIChatRequest) {
   if (request.context.personId || request.mode === 'genealogy') return true;
-  return /gia phả|con ai|cha mẹ|cha\b|mẹ|vợ|chồng|phối ngẫu|anh chị em|ngày giỗ|húy kỵ|tổ tiên|thủy tổ|thuy to|khai tổ|ông tổ|bà tổ|chi họ|thành viên|mối quan hệ|quan hệ|là ai|la ai|thông tin/i.test(
+  return /gia phả|con ai|cha mẹ|cha\b|mẹ|vợ|chồng|phối ngẫu|anh chị em|anh em|bác|chú|cô\b|cậu|dì|thím|mợ|dượng|con nuôi|cha dượng|mẹ kế|cùng cha|cùng mẹ|ngày giỗ|húy kỵ|tổ tiên|tổ tiên chung|hậu duệ|thủy tổ|thuy to|khai tổ|ông tổ|bà tổ|chi họ|nhánh nội|nhánh ngoại|đời thứ|thành viên|mối quan hệ|quan hệ|là ai|la ai|thông tin/i.test(
     request.message,
   );
 }

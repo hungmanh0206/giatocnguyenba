@@ -19,7 +19,11 @@ import { isFamilyRole, type FamilyRole } from '@/lib/access';
 import {
   UNKNOWN_MEMBER_NAME,
   compareSiblingOrder,
+  parentRelationsOf,
+  spouseRelationsOf,
   type Member,
+  type MarriageStatus,
+  type ParentageKind,
 } from '@/lib/family';
 
 const memberFields = [
@@ -44,6 +48,8 @@ const memberFields = [
   'lifeStatus',
   'parents',
   'spouses',
+  'parentRelations',
+  'spouseRelations',
   'anniversary',
   'biography',
   'hometown',
@@ -65,6 +71,47 @@ function ids(value: unknown) {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string')
     : [];
+}
+
+function parentRelations(value: unknown, parents: string[]) {
+  if (!Array.isArray(value)) return undefined;
+  const allowed = new Set(parents);
+  const relations = value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const raw = item as Record<string, unknown>;
+    const parentId = string(raw.parentId).trim();
+    const kind = raw.kind;
+    if (!allowed.has(parentId) || !['biological', 'adoptive', 'step'].includes(String(kind))) return [];
+    return [{ parentId, kind: kind as ParentageKind }];
+  });
+  return relations.length ? relations : undefined;
+}
+
+function spouseRelations(value: unknown, spouses: string[]) {
+  if (!Array.isArray(value)) return undefined;
+  const allowed = new Set(spouses);
+  const relations = value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const raw = item as Record<string, unknown>;
+    const spouseId = string(raw.spouseId).trim();
+    const status = ['current', 'divorced', 'widowed', 'deceased', 'unknown'].includes(String(raw.status))
+      ? raw.status as MarriageStatus
+      : undefined;
+    if (!allowed.has(spouseId)) return [];
+    const order = integer(raw.order) || undefined;
+    const startDate = string(raw.startDate).trim() || undefined;
+    const endDate = string(raw.endDate).trim() || undefined;
+    const notes = string(raw.notes).trim() || undefined;
+    return [{
+      spouseId,
+      ...(order !== undefined ? { order } : {}),
+      ...(status ? { status } : {}),
+      ...(startDate ? { startDate } : {}),
+      ...(endDate ? { endDate } : {}),
+      ...(notes ? { notes } : {}),
+    }];
+  });
+  return relations.length ? relations : undefined;
 }
 
 export function firestoreMember(id: string, raw: DocumentData): Member | null {
@@ -163,6 +210,8 @@ export function firestoreMember(id: string, raw: DocumentData): Member | null {
           : undefined,
     parents: ids(raw.parents),
     spouses: ids(raw.spouses),
+    parentRelations: parentRelations(raw.parentRelations, ids(raw.parents)),
+    spouseRelations: spouseRelations(raw.spouseRelations, ids(raw.spouses)),
     anniversary: normalizedDeathDate
       ? { day: normalizedDeathDate.day, month: normalizedDeathDate.month }
       : legacyAnniversary,
@@ -214,6 +263,8 @@ function memberData(person: Member) {
     lifeStatus: person.lifeStatus ?? null,
     parents: [...new Set(person.parents)],
     spouses: [...new Set(person.spouses)],
+    parentRelations: parentRelationsOf(person),
+    spouseRelations: spouseRelationsOf(person),
     anniversary: normalizedDeathDate
       ? { day: normalizedDeathDate.day, month: normalizedDeathDate.month }
       : null,
@@ -310,6 +361,9 @@ export async function saveFirestoreMember(db: Firestore, person: Member) {
           ...memberData({
             ...normalized,
             spouses: normalized.spouses.filter((id) => id !== person.id),
+            spouseRelations: spouseRelationsOf(normalized).filter(
+              (relation) => relation.spouseId !== person.id,
+            ),
           }),
           createdAt: spouseData.createdAt ?? serverTimestamp(),
         },
@@ -325,12 +379,28 @@ export async function saveFirestoreMember(db: Firestore, person: Member) {
       const spouseData = spouse.data();
       const normalized = firestoreMember(spouseId, spouseData);
       if (!normalized) continue;
+      const relationship = spouseRelationsOf(person).find(
+        (relation) => relation.spouseId === spouseId,
+      );
       transaction.set(
         spouse.ref,
         {
           ...memberData({
             ...normalized,
             spouses: [...new Set([...normalized.spouses, person.id])],
+            spouseRelations: [
+              ...spouseRelationsOf(normalized).filter(
+                (relation) => relation.spouseId !== person.id,
+              ),
+              {
+                spouseId: person.id,
+                ...(relationship?.order !== undefined ? { order: relationship.order } : {}),
+                ...(relationship?.status ? { status: relationship.status } : {}),
+                ...(relationship?.startDate ? { startDate: relationship.startDate } : {}),
+                ...(relationship?.endDate ? { endDate: relationship.endDate } : {}),
+                ...(relationship?.notes ? { notes: relationship.notes } : {}),
+              },
+            ],
           }),
           createdAt: spouseData.createdAt ?? serverTimestamp(),
         },
@@ -372,9 +442,13 @@ export async function deleteFirestoreMember(db: Firestore, memberId: string) {
     };
     if (ids(data.parents).includes(memberId)) {
       update.parents = arrayRemove(memberId);
+      update.parentRelations = parentRelations(data.parentRelations, ids(data.parents))
+        ?.filter((relation) => relation.parentId !== memberId) || [];
     }
     if (ids(data.spouses).includes(memberId)) {
       update.spouses = arrayRemove(memberId);
+      update.spouseRelations = spouseRelations(data.spouseRelations, ids(data.spouses))
+        ?.filter((relation) => relation.spouseId !== memberId) || [];
     }
     batch.update(snapshot.ref, update);
   }

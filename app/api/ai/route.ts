@@ -34,6 +34,19 @@ function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
+function logGenealogyResolution(context: Awaited<ReturnType<typeof buildAIContext>>) {
+  if (process.env.NODE_ENV !== 'development' || !context.genealogy) return;
+  const relationship = context.genealogy.relationship;
+  console.info('[GenealogyAI]', {
+    intent: relationship ? 'GET_RELATIONSHIP' : 'LOOKUP_GENEALOGY',
+    people: context.genealogy.people.map((person) => person.person.id),
+    ambiguities: context.genealogy.ambiguities?.map((item) => item.candidates.map((person) => person.id)),
+    relationship: relationship?.relationshipCode,
+    status: relationship?.status,
+    path: relationship?.path.map((step) => `${step.fromId}:${step.relation}:${step.toId}`),
+  });
+}
+
 export async function POST(request: Request) {
   if (!withinRateLimit(request)) {
     return jsonError('Trợ lý AI đang nhận nhiều yêu cầu. Vui lòng thử lại sau ít phút.', 429);
@@ -51,6 +64,7 @@ export async function POST(request: Request) {
 
   try {
     const context = await buildAIContext(parsed);
+    logGenealogyResolution(context);
     const localAnswer = structuredGenealogyAnswer({
       message: parsed.message,
       history: parsed.history,

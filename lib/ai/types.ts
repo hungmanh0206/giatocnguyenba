@@ -1,4 +1,6 @@
 import type { CalendarActivityId } from '@/lib/lunar-calendar/activity-advice';
+import type { GenealogyRelationshipResult } from '@/lib/genealogy/relationship-engine';
+import type { MarriageStatus, ParentageKind } from '@/lib/family';
 
 export const aiModes = ['general', 'genealogy', 'calendar', 'horoscope'] as const;
 
@@ -57,17 +59,25 @@ export type AIGenealogyPerson = {
   spouses: AIPersonFact[];
   children: AIPersonFact[];
   siblings: AIPersonFact[];
+  parentRelations: Array<{ person: AIPersonFact; kind: ParentageKind }>;
+  childRelations: Array<{ person: AIPersonFact; kind: ParentageKind }>;
+  siblingRelations: Array<{
+    person: AIPersonFact;
+    relationshipCode?: string;
+    term?: string;
+  }>;
+  spouseRelations: Array<{ person: AIPersonFact; status?: MarriageStatus; order?: number }>;
 };
 
 export type AIGenealogyContext = {
   people: AIGenealogyPerson[];
   founder?: AIGenealogyPerson;
   matches?: AIPersonFact[];
-  relationship?: {
-    first: string;
-    second: string;
-    description: string;
-  };
+  relationship?: GenealogyRelationshipResult;
+  ambiguities?: Array<{
+    query: string;
+    candidates: AIPersonFact[];
+  }>;
   upcomingMemorials?: Array<{
     title: string;
     lunarDate: string;

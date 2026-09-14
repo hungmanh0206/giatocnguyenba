@@ -78,7 +78,7 @@ test('genealogy assistant resolves the clan founder and family graph before usin
     members: seedMembers,
     message: 'Nguyễn Bá Linh và Nguyễn Văn Xum có quan hệ gì?',
   });
-  assert.match(relationshipContext.relationship?.description || '', /ông|bà/i);
+  assert.match(relationshipContext.relationship?.explanation || '', /cháu|ông|bà/i);
 });
 
 test('calendar assistant context comes from the existing lunar calendar engine', () => {

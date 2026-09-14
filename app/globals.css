@@ -4233,6 +4233,21 @@ button:disabled,
   gap: 18px;
 }
 
+.member-parent-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.7fr);
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid #e5ded2;
+  border-radius: var(--radius-md);
+  background: #fffdf8;
+}
+
+.member-parent-link label {
+  margin-bottom: 0;
+}
+
 .form-actions {
   gap: 10px;
   padding: 17px 28px;
@@ -4506,6 +4521,11 @@ button:disabled,
 
 @media (max-width: 400px) {
   .form-columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .member-parent-link {
     grid-template-columns: 1fr;
     gap: 0;
   }
@@ -5394,6 +5414,7 @@ main#main:not(.tree-page) {
     width: 27px;
     height: 27px;
   }
+
   .brand-mark .heritage-icon {
     width: 31px;
     height: 31px;

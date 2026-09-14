@@ -4,6 +4,7 @@ import {
   type AIProviderRequest,
   type AIProviderResponse,
 } from '../types.ts';
+import type { GenealogyRelationshipResult, RelationshipPathStep } from '@/lib/genealogy/relationship-engine';
 import type { AIProvider } from './ai-provider.ts';
 
 function normalise(value: string) {
@@ -31,13 +32,65 @@ function founderAnswer(question: string, founder: AIGenealogyPerson) {
   return `${person.name} là thủy tổ được ghi nhận của dòng họ, thuộc đời ${person.generation}.${spouseText}${childrenText}${personWarning(founder)}`;
 }
 
+function relationshipPath(path: RelationshipPathStep[]) {
+  if (!path.length) return '';
+  return path
+    .map((step) => `${step.fromName} → ${step.relation} → ${step.toName}`)
+    .join('\n');
+}
+
+function formatRelationshipAnswer(result: GenealogyRelationshipResult) {
+  const from = result.personA.name;
+  const to = result.personB.name;
+  const path = relationshipPath(result.path);
+  if (result.status === 'EXACT') {
+    const term = result.kinshipTermAtoB || result.relationshipFromAToB || 'người có quan hệ gia đình';
+    return [
+      `**${from} là ${term} của ${to}.**`,
+      path ? `Đường quan hệ:\n${path}` : '',
+      result.explanation,
+    ].filter(Boolean).join('\n\n');
+  }
+  if (result.status === 'AMBIGUOUS') {
+    return [
+      `**${from} là ${result.relationshipFromAToB || 'người thân'} của ${to}, nhưng chưa thể xác định chính xác cách xưng hô.**`,
+      result.possibleTerms?.length ? `Có thể là: ${result.possibleTerms.join(' hoặc ')}.` : '',
+      path ? `Đường quan hệ:\n${path}` : '',
+      result.missingFacts.length ? `Cần bổ sung: ${result.missingFacts.join(' ')}` : result.explanation,
+    ].filter(Boolean).join('\n\n');
+  }
+  if (result.status === 'UNSUPPORTED') {
+    return [
+      result.explanation,
+      path ? `Đường quan hệ đã xác nhận:\n${path}` : '',
+    ].filter(Boolean).join('\n\n');
+  }
+  return [
+    result.explanation,
+    result.missingFacts.length ? `Cần bổ sung: ${result.missingFacts.join(' ')}` : '',
+  ].filter(Boolean).join('\n\n');
+}
+
+function ambiguityAnswer(ambiguities: NonNullable<AIProviderRequest['context']['genealogy']>['ambiguities']) {
+  if (!ambiguities?.length) return null;
+  const groups = ambiguities.map((ambiguity) => {
+    const candidates = ambiguity.candidates
+      .map((person) => `${person.name} · đời ${person.generation}${person.birthYear ? ` · sinh ${person.birthYear}` : ''} · ${person.branch}`)
+      .join('\n- ');
+    return `Có ${ambiguity.candidates.length} người trùng khớp với “${ambiguity.query}”:\n- ${candidates}`;
+  });
+  return `Mình chưa thể tự chọn người vì gia phả có tên trùng nhau. ${groups.join('\n\n')}\n\nBạn hãy cho biết thêm đời, năm sinh, chi họ hoặc tên cha/mẹ.`;
+}
+
 export function structuredGenealogyAnswer(input: AIProviderRequest) {
   const genealogy = input.context.genealogy;
   if (!genealogy) return null;
 
+  const ambiguity = ambiguityAnswer(genealogy.ambiguities);
+  if (ambiguity) return ambiguity;
   const founder = genealogy.founder ? founderAnswer(input.message, genealogy.founder) : null;
   if (founder) return founder;
-  if (genealogy.relationship) return genealogy.relationship.description;
+  if (genealogy.relationship) return formatRelationshipAnswer(genealogy.relationship);
 
   const person = genealogy.people[0];
   if (!person) return null;
@@ -54,25 +107,37 @@ function relationAnswer(question: string, person: AIGenealogyPerson) {
   const { children, parents, siblings, spouses } = person;
   const name = person.person.name;
   const list = (items: Array<{ name: string }>) => items.map((item) => item.name).join(', ');
+  const parentList = person.parentRelations.length
+    ? person.parentRelations.map((relation) => `${relation.person.name} (${relation.kind === 'biological' ? 'cha/mẹ ruột' : relation.kind === 'adoptive' ? 'cha/mẹ nuôi' : 'cha dượng/mẹ kế'})`).join(', ')
+    : list(parents);
+  const childList = person.childRelations.length
+    ? person.childRelations.map((relation) => `${relation.person.name} (${relation.kind === 'biological' ? 'con ruột' : relation.kind === 'adoptive' ? 'con nuôi' : 'con riêng'})`).join(', ')
+    : list(children);
+  const siblingList = person.siblingRelations.length
+    ? person.siblingRelations.map((relation) => `${relation.person.name}${relation.term ? ` (${relation.term})` : ''}`).join(', ')
+    : list(siblings);
+  const spouseList = person.spouseRelations.length
+    ? person.spouseRelations.map((relation) => `${relation.person.name}${relation.status ? ` (${relation.status === 'current' ? 'hiện tại' : relation.status === 'divorced' ? 'đã ly hôn' : relation.status === 'widowed' ? 'đã góa' : relation.status === 'deceased' ? 'đã mất' : 'chưa rõ tình trạng'})` : ''}`).join(', ')
+    : list(spouses);
 
   if (/con ai|cha me|bo me|phu mau|ai la cha|ai la me/.test(query)) {
     return parents.length
-      ? `${name} là con của ${list(parents)}.${personWarning(person)}`
+      ? `${name} có cha/mẹ được ghi nhận: ${parentList}.${personWarning(person)}`
       : `Hiện gia phả chưa có dữ liệu cha mẹ của ${name}.`;
   }
   if (/ai la con cua|con cua|con chau cua|may nguoi con/.test(query)) {
     return children.length
-      ? `${name} có ${children.length} người con được ghi nhận: ${list(children)}.${personWarning(person)}`
+      ? `${name} có ${children.length} người con được ghi nhận: ${childList}.${personWarning(person)}`
       : `Hiện gia phả chưa có dữ liệu con của ${name}.`;
   }
   if (query.includes('vo chong') || query.includes('phoi ngau')) {
     return spouses.length
-      ? `${name} có phối ngẫu được ghi nhận là ${list(spouses)}.${personWarning(person)}`
+      ? `${name} có phối ngẫu được ghi nhận là ${spouseList}.${personWarning(person)}`
       : `Hiện gia phả chưa có dữ liệu phối ngẫu của ${name}.`;
   }
   if (query.includes('anh chi em') || query.includes('anh em')) {
     return siblings.length
-      ? `${name} có anh chị em được ghi nhận: ${list(siblings)}.${personWarning(person)}`
+      ? `${name} có anh chị em được ghi nhận: ${siblingList}.${personWarning(person)}`
       : `Hiện gia phả chưa có dữ liệu anh chị em của ${name}.`;
   }
   if (query.includes('ngay gio') || query.includes('huy ky')) {

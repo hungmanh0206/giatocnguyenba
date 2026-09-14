@@ -48,11 +48,14 @@ import {
   memberBranchName,
   memberName,
   memberPositionLockMessage,
+  parentRelationsOf,
   searchMembers,
+  spouseRelationsOf,
   branchName,
   type Member,
 } from '@/lib/family';
 import { canManageFamily } from '@/lib/access';
+import { validateGenealogyRelations } from '@/lib/genealogy/relationship-engine';
 const blank = (): Member => ({
   id: crypto.randomUUID(),
   name: '',
@@ -202,7 +205,13 @@ export function AdminPage() {
 
       const parentSlots = [person.parents[0] || '', person.parents[1] || ''];
       parentSlots[index] = value === 'none' ? '' : value;
-      let next = { ...person, parents: parentSlots.filter(Boolean) };
+      let next = {
+        ...person,
+        parents: parentSlots.filter(Boolean),
+        parentRelations: person.parentRelations?.filter((relation) =>
+          parentSlots.includes(relation.parentId),
+        ),
+      };
 
       if (
         next.parents.length === 2 &&
@@ -210,7 +219,13 @@ export function AdminPage() {
           (candidate) => candidate.id === next.parents[index],
         )
       ) {
-        next = { ...next, parents: [next.parents[index]] };
+        next = {
+          ...next,
+          parents: [next.parents[index]],
+          parentRelations: next.parentRelations?.filter(
+            (relation) => relation.parentId === next.parents[index],
+          ),
+        };
       }
 
       const branches = eligibleBranches(next, members);
@@ -219,6 +234,20 @@ export function AdminPage() {
         branch: branches.includes(next.branch)
           ? next.branch
           : (branches[0] ?? -1),
+      };
+    });
+  }
+
+  function updateParentRelationKind(index: number, kind: 'biological' | 'adoptive' | 'step') {
+    setEditing((person) => {
+      const parentId = person?.parents[index];
+      if (!person || !parentId) return person;
+      return {
+        ...person,
+        parentRelations: [
+          ...parentRelationsOf(person).filter((relation) => relation.parentId !== parentId),
+          { parentId, kind },
+        ],
       };
     });
   }
@@ -244,6 +273,15 @@ export function AdminPage() {
         ? { day: date.day, month: date.month }
         : editing.anniversary,
     };
+    const validation = validateGenealogyRelations([
+      ...members.filter((member) => member.id !== person.id),
+      person,
+    ]);
+    if (validation.errors.length) {
+      setSaving(false);
+      setError(validation.errors.join(' '));
+      return;
+    }
     const result = await save(person);
     setSaving(false);
     if (result) {
@@ -251,9 +289,9 @@ export function AdminPage() {
       return;
     }
     setSuccess(
-      connection.mode === 'demo'
+      `${connection.mode === 'demo'
         ? `Đã lưu hồ sơ ${memberName(person)} trong phiên dùng thử.`
-        : `Đã đồng bộ hồ sơ ${memberName(person)} với Firestore.`,
+        : `Đã đồng bộ hồ sơ ${memberName(person)} với Firestore.`}${validation.warnings.length ? ` Lưu ý: ${validation.warnings.join(' ')}` : ''}`,
     );
     setEditing(null);
     setError('');
@@ -819,25 +857,48 @@ export function AdminPage() {
                 </label>
                 <h3>Quan hệ gia đình</h3>
                 {[0, 1].map((index) => (
-                  <label key={index}>
-                    {index === 0 ? 'Cha / mẹ thứ nhất' : 'Cha / mẹ thứ hai'}
-                    <Choice
-                      label={`Cha mẹ ${index + 1}`}
-                      value={editing.parents[index] || 'none'}
-                      onChange={(v) => updateParent(index, v)}
-                      options={[
-                        { value: 'none', label: 'Chưa ghi nhận' },
-                        ...eligibleParents(editing, members, index)
-                          .map((p) => ({
-                            value: p.id,
-                            label: `${memberName(p)} (${memberBirthLabel(p)})`,
-                          })),
-                      ]}
-                      disabled={
-                        !!positionLock || (index === 1 && !editing.parents[0])
-                      }
-                    />
-                  </label>
+                  <div className="member-parent-link" key={index}>
+                    <label>
+                      {index === 0 ? 'Cha / mẹ thứ nhất' : 'Cha / mẹ thứ hai'}
+                      <Choice
+                        label={`Cha mẹ ${index + 1}`}
+                        value={editing.parents[index] || 'none'}
+                        onChange={(v) => updateParent(index, v)}
+                        options={[
+                          { value: 'none', label: 'Chưa ghi nhận' },
+                          ...eligibleParents(editing, members, index)
+                            .map((p) => ({
+                              value: p.id,
+                              label: `${memberName(p)} (${memberBirthLabel(p)})`,
+                            })),
+                        ]}
+                        disabled={
+                          !!positionLock || (index === 1 && !editing.parents[0])
+                        }
+                      />
+                    </label>
+                    {editing.parents[index] ? (
+                      <label>
+                        Loại quan hệ
+                        <Choice
+                          label={`Loại quan hệ cha mẹ ${index + 1}`}
+                          value={parentRelationsOf(editing).find(
+                            (relation) => relation.parentId === editing.parents[index],
+                          )?.kind || 'biological'}
+                          onChange={(value) => updateParentRelationKind(
+                            index,
+                            value as 'biological' | 'adoptive' | 'step',
+                          )}
+                          options={[
+                            { value: 'biological', label: 'Cha/mẹ ruột' },
+                            { value: 'adoptive', label: 'Cha/mẹ nuôi' },
+                            { value: 'step', label: 'Cha dượng/mẹ kế' },
+                          ]}
+                          disabled={!!positionLock}
+                        />
+                      </label>
+                    ) : null}
+                  </div>
                 ))}
                 <label>
                   Vợ / chồng
@@ -845,10 +906,14 @@ export function AdminPage() {
                     label="Thêm vợ hoặc chồng"
                     value="none"
                     onChange={(v) => {
-                      if (v !== 'none')
-                        update('spouses', [
-                          ...new Set([...editing.spouses, v]),
+                      if (v !== 'none') {
+                        const spouseRelations = spouseRelationsOf(editing);
+                        update('spouses', [...new Set([...editing.spouses, v])]);
+                        update('spouseRelations', [
+                          ...spouseRelations.filter((relation) => relation.spouseId !== v),
+                          { spouseId: v, order: spouseRelations.length + 1, status: 'current' },
                         ]);
+                      }
                     }}
                     options={[
                       { value: 'none', label: 'Chọn để thêm…' },
@@ -865,10 +930,15 @@ export function AdminPage() {
                       variant="secondary"
                       type="button"
                       onClick={() =>
-                        update(
-                          'spouses',
-                          editing.spouses.filter((s) => s !== id),
-                        )
+                        setEditing((person) => person
+                          ? {
+                              ...person,
+                              spouses: person.spouses.filter((spouseId) => spouseId !== id),
+                              spouseRelations: spouseRelationsOf(person).filter(
+                                (relation) => relation.spouseId !== id,
+                              ),
+                            }
+                          : null)
                       }
                       title="Bỏ quan hệ vợ chồng"
                       disabled={!!spouseLock}
