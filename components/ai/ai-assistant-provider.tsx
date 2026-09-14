@@ -10,6 +10,7 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -21,7 +22,6 @@ import {
 } from '@/components/ui/sheet';
 import { type AIChatResponse, type AIClientContext, type AIMode } from '@/lib/ai/types';
 import { AIComposer } from './ai-composer';
-import { AIContextHeader } from './ai-context-header';
 import { AIMessage, type AssistantMessage } from './ai-message';
 import { AIQuickActions } from './ai-quick-actions';
 import { AIButtonIcon } from './ai-button-icon';
@@ -72,7 +72,6 @@ function AIAssistantDrawer({
   onDeleteConversation,
   onNewConversation,
   onOpenChange,
-  onClearContext,
   open,
 }: {
   active: AssistantState;
@@ -81,7 +80,6 @@ function AIAssistantDrawer({
   onDeleteConversation: () => void;
   onNewConversation: () => void;
   onOpenChange: (open: boolean) => void;
-  onClearContext: () => void;
   open: boolean;
 }) {
   const [pending, setPending] = useState(false);
@@ -167,7 +165,14 @@ function AIAssistantDrawer({
               type="button"
               variant="outline"
             >
-              <HeritageIcon name="reset" size={14} />
+              <Image
+                alt=""
+                aria-hidden="true"
+                className="ai-new-chat-icon"
+                height={22}
+                src="/app-icons/ai-new-chat.png"
+                width={22}
+              />
               <span className="ai-conversation-action-label">Chat mới</span>
             </Button>
             <Button
@@ -184,12 +189,6 @@ function AIAssistantDrawer({
             </Button>
           </div>
         </SheetHeader>
-        <AIContextHeader
-          context={active.context}
-          contextLabel={active.contextLabel}
-          mode={active.mode}
-          onClearContext={active.context.source !== 'global' ? onClearContext : undefined}
-        />
         <div className="ai-assistant-scroll">
           {messages.length ? (
             <div className="ai-messages" aria-live="polite">
@@ -253,13 +252,6 @@ export function AIAssistantProvider({ children }: PropsWithChildren) {
     setOpen(true);
   }, []);
 
-  const clearContext = useCallback(() => {
-    const next = createState();
-    signatureRef.current = next.signature;
-    setActive(next);
-    setMessages([]);
-  }, []);
-
   const startNewConversation = useCallback(() => {
     setMessages([]);
   }, []);
@@ -285,7 +277,6 @@ export function AIAssistantProvider({ children }: PropsWithChildren) {
         onDeleteConversation={deleteConversation}
         onNewConversation={startNewConversation}
         onOpenChange={setOpen}
-        onClearContext={clearContext}
         open={open}
       />
     </AIAssistantContext.Provider>

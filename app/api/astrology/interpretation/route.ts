@@ -10,9 +10,11 @@ import {
   type AstrologyInterpretation,
 } from '@/lib/astrology';
 import type { AIHistoryMessage } from '@/lib/ai/types';
+import { parseAIModelPreference } from '@/lib/ai/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 function readHistory(value: unknown): AIHistoryMessage[] {
   if (!Array.isArray(value)) return [];
@@ -33,6 +35,7 @@ function readInterpretation(value: unknown): AstrologyInterpretation | null {
 export async function POST(request: Request) {
   try {
     const payload = await request.json() as Record<string, unknown>;
+    const modelPreference = parseAIModelPreference(payload.modelPreference);
     const input = parseAstrologyInput(payload.input);
     if (!input) return NextResponse.json({ message: 'Thông tin tử vi chưa hợp lệ.' }, { status: 400 });
 
@@ -49,11 +52,16 @@ export async function POST(request: Request) {
         interpretation: readInterpretation(payload.interpretation),
         question,
         history: readHistory(payload.history),
+        modelPreference,
       });
       return NextResponse.json({ profile: result.profile, ...answer }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
-    const reading = await generateAstrologyInterpretation(result.profile, parseAstrologyFocus(payload.focus));
+    const reading = await generateAstrologyInterpretation(
+      result.profile,
+      parseAstrologyFocus(payload.focus),
+      modelPreference,
+    );
     return NextResponse.json({ profile: result.profile, ...reading }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return NextResponse.json({ message: 'Luận giải AI tạm thời chưa phản hồi. Dữ liệu lịch vẫn có thể được xem.' }, { status: 503 });

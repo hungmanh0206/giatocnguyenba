@@ -103,7 +103,31 @@ test('almanac evaluation stays deterministic and custom activities resolve befor
     activity: 'buy_house',
     label: 'Ký hợp đồng mua nhà',
   });
+  assert.deepEqual(resolveCustomActivity('Cải táng cho gia đình'), {
+    kind: 'resolved',
+    activity: 'exhumation',
+    label: 'Cải táng cho gia đình',
+  });
+  assert.deepEqual(resolveCustomActivity('Lễ ma chay'), {
+    kind: 'resolved',
+    activity: 'funeral',
+    label: 'Lễ ma chay',
+  });
   assert.equal(resolveCustomActivity('Làm việc lớn')?.kind, 'ambiguous');
+});
+
+test('funeral activity remains distinct from exhumation and reports partial support', () => {
+  const info = getLunarDayInfo(new Date(2024, 1, 10));
+  assert.equal(info.supported, true);
+  const funeral = evaluateActivityDay(info, 'funeral', false);
+  const exhumation = evaluateActivityDay(info, 'exhumation', false);
+
+  assert.equal(funeral.activity.id, 'funeral');
+  assert.equal(funeral.activity.supportLevel, 'partial');
+  assert.match(funeral.activity.supportNote || '', /cải táng/i);
+  assert.equal(exhumation.activity.id, 'exhumation');
+  assert.equal(exhumation.activity.supportLevel, 'full');
+  assert.equal(funeral.provenance.calendar, 'Calendar Core (@lichta/core)');
 });
 
 test('lunar month length reports both 29-day and 30-day months', () => {

@@ -5,6 +5,7 @@ import type { AIProvider } from './ai-provider';
 
 type GeminiResponse = {
   candidates?: Array<{
+    finishReason?: string;
     content?: {
       parts?: Array<{ text?: string }>;
     };
@@ -20,15 +21,37 @@ export class GeminiProvider implements AIProvider {
   constructor(
     private readonly apiKey: string,
     private readonly model: string,
+    private readonly fallbackModel?: string,
   ) {}
 
   async generate(input: AIProviderRequest): Promise<AIProviderResponse> {
+    try {
+      return await this.generateWithModel(input, this.model);
+    } catch (error) {
+      if (
+        !(error instanceof AIProviderError) ||
+        error.code !== 'unavailable' ||
+        !this.fallbackModel ||
+        this.fallbackModel === this.model
+      ) {
+        throw error;
+      }
+
+      console.warn('[ai] Primary Gemini model unavailable; using fallback model');
+      return this.generateWithModel(input, this.fallbackModel);
+    }
+  }
+
+  private async generateWithModel(
+    input: AIProviderRequest,
+    model: string,
+  ): Promise<AIProviderResponse> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25_000);
+    const timeout = setTimeout(() => controller.abort(), 55_000);
 
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(this.model)}:generateContent?key=${encodeURIComponent(this.apiKey)}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(this.apiKey)}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -43,8 +66,9 @@ export class GeminiProvider implements AIProvider {
               { role: 'user', parts: [{ text: input.message }] },
             ],
             generationConfig: {
-              maxOutputTokens: 600,
+              maxOutputTokens: input.responseMimeType ? 8192 : 1200,
               temperature: 0.35,
+              ...(input.responseMimeType ? { responseMimeType: input.responseMimeType } : {}),
             },
           }),
         },
@@ -66,7 +90,13 @@ export class GeminiProvider implements AIProvider {
         ?.map((part) => part.text ?? '')
         .join('')
         .trim();
-      if (!answer) throw new AIProviderError('invalid_response');
+      if (!answer) {
+        console.warn('[ai] Gemini response did not include text', {
+          model,
+          finishReason: payload.candidates?.[0]?.finishReason || 'unknown',
+        });
+        throw new AIProviderError('invalid_response');
+      }
       return { answer, provider: 'gemini' };
     } catch (error) {
       if (error instanceof AIProviderError) throw error;

@@ -1,5 +1,5 @@
 import { calendarActivities, type CalendarActivityId } from '../lunar-calendar/activity-advice.ts';
-import { aiModes, type AIChatRequest, type AIClientContext, type AIHistoryMessage, type AIMode, type AISource } from './types.ts';
+import { aiModelPreferences, aiModes, type AIChatRequest, type AIClientContext, type AIHistoryMessage, type AIMode, type AIModelPreference, type AISource } from './types.ts';
 
 const sources = ['global', 'family-tree', 'member', 'calendar', 'activity', 'fortune'] as const;
 const maxMessageLength = 1_200;
@@ -97,4 +97,10 @@ export function parseAIChatRequest(value: unknown): AIChatRequest | null {
     return null;
   }
   return { message, mode, context, history };
+}
+
+export function parseAIModelPreference(value: unknown): AIModelPreference {
+  return aiModelPreferences.includes(value as AIModelPreference)
+    ? value as AIModelPreference
+    : 'auto';
 }

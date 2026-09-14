@@ -6221,12 +6221,10 @@ main#main.admin-page {
 }
 
 .ai-sheet-header {
-  display: flex;
+  display: grid;
   flex: 0 0 auto;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 22px 54px 15px 22px;
+  gap: 12px;
+  padding: 20px 52px 16px 22px;
   border-bottom: 1px solid #ebe2d6;
 }
 
@@ -6250,16 +6248,16 @@ main#main.admin-page {
 .ai-conversation-actions {
   display: flex;
   flex: 0 0 auto;
-  gap: 6px;
+  gap: 10px;
 }
 
 .ai-conversation-action {
   min-width: 0;
-  min-height: 30px;
-  gap: 4px;
+  min-height: 34px;
+  gap: 6px;
   border-color: #decdb9;
   border-radius: 5px;
-  padding: 4px 8px;
+  padding: 5px 10px;
   color: #80523a;
   background: #fffaf2;
   font-size: 11px;
@@ -6273,7 +6271,15 @@ main#main.admin-page {
 }
 
 .ai-conversation-delete {
+  min-width: 54px;
   color: #9a3932;
+}
+
+.ai-new-chat-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px #5d171626);
 }
 
 .ai-sheet-close {
@@ -6622,21 +6628,18 @@ main#main.admin-page {
   }
 
   .ai-sheet-header {
-    padding: calc(16px + env(safe-area-inset-top)) 52px 13px 18px;
+    gap: 10px;
+    padding: calc(16px + env(safe-area-inset-top)) 52px 14px 18px;
   }
 
   .ai-conversation-actions {
-    gap: 5px;
+    gap: 10px;
   }
 
   .ai-conversation-action {
-    width: 30px;
-    min-width: 30px;
-    padding: 0;
-  }
-
-  .ai-conversation-action-label {
-    display: none;
+    width: auto;
+    min-width: 0;
+    padding: 5px 10px;
   }
 
   .ai-sheet-close {
@@ -12520,7 +12523,6 @@ main#main .timeline-entry p {
 }
 
 .activity-day-layout {
-  align-items: start;
   grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.2fr);
 }
 
@@ -12608,14 +12610,38 @@ main#main .timeline-entry p {
 }
 
 .activity-date-field {
+  position: relative;
   width: 170px;
 }
 
 .activity-date-input {
   height: 40px !important;
+  padding-right: 44px !important;
   border-color: #ddd1bf !important;
   background: #fffefa !important;
   color: #4a3c30 !important;
+}
+
+.activity-date-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.activity-date-icon {
+  position: absolute;
+  z-index: 1;
+  right: 10px;
+  bottom: 9px;
+  width: 21px;
+  height: 21px;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .activity-option-grid {
@@ -12727,15 +12753,40 @@ main#main .timeline-entry p {
   gap: 8px;
 }
 
+.ai-model-switch {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  color: #746653;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.ai-model-switch .choice {
+  width: 100%;
+  height: 38px !important;
+  border-color: #ddd1bf;
+  background: #fffefa;
+  color: #5d4d3e;
+  font-size: 12px;
+}
+
+.fortune-model-switch {
+  margin-top: 12px;
+}
+
 .activity-analyze-button .ai-button-icon,
 .fortune-submit .ai-button-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   padding: 3px;
-  border: 1px solid #fff3df99;
-  border-radius: 50%;
-  background: #fff8e8;
-  box-shadow: 0 1px 2px #5817133d;
+  border: 1px solid #ffe8c7;
+  border-radius: 8px;
+  background: #fffdf8;
+  box-shadow: 0 1px 3px #58171352;
+  filter: drop-shadow(0 1px 1px #5a17153d);
 }
 
 .activity-resolution {
@@ -12791,6 +12842,11 @@ main#main .timeline-entry p {
   justify-items: start;
   gap: 10px;
   color: #766657;
+}
+
+.activity-empty-state {
+  align-content: start;
+  padding-top: 1px;
 }
 
 .activity-result-state .heritage-icon,
@@ -12977,6 +13033,20 @@ main#main .timeline-entry p {
   margin: 6px 0 0;
 }
 
+.activity-support-note {
+  margin: -7px 0 18px;
+  padding: 10px 12px;
+  border-left: 3px solid #bd7a3d;
+  background: #fff8e9;
+  color: #6b5640;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.activity-support-note strong {
+  color: #815432;
+}
+
 .activity-section-label {
   display: block;
   color: #927a61;
@@ -13121,6 +13191,23 @@ main#main .timeline-entry p {
   border: 1px solid #ecd9ca;
   border-radius: 6px;
   background: #fff9f4;
+}
+
+.activity-ai-conclusion {
+  margin-top: 14px;
+  padding: 15px 16px;
+  border: 1px solid #dfc5a4;
+  border-left: 3px solid #9a312d;
+  border-radius: 6px;
+  background: #fffaf2;
+}
+
+.activity-ai-conclusion p {
+  margin: 8px 0 0;
+  color: #4e3d30;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.65;
 }
 
 .activity-ai-loading,
@@ -13298,6 +13385,21 @@ main#main .timeline-entry p {
 
 .fortune-date-input {
   font-variant-numeric: tabular-nums;
+  padding-right: 42px !important;
+}
+
+.fortune-date-field {
+  position: relative;
+}
+
+.fortune-date-icon {
+  position: absolute;
+  right: 10px;
+  bottom: 9px;
+  width: 21px;
+  height: 21px;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .fortune-calendar-type > div {
@@ -13436,28 +13538,43 @@ main#main .timeline-entry p {
 }
 
 .fortune-reading-heading {
-  align-items: center;
-  padding-bottom: 17px;
+  align-items: flex-start;
+  padding-bottom: 16px;
   border-bottom: 1px solid #ebe2d6;
 }
 
-.fortune-empty-state > .heritage-icon {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
+.fortune-reading-summary {
+  margin-top: 18px;
+  padding: 15px 16px;
+  border: 1px solid #dfc5a4;
+  border-left: 3px solid #9a312d;
+  border-radius: 6px;
+  background: #fffaf2;
 }
 
-.fortune-overview {
-  margin-top: 17px;
-  color: #4f4034;
+.fortune-reading-summary h3 {
+  margin: 5px 0 0;
+  color: #4a372b;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.fortune-reading-summary p {
+  margin: 7px 0 0;
+  color: #5d4d3e;
   font-size: 14px;
+  line-height: 1.65;
+}
+
+.fortune-profile-section {
+  margin-top: 18px;
 }
 
 .fortune-profile-facts {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  margin: 18px 0 0;
+  margin: 9px 0 0;
 }
 
 .fortune-profile-facts > div {
@@ -13486,6 +13603,7 @@ main#main .timeline-entry p {
   text-overflow: ellipsis;
 }
 
+
 .fortune-pending-reading {
   margin: 18px 0 0;
   color: #7c6c59;
@@ -13494,19 +13612,21 @@ main#main .timeline-entry p {
 
 .fortune-interpretation {
   display: grid;
-  gap: 0;
-  margin-top: 22px;
-  border-top: 1px solid #ede5da;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .fortune-interpretation-section {
-  border-bottom: 1px solid #ede5da;
+  border: 1px solid #e8ddcf;
+  border-radius: 6px;
+  background: #fffefa;
 }
 
 .fortune-interpretation-section summary {
   display: flex;
   min-height: 50px;
   align-items: center;
+  padding: 0 14px;
   cursor: pointer;
   color: #76532e;
   font-size: 14px;
@@ -13531,7 +13651,7 @@ main#main .timeline-entry p {
 }
 
 .fortune-interpretation-section p {
-  margin: -1px 0 15px;
+  margin: -1px 14px 15px;
   color: #695b4c;
   font-size: 14px;
   line-height: 1.7;
@@ -13541,7 +13661,7 @@ main#main .timeline-entry p {
 .fortune-suggestions ul {
   display: grid;
   gap: 5px;
-  margin: 0 0 13px;
+  margin: 0 14px 13px;
   padding-left: 18px;
   color: #695b4c;
   font-size: 13px;
@@ -13550,6 +13670,10 @@ main#main .timeline-entry p {
 
 .fortune-suggestions {
   margin-top: 15px;
+  padding: 14px;
+  border: 1px solid #e8ddcf;
+  border-radius: 6px;
+  background: #fffaf2;
 }
 
 .fortune-suggestions strong {
@@ -13686,9 +13810,10 @@ main#main .timeline-entry p {
   display: grid;
   min-height: 0;
   flex: 1;
-  align-content: center;
+  align-content: start;
   justify-items: start;
   gap: 8px;
+  padding-top: 1px;
 }
 
 .fortune-empty-state h2 {
@@ -13815,6 +13940,15 @@ main#main .timeline-entry p {
 
   .activity-custom-submit {
     width: auto;
+  }
+
+  .ai-model-switch {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .ai-model-switch .choice {
+    font-size: 11px;
   }
 
   .activity-result-heading {

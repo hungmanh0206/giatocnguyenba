@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAIProvider } from '@/lib/ai/providers';
 import { AIProviderError, type AIResolvedContext } from '@/lib/ai/types';
+import { parseAIModelPreference } from '@/lib/ai/validation';
 import {
   calendarActivities,
   evaluateActivityDay,
@@ -13,6 +14,7 @@ import { getLunarDayInfo } from '@/lib/lunar-calendar/service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 type ActivityAIInterpretation = {
   shortSummary: string;
@@ -32,7 +34,12 @@ function parseDate(value: unknown) {
 
 function parseInterpretation(value: string): ActivityAIInterpretation | null {
   try {
-    const parsed = JSON.parse(value.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')) as Record<string, unknown>;
+    const cleaned = value.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    const parsed = JSON.parse(firstBrace >= 0 && lastBrace > firstBrace
+      ? cleaned.slice(firstBrace, lastBrace + 1)
+      : cleaned) as Record<string, unknown>;
     if (typeof parsed.shortSummary !== 'string' || typeof parsed.detailedExplanation !== 'string') return null;
     return {
       shortSummary: parsed.shortSummary.trim().slice(0, 500),
@@ -88,15 +95,16 @@ function cachedEvaluation(date: Date, activity: AlmanacActivity, label: string) 
   return { ...evaluation, activity: { ...evaluation.activity, label } };
 }
 
-async function generateInterpretation(evaluation: ActivityDayEvaluation) {
+async function generateInterpretation(evaluation: ActivityDayEvaluation, modelPreference: ReturnType<typeof parseAIModelPreference>) {
   const request = {
     message: `Giải thích kết quả cho việc ${evaluation.activity.label}.`,
     history: [],
     context: aiContext(),
     systemInstruction: systemInstruction(evaluation),
+    responseMimeType: 'application/json' as const,
   };
   try {
-    const provider = getAIProvider();
+    const provider = getAIProvider(modelPreference);
     const first = await provider.generate(request);
     const parsed = parseInterpretation(first.answer);
     if (parsed) return { interpretation: parsed, source: 'ai' as const };
@@ -119,7 +127,7 @@ export async function POST(request: Request) {
     if ('ambiguous' in activity) return NextResponse.json({ message: 'Bạn muốn xem theo việc nào?', suggestions: activity.ambiguous }, { status: 422 });
     const evaluation = cachedEvaluation(date, activity.activity, activity.label);
     if ('error' in evaluation) return NextResponse.json({ message: evaluation.error }, { status: 400 });
-    const ai = await generateInterpretation(evaluation);
+    const ai = await generateInterpretation(evaluation, parseAIModelPreference(payload.modelPreference));
     return NextResponse.json({ evaluation, ...ai }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return NextResponse.json({ message: 'Chưa thể phân tích ngày này.' }, { status: 500 });

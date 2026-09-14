@@ -1,5 +1,10 @@
 import { getAIProvider } from '../ai/providers/index.ts';
-import { AIProviderError, type AIHistoryMessage, type AIResolvedContext } from '../ai/types.ts';
+import {
+  AIProviderError,
+  type AIHistoryMessage,
+  type AIModelPreference,
+  type AIResolvedContext,
+} from '../ai/types.ts';
 import type {
   AstrologyFocus,
   AstrologyInterpretation,
@@ -22,20 +27,29 @@ function arrays(value: unknown) {
     : [];
 }
 
-function section(value: unknown, keys: Array<'strengths' | 'opportunities' | 'considerations'>): AstrologyInterpretationSection | null {
-  if (typeof value !== 'object' || value === null) return null;
-  const input = value as Record<string, unknown>;
-  if (typeof input.summary !== 'string' || !input.summary.trim()) return null;
+function section(
+  value: unknown,
+  keys: Array<'strengths' | 'opportunities' | 'considerations'>,
+): AstrologyInterpretationSection {
+  const input = typeof value === 'object' && value !== null
+    ? value as Record<string, unknown>
+    : {};
   return {
-    summary: input.summary.trim().slice(0, 900),
+    summary: typeof input.summary === 'string' && input.summary.trim()
+      ? input.summary.trim().slice(0, 900)
+      : 'Chưa có luận giải riêng cho nội dung này; hãy dùng các dữ kiện hiện có để tham khảo.',
     ...Object.fromEntries(keys.map((key) => [key, arrays(input[key])])),
-  } as AstrologyInterpretationSection;
+  };
 }
 
 export function parseAstrologyInterpretation(value: string): AstrologyInterpretation | null {
   try {
     const cleaned = value.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-    const input = JSON.parse(cleaned) as Record<string, unknown>;
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    const input = JSON.parse(firstBrace >= 0 && lastBrace > firstBrace
+      ? cleaned.slice(firstBrace, lastBrace + 1)
+      : cleaned) as Record<string, unknown>;
     const overview = input.overview as Record<string, unknown> | undefined;
     const personality = section(input.personality, ['strengths', 'considerations']);
     const career = section(input.career, ['strengths', 'considerations']);
@@ -44,19 +58,23 @@ export function parseAstrologyInterpretation(value: string): AstrologyInterpreta
     const family = section(input.family, []);
     const relationships = section(input.relationships, []);
     const currentYear = input.currentYear as Record<string, unknown> | undefined;
-
-    if (
-      typeof overview?.title !== 'string' ||
-      typeof overview.summary !== 'string' ||
-      !personality || !career || !wealth || !love || !family || !relationships ||
-      !currentYear ||
-      !Number.isInteger(currentYear.year) ||
-      typeof currentYear.summary !== 'string' ||
-      !Array.isArray(input.suggestions)
-    ) return null;
+    const currentYearValue = typeof currentYear?.year === 'number' && Number.isInteger(currentYear.year)
+      ? currentYear.year
+      : new Date().getFullYear();
+    const hasInterpretation = typeof overview?.summary === 'string' && overview.summary.trim()
+      || [input.personality, input.career, input.wealth, input.love, input.family, input.relationships]
+        .some((value) => typeof value === 'object' && value !== null && typeof (value as Record<string, unknown>).summary === 'string');
+    if (!hasInterpretation) return null;
 
     return {
-      overview: { title: overview.title.trim().slice(0, 100), summary: overview.summary.trim().slice(0, 900) },
+      overview: {
+        title: typeof overview?.title === 'string' && overview.title.trim()
+          ? overview.title.trim().slice(0, 100)
+          : 'Tổng quan',
+        summary: typeof overview?.summary === 'string' && overview.summary.trim()
+          ? overview.summary.trim().slice(0, 900)
+          : personality.summary,
+      },
       personality,
       career,
       wealth,
@@ -64,10 +82,12 @@ export function parseAstrologyInterpretation(value: string): AstrologyInterpreta
       family,
       relationships,
       currentYear: {
-        year: currentYear.year as number,
-        summary: currentYear.summary.trim().slice(0, 900),
-        opportunities: arrays(currentYear.opportunities),
-        considerations: arrays(currentYear.considerations),
+        year: currentYearValue,
+        summary: typeof currentYear?.summary === 'string' && currentYear.summary.trim()
+          ? currentYear.summary.trim().slice(0, 900)
+          : 'Hãy duy trì nhịp sống cân bằng và điều chỉnh kế hoạch theo điều kiện thực tế trong năm nay.',
+        opportunities: arrays(currentYear?.opportunities),
+        considerations: arrays(currentYear?.considerations),
       },
       suggestions: arrays(input.suggestions),
       disclaimer: typeof input.disclaimer === 'string' && input.disclaimer.trim()
@@ -84,7 +104,7 @@ export function buildEngineOnlyInterpretation(profile: AstrologyProfile): Astrol
     ? `Giờ sinh ${profile.birth.birthTime}${profile.birth.birthHourBranch ? `, giờ ${profile.birth.birthHourBranch}` : ''} đã được hệ thống chuẩn hóa.`
     : 'Chưa có giờ sinh nên hệ thống không tính Can Chi giờ và không đưa ra phần phụ thuộc giờ sinh.';
   const dataNote = `Dữ liệu hiện có gồm ngày dương ${profile.birth.solarDate}, ngày âm ${profile.birth.lunarDate.day}/${profile.birth.lunarDate.month}/${profile.birth.lunarDate.year}${profile.birth.lunarDate.isLeapMonth ? ' nhuận' : ''}, Can Chi năm ${profile.canChi.year} và Nạp âm ${profile.fiveElements.napAm || 'chưa có'}.`;
-  const unavailable = 'Phần luận giải chi tiết đang được hoàn thiện. Bạn có thể dùng những thông tin ngày sinh ở trên để tham khảo và thử lại sau.';
+  const unavailable = 'Hồ sơ hiện được trình bày từ các dữ kiện ngày sinh đã chuẩn hóa. Các kết luận chuyên sâu chỉ nên được xem là gợi ý tham khảo khi chưa có phản hồi AI.';
 
   return {
     overview: { title: 'Tổng quan ngày sinh', summary: `${dataNote} ${timeNote}` },
@@ -100,7 +120,7 @@ export function buildEngineOnlyInterpretation(profile: AstrologyProfile): Astrol
       opportunities: [],
       considerations: [],
     },
-    suggestions: ['Có thể thử lại khi dịch vụ AI sẵn sàng.', 'Hãy dùng các dữ kiện lịch như thông tin tham khảo, không xem đây là lá số Tử Vi Đẩu Số đầy đủ.'],
+    suggestions: ['Dùng các dữ kiện lịch để tự chiêm nghiệm, đồng thời cân nhắc bối cảnh thực tế khi đưa ra quyết định.', 'Đây không phải lá số Tử Vi Đẩu Số đầy đủ; phần phụ thuộc dữ kiện chuyên sâu không được tự suy diễn.'],
     disclaimer,
   };
 }
@@ -141,7 +161,7 @@ Chủ đề ưu tiên: ${focusLabels[focus]}. Năm hiện tại: ${currentYear}.
 
 Trả về đúng JSON, không bọc Markdown, có đúng cấu trúc:
 {"overview":{"title":"Tổng quan","summary":"..."},"personality":{"summary":"...","strengths":["..."],"considerations":["..."]},"career":{"summary":"...","strengths":["..."],"considerations":["..."]},"wealth":{"summary":"...","opportunities":["..."],"considerations":["..."]},"love":{"summary":"...","strengths":["..."],"considerations":["..."]},"family":{"summary":"..."},"relationships":{"summary":"..."},"currentYear":{"year":${currentYear},"summary":"...","opportunities":["..."],"considerations":["..."]},"suggestions":["..."],"disclaimer":"..."}.
-Mỗi summary chỉ 1 đoạn ngắn; mỗi mảng 0-4 ý.`;
+Mỗi summary viết 2-4 câu cụ thể, có lý giải và gợi ý thực tế nhưng chỉ dựa trên ASTROLOGY_DATA. Mỗi mảng đưa 2-4 ý khi dữ kiện cho phép; không lặp lại ý giữa các phần.`;
 }
 
 function followUpInstruction(profile: AstrologyProfile, interpretation: AstrologyInterpretation | null) {
@@ -154,14 +174,19 @@ ASTROLOGY_DATA: ${JSON.stringify(profile)}
 KẾT_QUẢ_TRƯỚC: ${JSON.stringify(interpretation)}`;
 }
 
-export async function generateAstrologyInterpretation(profile: AstrologyProfile, focus: AstrologyFocus) {
+export async function generateAstrologyInterpretation(
+  profile: AstrologyProfile,
+  focus: AstrologyFocus,
+  modelPreference: AIModelPreference = 'auto',
+) {
   const currentYear = new Date().getFullYear();
-  const provider = getAIProvider();
+  const provider = getAIProvider(modelPreference);
   const request = {
     message: `Hãy lập luận giải có cấu trúc cho ${profile.identity.fullName}.`,
     history: [] as AIHistoryMessage[],
     context: profileContext(profile),
     systemInstruction: instruction(profile, focus, currentYear),
+    responseMimeType: 'application/json' as const,
   };
 
   try {
@@ -191,11 +216,13 @@ export async function generateAstrologyFollowUp({
   interpretation,
   question,
   history,
+  modelPreference = 'auto',
 }: {
   profile: AstrologyProfile;
   interpretation: AstrologyInterpretation | null;
   question: string;
   history: AIHistoryMessage[];
+  modelPreference?: AIModelPreference;
 }) {
   const sensitive = /bệnh|ung thư|chẩn đoán|đầu tư|mua cổ phiếu|ly hôn|chắc chắn giàu/i.test(question);
   if (sensitive) {
@@ -206,7 +233,7 @@ export async function generateAstrologyFollowUp({
   }
 
   try {
-    const result = await getAIProvider().generate({
+    const result = await getAIProvider(modelPreference).generate({
       message: question,
       history: history.slice(-6),
       context: profileContext(profile),

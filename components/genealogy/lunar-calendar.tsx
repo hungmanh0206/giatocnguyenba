@@ -59,6 +59,7 @@ import type {
   BirthTimeAccuracy,
 } from '@/lib/astrology/types';
 import { astrologyFocuses, type AstrologyFocus } from '@/lib/astrology/types';
+import type { AIModelPreference } from '@/lib/ai/types';
 
 const calendarMonthOptions = Array.from({ length: 12 }, (_, month) => ({
   value: String(month),
@@ -71,6 +72,11 @@ const calendarYearOptions = Array.from({ length: 400 }, (_, offset) => {
 });
 
 const astrologyEnabled = process.env.NEXT_PUBLIC_ASTROLOGY_ENABLED !== 'false';
+const aiModelOptions = [
+  { value: 'auto', label: 'Tự động (Gemini → OpenAI)' },
+  { value: 'gemini', label: 'Gemini' },
+  { value: 'openai', label: 'OpenAI GPT-5 mini' },
+];
 
 function inputDateValue(date: Date) {
   const year = date.getFullYear();
@@ -619,8 +625,9 @@ function LunarCalendarView() {
 function ActivityDayView() {
   const [today] = useState(vietnamToday);
   const [selectedDate, setSelectedDate] = useState(today);
-  const [activityId, setActivityId] = useState<CalendarActivityId | null>('wedding');
+  const [activityId, setActivityId] = useState<CalendarActivityId | null>(null);
   const [otherActivityInput, setOtherActivityInput] = useState('');
+  const [modelPreference, setModelPreference] = useState<AIModelPreference>('auto');
   const [analysis, setAnalysis] = useState<ActivityAnalysis | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -664,6 +671,7 @@ function ActivityDayView() {
         body: JSON.stringify({
           selectedDate: inputDateValue(selectedDate),
           ...(activityId ? { activityId } : { customActivity: otherActivityInput.trim() }),
+          modelPreference,
         }),
       });
       const data = (await response.json()) as ActivityAnalysis & {
@@ -694,6 +702,12 @@ function ActivityDayView() {
   }
 
   function selectActivity(nextActivity: CalendarActivityId) {
+    if (activityId === nextActivity) {
+      setActivityId(null);
+      clearAnalysis();
+      return;
+    }
+
     setActivityId(nextActivity);
     setOtherActivityInput('');
     clearAnalysis();
@@ -745,6 +759,7 @@ function ActivityDayView() {
                   value={inputDateValue(selectedDate)}
                   onChange={(event) => selectDate(event.target.value)}
                 />
+                <HeritageIcon className="activity-date-icon" name="solar-calendar" size={18} />
               </label>
             </div>
 
@@ -801,6 +816,23 @@ function ActivityDayView() {
                 <AIButtonIcon />
                 {isAnalyzing ? 'Đang phân tích...' : 'Hỏi AI về ngày này'}
             </Button>
+            <label className="ai-model-switch">
+              <span>Mô hình AI</span>
+              <Select
+                items={aiModelOptions}
+                value={modelPreference}
+                onValueChange={(value) => setModelPreference(value as AIModelPreference)}
+              >
+                <SelectTrigger aria-label="Mô hình AI cho xem ngày" className="choice">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {aiModelOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
           </section>
 
           <section className="activity-result" aria-live="polite">
@@ -826,9 +858,13 @@ function ActivityDayView() {
                 </div>
 
                 <section className="activity-result-summary activity-result-block">
-                  <span className="activity-section-label">KẾT LUẬN NHANH</span>
+                  <span className="activity-section-label">ĐÁNH GIÁ THEO LỊCH</span>
                   <p>{analysis.evaluation.summaryReason}</p>
                 </section>
+                {analysis.evaluation.activity.supportLevel !== 'full' ? <p className="activity-support-note">
+                  <strong>{analysis.evaluation.activity.supportLevel === 'unsupported' ? 'Chưa có bộ quy tắc riêng.' : 'Phạm vi tham khảo.'}</strong>
+                  {' '}{analysis.evaluation.activity.supportNote || 'Kết quả chỉ dùng các dữ kiện lịch đã có.'}
+                </p> : null}
 
                 <div className="activity-factor-grid">
                   <section className="activity-result-block">
@@ -878,7 +914,11 @@ function ActivityDayView() {
 
                 <section className="activity-ai-analysis activity-result-block">
                   <span className="activity-section-label">PHÂN TÍCH AI</span>
-                  {analysis.interpretation ? <div className="activity-ai-answer"><p>{analysis.interpretation.shortSummary}</p><p>{analysis.interpretation.detailedExplanation}</p>{analysis.interpretation.practicalSuggestion ? <p><strong>Gợi ý:</strong> {analysis.interpretation.practicalSuggestion}</p> : null}</div> : <p className="activity-ai-placeholder">Phần gợi ý chi tiết đang được hoàn thiện. Bạn vẫn có thể tham khảo các thông tin ngày ở trên.</p>}
+                  {analysis.interpretation ? <div className="activity-ai-answer"><p>{analysis.interpretation.detailedExplanation}</p>{analysis.interpretation.practicalSuggestion ? <p><strong>Gợi ý:</strong> {analysis.interpretation.practicalSuggestion}</p> : null}</div> : <p className="activity-ai-placeholder">Phần gợi ý chi tiết đang được hoàn thiện. Bạn vẫn có thể tham khảo các thông tin ngày ở trên.</p>}
+                </section>
+                <section className="activity-ai-conclusion activity-result-block">
+                  <span className="activity-section-label">KẾT LUẬN</span>
+                  <p>{analysis.interpretation?.shortSummary || analysis.evaluation.summaryReason}</p>
                 </section>
                 <p className="calendar-policy activity-policy">
                   <span className="calendar-policy-info" aria-hidden="true">i</span>
@@ -898,7 +938,6 @@ function ActivityDayView() {
               </div>
             ) : (
               <div className="activity-result-state activity-empty-state">
-                <HeritageIcon name="activity-calendar" size={31} />
                 <span className="eyebrow">KẾT QUẢ PHÂN TÍCH</span>
                 <h2>Chưa có phân tích</h2>
                 <p>Chọn một công việc và ngày ở block bên trái, sau đó bấm “Hỏi AI về ngày này”.</p>
@@ -922,6 +961,7 @@ function FortuneView() {
   const [unknownBirthTime, setUnknownBirthTime] = useState(false);
   const [birthTimeAccuracy, setBirthTimeAccuracy] = useState<BirthTimeAccuracy>('exact');
   const [focus, setFocus] = useState<AstrologyFocus>('overall');
+  const [modelPreference, setModelPreference] = useState<AIModelPreference>('auto');
   const [profile, setProfile] = useState<AstrologyProfile | null>(null);
   const [reading, setReading] = useState<AstrologyInterpretation | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -993,7 +1033,7 @@ function FortuneView() {
       const response = await fetch('/api/astrology/interpretation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input, focus }),
+        body: JSON.stringify({ input, focus, modelPreference }),
       });
       const data = (await response.json()) as {
         interpretation?: AstrologyInterpretation;
@@ -1024,7 +1064,7 @@ function FortuneView() {
       const response = await fetch('/api/astrology/interpretation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input, focus, question, interpretation: reading, history: followUpHistory }),
+        body: JSON.stringify({ input, focus, question, interpretation: reading, history: followUpHistory, modelPreference }),
       });
       const data = (await response.json()) as { answer?: string; message?: string };
       if (!response.ok || !data.answer) throw new Error(data.message || 'Chưa thể nhận câu trả lời.');
@@ -1090,7 +1130,7 @@ function FortuneView() {
                   value={fullName}
                 />
               </label>
-              <div className="fortune-field fortune-birth-date">
+              <div className="fortune-field fortune-birth-date fortune-date-field">
                 <span>Ngày sinh</span>
                 <Input
                   aria-label="Ngày sinh, tháng sinh, năm sinh"
@@ -1104,6 +1144,7 @@ function FortuneView() {
                   placeholder="DD/MM/YYYY"
                   value={birthDate}
                 />
+                <HeritageIcon className="fortune-date-icon" name="solar-calendar" size={18} />
               </div>
               <div className="fortune-field fortune-calendar-type">
                 <span>Loại lịch</span>
@@ -1183,6 +1224,23 @@ function FortuneView() {
               <AIButtonIcon size={19} />
               {loadingStage === 'calendar' ? 'Đang tính dữ liệu ngày sinh...' : loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : loadingStage === 'ai' ? 'Đang luận giải bằng AI...' : 'Luận giải tử vi'}
             </Button>
+            <label className="ai-model-switch fortune-model-switch">
+              <span>Mô hình AI</span>
+              <Select
+                items={aiModelOptions}
+                value={modelPreference}
+                onValueChange={(value) => setModelPreference(value as AIModelPreference)}
+              >
+                <SelectTrigger aria-label="Mô hình AI cho tử vi" className="choice">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {aiModelOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
             <p className="fortune-disclaimer">
               Nội dung mang tính tham khảo và giải trí, không thay thế tư vấn
               chuyên môn hay quyết định quan trọng.
@@ -1205,12 +1263,20 @@ function FortuneView() {
                     <p>{profile.identity.gender === 'male' ? 'Nam' : 'Nữ'} · {dateLabel}{profile.birth.birthTime ? ` · ${profile.birth.birthTime}${profile.birth.birthHourBranch ? `, giờ ${profile.birth.birthHourBranch}` : ''}` : ' · Chưa rõ giờ sinh'}</p>
                   </div>
                 </div>
-                <dl className="fortune-profile-facts">
-                  <div><dt>Âm lịch</dt><dd>{profile.birth.lunarDate.day}/{profile.birth.lunarDate.month}/{profile.birth.lunarDate.year}{profile.birth.lunarDate.isLeapMonth ? ' nhuận' : ''}</dd></div>
-                  <div><dt>Can Chi năm</dt><dd>{profile.canChi.year}</dd></div>
-                  <div><dt>Nạp âm</dt><dd>{profile.fiveElements.napAm || 'Đang cập nhật'}</dd></div>
-                  <div><dt>Ngũ hành</dt><dd>{profile.fiveElements.yearElement || 'Đang cập nhật'}{profile.fiveElements.yinYang ? ` · ${profile.fiveElements.yinYang}` : ''}</dd></div>
-                </dl>
+                {reading ? <section className="fortune-reading-summary">
+                  <span className="activity-section-label">KẾT LUẬN</span>
+                  <h3>{reading.overview.title}</h3>
+                  <p>{reading.overview.summary}</p>
+                </section> : null}
+                <section className="fortune-profile-section">
+                  <span className="activity-section-label">HỒ SƠ ĐÃ CHUẨN HÓA</span>
+                  <dl className="fortune-profile-facts">
+                    <div><dt>Âm lịch</dt><dd>{profile.birth.lunarDate.day}/{profile.birth.lunarDate.month}/{profile.birth.lunarDate.year}{profile.birth.lunarDate.isLeapMonth ? ' nhuận' : ''}</dd></div>
+                    <div><dt>Can Chi năm</dt><dd>{profile.canChi.year}</dd></div>
+                    <div><dt>Nạp âm</dt><dd>{profile.fiveElements.napAm || 'Đang cập nhật'}</dd></div>
+                    <div><dt>Ngũ hành</dt><dd>{profile.fiveElements.yearElement || 'Đang cập nhật'}{profile.fiveElements.yinYang ? ` · ${profile.fiveElements.yinYang}` : ''}</dd></div>
+                  </dl>
+                </section>
                 {reading ? <FortuneInterpretation reading={reading} /> : <p className="fortune-pending-reading">{loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : 'Đang luận giải bằng AI...'}</p>}
                 {reading ? (
                   <div className="fortune-follow-up">
@@ -1229,7 +1295,6 @@ function FortuneView() {
               </div>
             ) : (
               <div className="fortune-empty-state">
-                <HeritageIcon name="message" size={31} />
                 <h2>Luận giải của bạn</h2>
                 <p>Nhập họ tên, ngày sinh, giới tính và giờ sinh để hệ thống tạo hồ sơ độc lập tại đây.</p>
               </div>
@@ -1277,12 +1342,8 @@ function FortuneInterpretation({
   ];
   return (
     <div className="fortune-interpretation">
-      <details className="fortune-interpretation-section" open>
-        <summary>{reading.overview.title}</summary>
-        <p>{reading.overview.summary}</p>
-      </details>
       {sections.map((section) => (
-        <details className="fortune-interpretation-section" key={section.id}>
+        <details className="fortune-interpretation-section" key={section.id} open>
           <summary>{section.title}</summary>
           <p>{section.value.summary}</p>
           {section.value.strengths?.length ? <ul>{section.value.strengths.map((item) => <li key={item}>{item}</li>)}</ul> : null}
@@ -1290,7 +1351,7 @@ function FortuneInterpretation({
           {section.value.considerations?.length ? <ul>{section.value.considerations.map((item) => <li key={item}>{item}</li>)}</ul> : null}
         </details>
       ))}
-      <details className="fortune-interpretation-section">
+      <details className="fortune-interpretation-section" open>
         <summary>Vận năm {reading.currentYear.year}</summary>
         <p>{reading.currentYear.summary}</p>
         {reading.currentYear.opportunities.length ? <ul>{reading.currentYear.opportunities.map((item) => <li key={item}>{item}</li>)}</ul> : null}

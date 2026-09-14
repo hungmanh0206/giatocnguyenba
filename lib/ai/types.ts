@@ -3,6 +3,8 @@ import type { CalendarActivityId } from '@/lib/lunar-calendar/activity-advice';
 export const aiModes = ['general', 'genealogy', 'calendar', 'horoscope'] as const;
 
 export type AIMode = (typeof aiModes)[number];
+export const aiModelPreferences = ['auto', 'gemini', 'openai'] as const;
+export type AIModelPreference = (typeof aiModelPreferences)[number];
 
 export type AISource =
   | 'global'
@@ -140,16 +142,17 @@ export type AIProviderRequest = {
   history: AIHistoryMessage[];
   context: AIResolvedContext;
   systemInstruction: string;
+  responseMimeType?: 'application/json';
 };
 
 export type AIProviderResponse = {
   answer: string;
-  provider: 'gemini' | 'mock';
+  provider: 'gemini' | 'openai' | 'mock';
 };
 
 export type AIChatResponse = {
   answer: string;
-  provider: 'gemini' | 'mock';
+  provider: 'gemini' | 'openai' | 'mock';
   contextUsed: {
     personId?: string;
     selectedDate?: string;
