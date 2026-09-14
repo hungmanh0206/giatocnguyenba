@@ -1,7 +1,8 @@
 'use client';
 
-import { CalendarDays, Sparkles, UsersRound } from 'lucide-react';
 import { type AIMode, type AIClientContext } from '@/lib/ai/types';
+import { HeritageIcon } from '@/components/genealogy/heritage-icon';
+import { AIButtonIcon } from './ai-button-icon';
 
 const labels: Record<AIMode, { title: string; description: string }> = {
   general: {
@@ -34,7 +35,6 @@ export function AIContextHeader({
   onClearContext?: () => void;
 }) {
   const label = labels[mode];
-  const Icon = mode === 'calendar' ? CalendarDays : mode === 'genealogy' ? UsersRound : Sparkles;
   const detail = contextLabel || (context.selectedDate
     ? `Đang xem ngày ${new Date(`${context.selectedDate}T12:00:00`).toLocaleDateString('vi-VN')}`
     : context.birthYear
@@ -44,7 +44,7 @@ export function AIContextHeader({
   return (
     <div className="ai-context-header">
       <span className="ai-context-icon" aria-hidden="true">
-        <Icon size={19} />
+        {mode === 'horoscope' ? <AIButtonIcon size={20} /> : <HeritageIcon name={mode === 'calendar' ? 'calendar' : mode === 'genealogy' ? 'members' : 'message'} size={16} />}
       </span>
       <span className="ai-context-copy">
         <strong>{label.title}</strong>

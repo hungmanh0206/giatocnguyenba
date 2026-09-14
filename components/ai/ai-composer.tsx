@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, type KeyboardEvent } from 'react';
-import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { HeritageIcon } from '@/components/genealogy/heritage-icon';
 
 export function AIComposer({
   disabled,
@@ -49,7 +49,7 @@ export function AIComposer({
         title="Gửi câu hỏi"
         type="button"
       >
-        <Send size={17} />
+        <HeritageIcon name="next" size={17} />
       </Button>
     </div>
   );

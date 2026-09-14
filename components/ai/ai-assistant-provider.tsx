@@ -10,7 +10,6 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
-import { RefreshCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -25,6 +24,8 @@ import { AIComposer } from './ai-composer';
 import { AIContextHeader } from './ai-context-header';
 import { AIMessage, type AssistantMessage } from './ai-message';
 import { AIQuickActions } from './ai-quick-actions';
+import { AIButtonIcon } from './ai-button-icon';
+import { HeritageIcon } from '@/components/genealogy/heritage-icon';
 
 const storageKey = 'nguyen-ba-ai-assistant-session';
 const isEnabled = process.env.NEXT_PUBLIC_AI_ASSISTANT_ENABLED !== 'false';
@@ -139,7 +140,7 @@ function AIAssistantDrawer({
           className="ai-sheet-close"
           render={<Button size="icon-sm" variant="ghost" />}
         >
-          <span aria-hidden="true">×</span>
+          <HeritageIcon name="close" size={16} />
         </SheetClose>
         <SheetHeader className="ai-sheet-header">
           <SheetTitle>Trợ lý AI</SheetTitle>
@@ -158,7 +159,7 @@ function AIAssistantDrawer({
             </div>
           ) : (
             <div className="ai-empty-state">
-              <Sparkles size={27} aria-hidden="true" />
+              <AIButtonIcon size={28} />
               <strong>Xin chào, mình có thể giúp gì?</strong>
               <p>Hỏi về thành viên, quan hệ gia phả, lịch âm hoặc ngày giỗ.</p>
               <AIQuickActions mode={active.mode} onChoose={(prompt) => void send(prompt)} />
@@ -169,7 +170,7 @@ function AIAssistantDrawer({
             <div className="ai-error" role="alert">
               <span>{error}</span>
               <Button onClick={() => void send(lastPrompt)} size="sm" type="button" variant="outline">
-                <RefreshCw size={14} /> Thử lại
+                <HeritageIcon name="reset" size={14} /> Thử lại
               </Button>
             </div>
           ) : null}

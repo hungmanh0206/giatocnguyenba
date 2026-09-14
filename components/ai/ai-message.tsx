@@ -1,7 +1,7 @@
 'use client';
 
-import { Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { HeritageIcon } from '@/components/genealogy/heritage-icon';
 import { cn } from '@/lib/utils';
 
 export type AssistantMessage = {
@@ -79,7 +79,7 @@ export function AIMessage({ message }: { message: AssistantMessage }) {
           type="button"
           variant="ghost"
         >
-          <Copy size={14} />
+          <HeritageIcon name="document" size={14} />
         </Button>
       ) : null}
     </article>

@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState, type FormEvent } from 'react';
-import { Check } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -340,7 +339,6 @@ export function AdminPage() {
         {error && <p className="form-error" role="alert">{error}</p>}
         {success && (
           <div className="success-message" role="status">
-            <Check size={18} />
             {success}
           </div>
         )}
@@ -381,7 +379,6 @@ export function AdminPage() {
       </div>
       {success && (
         <div className="success-message" role="status">
-          <Check size={18} />
           {success}
         </div>
       )}

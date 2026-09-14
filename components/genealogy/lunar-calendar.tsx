@@ -7,6 +7,7 @@ import { isSameMonth } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -42,18 +43,22 @@ import {
 import type { UpcomingFamilyEvent } from '@/lib/lunar-calendar/types';
 import {
   calendarActivities,
-  getCalendarActivityAdvice,
+  labelForActivityLevel,
+  labelForAlmanacActivity,
+  resolveCustomActivity,
+  type ActivityDayEvaluation,
+  type AlmanacActivity,
   type CalendarActivityId,
 } from '@/lib/lunar-calendar/activity-advice';
-import {
-  fortuneBirthHours,
-  fortuneFocuses,
-  fortuneGenders,
-  type FortuneBirthHour,
-  type FortuneFocus,
-  type FortuneGender,
-  type FortuneReading,
-} from '@/lib/lunar-calendar/fortune-advice';
+import type {
+  AstrologyCalendarType,
+  AstrologyGender,
+  AstrologyInput,
+  AstrologyInterpretation,
+  AstrologyProfile,
+  BirthTimeAccuracy,
+} from '@/lib/astrology/types';
+import { astrologyFocuses, type AstrologyFocus } from '@/lib/astrology/types';
 
 const calendarMonthOptions = Array.from({ length: 12 }, (_, month) => ({
   value: String(month),
@@ -64,6 +69,8 @@ const calendarYearOptions = Array.from({ length: 400 }, (_, offset) => {
   const year = 1800 + offset;
   return { value: String(year), label: `Năm ${year}` };
 });
+
+const astrologyEnabled = process.env.NEXT_PUBLIC_ASTROLOGY_ENABLED !== 'false';
 
 function inputDateValue(date: Date) {
   const year = date.getFullYear();
@@ -77,6 +84,18 @@ function inputDateToDate(value: string, fallback: Date) {
   const date = new Date(year, month - 1, day);
   return Number.isNaN(date.getTime()) ? fallback : date;
 }
+
+type ActivityAIInterpretation = {
+  shortSummary: string;
+  detailedExplanation: string;
+  practicalSuggestion?: string;
+};
+
+type ActivityAnalysis = {
+  evaluation: ActivityDayEvaluation;
+  interpretation: ActivityAIInterpretation | null;
+  source: 'ai' | 'engine';
+};
 
 function LunarCalendarView() {
   const { members } = useFamily();
@@ -584,20 +603,19 @@ function LunarCalendarView() {
 function ActivityDayView() {
   const [today] = useState(vietnamToday);
   const [selectedDate, setSelectedDate] = useState(today);
-  const [activityId, setActivityId] = useState<CalendarActivityId>('wedding');
+  const [activityId, setActivityId] = useState<CalendarActivityId | null>('wedding');
   const [otherActivityInput, setOtherActivityInput] = useState('');
-  const [otherActivity, setOtherActivity] = useState('');
-  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<ActivityAnalysis | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const analysisController = useRef<AbortController | null>(null);
-  const info = getLunarDayInfo(selectedDate);
-  const advice = info.supported
-    ? getCalendarActivityAdvice(info, activityId)
-    : null;
-  const selectedActivity = calendarActivities.find((activity) => activity.id === activityId);
-  const activityLabel = otherActivity || selectedActivity?.label || 'Công việc đang chọn';
-  const isCustomActivity = Boolean(otherActivity);
+  const customResolution = useMemo(
+    () => resolveCustomActivity(otherActivityInput),
+    [otherActivityInput],
+  );
+  const canAnalyze = Boolean(
+    activityId || (customResolution && customResolution.kind !== 'ambiguous'),
+  );
 
   useEffect(
     () => () => {
@@ -614,12 +632,7 @@ function ActivityDayView() {
     setIsAnalyzing(false);
   }
 
-  async function requestAnalysis(
-    subject: string,
-    activity?: CalendarActivityId,
-  ) {
-    if (!info.supported) return;
-
+  async function requestAnalysis() {
     analysisController.current?.abort();
     const controller = new AbortController();
     analysisController.current = controller;
@@ -628,32 +641,36 @@ function ActivityDayView() {
     setIsAnalyzing(true);
 
     try {
-      const response = await fetch('/api/ai', {
+      const response = await fetch('/api/almanac/interpretation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
         body: JSON.stringify({
-          message: `Hãy phân tích ngày đang chọn cho việc "${subject}". Chỉ dùng dữ kiện lịch trong APP CONTEXT. Trình bày ngắn gọn về mức độ phù hợp, các yếu tố cần lưu ý và gợi ý thực tế; không tự tạo thêm dữ kiện lịch.`,
-          mode: 'calendar',
-          context: {
-            source: activity ? 'activity' : 'calendar',
-            selectedDate: inputDateValue(selectedDate),
-            ...(activity ? { activity } : {}),
-          },
-          history: [],
+          selectedDate: inputDateValue(selectedDate),
+          ...(activityId ? { activityId } : { customActivity: otherActivityInput.trim() }),
         }),
       });
-      const data = (await response.json()) as { answer?: string; error?: string };
-      if (!response.ok || !data.answer) {
-        throw new Error(data.error || 'Chưa thể tạo phần phân tích.');
+      const data = (await response.json()) as ActivityAnalysis & {
+        message?: string;
+        suggestions?: AlmanacActivity[];
+      };
+      if (response.status === 422 && data.suggestions) {
+        throw new Error('Bạn muốn xem theo việc nào? Hãy chọn một gợi ý ở block bên trái.');
       }
-      if (!controller.signal.aborted) setAnalysis(data.answer);
+      if (!response.ok || !data.evaluation) throw new Error(data.message || 'Chưa thể phân tích ngày này.');
+      if (!controller.signal.aborted) {
+        setAnalysis({
+          evaluation: data.evaluation,
+          interpretation: data.interpretation || null,
+          source: data.source,
+        });
+      }
     } catch (requestError) {
       if (controller.signal.aborted) return;
       setAnalysisError(
         requestError instanceof Error
           ? requestError.message
-          : 'Chưa thể tạo phần phân tích. Vui lòng thử lại.',
+          : 'Chưa thể phân tích ngày này. Vui lòng thử lại.',
       );
     } finally {
       if (!controller.signal.aborted) setIsAnalyzing(false);
@@ -661,24 +678,31 @@ function ActivityDayView() {
   }
 
   function selectActivity(nextActivity: CalendarActivityId) {
-    const next = calendarActivities.find((activity) => activity.id === nextActivity);
     setActivityId(nextActivity);
-    setOtherActivity('');
     setOtherActivityInput('');
-    if (next) void requestAnalysis(next.label, nextActivity);
-  }
-
-  function selectDate(value: string) {
-    setSelectedDate(inputDateToDate(value, today));
     clearAnalysis();
   }
 
-  function submitOtherActivity(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const subject = otherActivityInput.trim();
-    if (!subject) return;
-    setOtherActivity(subject);
-    void requestAnalysis(subject);
+  function selectDate(value: string) {
+    const nextDate = inputDateToDate(value, today);
+    setSelectedDate(nextDate);
+    clearAnalysis();
+  }
+
+  function changeOtherActivity(value: string) {
+    setOtherActivityInput(value);
+    setActivityId(null);
+    clearAnalysis();
+  }
+
+  function chooseSuggestedActivity(activity: AlmanacActivity) {
+    if (calendarActivities.some((item) => item.id === activity)) {
+      selectActivity(activity as CalendarActivityId);
+      return;
+    }
+    setActivityId(null);
+    setOtherActivityInput(labelForAlmanacActivity(activity));
+    clearAnalysis();
   }
 
   return (
@@ -690,23 +714,12 @@ function ActivityDayView() {
             <h1>Xem ngày theo việc</h1>
             <p>Chọn một việc và ngày dương lịch để tham khảo Trực, sao, giờ và hướng.</p>
           </div>
-          <Button
-            variant="outline"
-            className="action-button calendar-today-button"
-            onClick={() => setSelectedDate(today)}
-          >
-            <HeritageIcon name="today" size={20} />
-            Hôm nay
-          </Button>
         </div>
 
         <div className="activity-day-layout">
           <section className="activity-picker" aria-labelledby="activity-picker-title">
             <div className="calendar-tool-section-heading">
-              <div>
-                <span className="eyebrow">BƯỚC 1</span>
-                <h2 id="activity-picker-title">Việc cần xem</h2>
-              </div>
+              <h2 id="activity-picker-title">Việc cần xem</h2>
               <label className="activity-date-field">
                 <span>Ngày dương</span>
                 <Input
@@ -738,162 +751,145 @@ function ActivityDayView() {
               ))}
             </div>
 
-            <form className="activity-custom-form" onSubmit={submitOtherActivity}>
-              <label>
-                <span>Việc khác</span>
-                <Input
-                  aria-label="Nhập công việc khác"
-                  maxLength={120}
-                  placeholder="Ví dụ: ký kết hợp đồng"
-                  value={otherActivityInput}
-                  onChange={(event) => setOtherActivityInput(event.target.value)}
-                />
-              </label>
-              <Button
-                className="activity-custom-submit"
-                disabled={!otherActivityInput.trim() || isAnalyzing}
-                type="submit"
-                variant="outline"
-              >
+            <div className="activity-custom-form">
+              <label htmlFor="other-activity">Việc khác</label>
+              <Input
+                aria-label="Nhập công việc khác"
+                id="other-activity"
+                maxLength={120}
+                placeholder="Ví dụ: ký hợp đồng mua nhà"
+                value={otherActivityInput}
+                onChange={(event) => changeOtherActivity(event.target.value)}
+              />
+            </div>
+
+            {customResolution?.kind === 'ambiguous' ? (
+              <div className="activity-resolution" role="group" aria-label="Chọn loại việc cụ thể">
+                <span>Bạn muốn xem theo việc nào?</span>
+                <div>
+                  {customResolution.suggestions.map((suggestion) => (
+                    <button key={suggestion} onClick={() => chooseSuggestedActivity(suggestion)} type="button">
+                      {labelForAlmanacActivity(suggestion)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <Button
+              className="activity-analyze-button"
+              disabled={!canAnalyze || isAnalyzing}
+              onClick={() => void requestAnalysis()}
+              type="button"
+            >
                 <AIButtonIcon />
-                Phân tích
-              </Button>
-            </form>
+                {isAnalyzing ? 'Đang phân tích...' : 'Hỏi AI về ngày này'}
+            </Button>
           </section>
 
           <section className="activity-result" aria-live="polite">
-            {info.supported && advice ? (
+            {isAnalyzing ? (
+              <div className="activity-result-state activity-loading-state">
+                <AIButtonIcon size={30} />
+                <span className="eyebrow">ĐANG PHÂN TÍCH</span>
+                <h2>Đang tổng hợp thông tin ngày</h2>
+                <p>Calendar Engine đang tính dữ liệu lịch, sau đó AI sẽ diễn giải đúng theo các dữ kiện này.</p>
+                <span className="activity-loading-line" aria-hidden="true" />
+              </div>
+            ) : analysis ? (
               <>
                 <div className="activity-result-heading">
                   <div>
-                    <span className="eyebrow">BƯỚC 2 · {info.solar.weekday}</span>
-                    <h2>{activityLabel}</h2>
+                    <span className="eyebrow">KẾT QUẢ XEM NGÀY</span>
+                    <h2>{analysis.evaluation.activity.label}</h2>
                     <p>
-                      {info.solar.day}/{info.solar.month}/{info.solar.year} dương lịch · {info.lunar.day}/{info.lunar.month} âm lịch
+                      {analysis.evaluation.date.solar} dương lịch · {analysis.evaluation.date.lunar.day}/{analysis.evaluation.date.lunar.month} âm lịch
                     </p>
                   </div>
-                  <span className="activity-tone" data-tone={advice.tone}>
-                    {advice.label}
+                  <span className={`activity-tone activity-tone-${analysis.evaluation.classification}`}>
+                    {labelForActivityLevel(analysis.evaluation.classification)}
                   </span>
                 </div>
 
-                <Button
-                  className="activity-ai-trigger"
-                  disabled={isAnalyzing}
-                  onClick={() =>
-                    void requestAnalysis(
-                      activityLabel,
-                      isCustomActivity ? undefined : activityId,
-                    )
-                  }
-                  variant="outline"
-                >
-                  <AIButtonIcon />
-                  {isAnalyzing ? 'Đang phân tích...' : 'Hỏi về ngày này'}
-                </Button>
+                <section className="activity-result-summary">
+                  <span className="activity-section-label">KẾT LUẬN NHANH</span>
+                  <p>{analysis.evaluation.summaryReason}</p>
+                </section>
 
-                <p className="activity-result-summary">
-                  {isCustomActivity
-                    ? `Đang tham khảo dữ kiện lịch truyền thống cho ${activityLabel.toLocaleLowerCase('vi')}.`
-                    : advice.summary}
-                </p>
-
-                <div className="activity-result-facts">
-                  <div>
-                    <span>Can Chi ngày</span>
-                    <strong>{info.canChi.day}</strong>
-                  </div>
-                  <div>
-                    <span>Trực ngày</span>
-                    <strong>{info.truc} · {info.dayClassification}</strong>
-                  </div>
-                  <div>
-                    <span>Tiết khí</span>
-                    <strong>{info.solarTerm}</strong>
-                  </div>
-                  <div>
-                    <span>28 Tú</span>
-                    <strong>{info.traditional.twentyEightMansion}</strong>
-                  </div>
+                <div className="activity-factor-grid">
+                  <section>
+                    <span className="activity-section-label">ĐIỂM THUẬN</span>
+                    {analysis.evaluation.goodFactors.length ? <ul>{analysis.evaluation.goodFactors.map((factor) => <li key={factor.code}>{factor.label}</li>)}</ul> : <p>Chưa ghi nhận điểm thuận nổi bật từ dữ liệu hiện có.</p>}
+                  </section>
+                  <section>
+                    <span className="activity-section-label">ĐIỂM CẦN LƯU Ý</span>
+                    {analysis.evaluation.warningFactors.length ? <ul>{analysis.evaluation.warningFactors.map((factor) => <li data-severity={factor.severity} key={factor.code}>{factor.label}</li>)}</ul> : <p>Chưa ghi nhận cảnh báo riêng trong dữ liệu hiện có.</p>}
+                  </section>
                 </div>
 
-                <div className="activity-guidance">
-                  <div>
-                    <h3>
-                      <HeritageIcon name="auspicious-hour" size={17} /> Giờ Hoàng đạo
-                    </h3>
-                    <div className="chip-row">
-                      {advice.goodHours.map((hour) => (
-                        <span key={hour}>{hour}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h3>
-                      <HeritageIcon name="departure-direction" size={17} /> Hướng xuất hành
-                    </h3>
-                    <p>
-                      Hỷ Thần: <b>{advice.directions.hyThan}</b>
-                      <br />
-                      Tài Thần: <b>{advice.directions.taiThan}</b>
-                    </p>
-                  </div>
+                <div className="activity-hour-grid">
+                  <section>
+                    <span className="activity-section-label">GIỜ PHÙ HỢP</span>
+                    <div>{analysis.evaluation.goodHours.map((hour) => <span key={hour.branch}>{hour.from}-{hour.to} · {hour.branch}</span>)}</div>
+                  </section>
+                  {analysis.evaluation.badHours.length ? <section>
+                    <span className="activity-section-label">GIỜ NÊN TRÁNH</span>
+                    <div>{analysis.evaluation.badHours.map((hour) => <span key={hour.branch}>{hour.from}-{hour.to} · {hour.branch}</span>)}</div>
+                  </section> : null}
                 </div>
 
-                <ul className="activity-reason-list">
-                  {advice.reasons.map((reason) => (
-                    <li key={reason}>{reason}</li>
-                  ))}
-                </ul>
-
-                <section className="activity-ai-analysis" aria-live="polite">
-                  <div>
-                    <span className="eyebrow">PHÂN TÍCH AI</span>
-                    <h3>{activityLabel}</h3>
+                <section>
+                  <span className="activity-section-label">THÔNG TIN NGÀY</span>
+                  <div className="activity-result-facts">
+                    <div><span>Can Chi ngày</span><strong>{analysis.evaluation.calendar.canChiDay}</strong></div>
+                    <div><span>Trực ngày</span><strong>{analysis.evaluation.calendar.dayOfficer}</strong></div>
+                    <div><span>Tiết khí</span><strong>{analysis.evaluation.calendar.solarTerm}</strong></div>
+                    <div><span>28 Tú</span><strong>{analysis.evaluation.calendar.lunarMansion}</strong></div>
+                    <div><span>Loại ngày</span><strong>{analysis.evaluation.calendar.dayType}</strong></div>
+                    {analysis.evaluation.calendar.element ? <div><span>Ngũ hành</span><strong>{analysis.evaluation.calendar.element}</strong></div> : null}
+                    {analysis.evaluation.calendar.napAm ? <div><span>Nạp âm</span><strong>{analysis.evaluation.calendar.napAm}</strong></div> : null}
                   </div>
-                  {isAnalyzing ? (
-                    <p className="activity-ai-loading">AI đang tổng hợp dữ kiện lịch cho ngày này...</p>
-                  ) : analysis ? (
-                    <div className="activity-ai-answer">
-                      {analysis.split('\n').filter(Boolean).map((paragraph, index) => (
-                        <p key={`${paragraph}-${index}`}>{paragraph}</p>
-                      ))}
-                    </div>
-                  ) : analysisError ? (
-                    <div className="activity-ai-error" role="alert">
-                      <p>{analysisError}</p>
-                      <Button
-                        onClick={() =>
-                          void requestAnalysis(
-                            activityLabel,
-                            isCustomActivity ? undefined : activityId,
-                          )
-                        }
-                        size="sm"
-                        variant="outline"
-                      >
-                        Thử lại
-                      </Button>
-                    </div>
-                  ) : (
-                    <p className="activity-ai-placeholder">
-                      Chọn một việc hoặc bấm “Hỏi về ngày này” để xem phần phân tích tại đây.
-                    </p>
-                  )}
+                </section>
+
+                <section className="activity-directions">
+                  <span className="activity-section-label">HƯỚNG XUẤT HÀNH</span>
+                  <p>Hỷ Thần: <strong>{analysis.evaluation.directions.joyGod}</strong></p>
+                  <p>Tài Thần: <strong>{analysis.evaluation.directions.wealthGod}</strong></p>
+                </section>
+
+                {analysis.evaluation.alternatives.length ? <section className="activity-alternatives">
+                  <span className="activity-section-label">NGÀY PHÙ HỢP HƠN</span>
+                  <div>{analysis.evaluation.alternatives.map((alternative) => <article key={alternative.solarDate}><strong>{alternative.solarDate}</strong><small>{alternative.lunarDate}</small><em>{labelForActivityLevel(alternative.classification)}</em></article>)}</div>
+                </section> : null}
+
+                <section className="activity-ai-analysis">
+                  <span className="activity-section-label">PHÂN TÍCH AI</span>
+                  {analysis.interpretation ? <div className="activity-ai-answer"><p>{analysis.interpretation.shortSummary}</p><p>{analysis.interpretation.detailedExplanation}</p>{analysis.interpretation.practicalSuggestion ? <p><strong>Gợi ý:</strong> {analysis.interpretation.practicalSuggestion}</p> : null}</div> : <p className="activity-ai-placeholder">AI hiện chưa sẵn sàng; các dữ kiện lịch và đánh giá từ engine vẫn được hiển thị đầy đủ ở trên.</p>}
                 </section>
               </>
-            ) : !info.supported ? (
-              <p className="muted">{info.reason}</p>
+            ) : analysisError ? (
+              <div className="activity-result-state activity-error-state" role="alert">
+                <HeritageIcon name="info" size={25} />
+                <span className="eyebrow">CHƯA CÓ KẾT QUẢ</span>
+                <h2>Không thể phân tích ngày này</h2>
+                <p>{analysisError}</p>
+                <small>Kiểm tra lựa chọn ở block bên trái rồi bấm “Hỏi AI về ngày này” để thử lại.</small>
+              </div>
             ) : (
-              <p className="muted">Chưa thể tổng hợp thông tin cho ngày này.</p>
+              <div className="activity-result-state activity-empty-state">
+                <HeritageIcon name="activity-calendar" size={31} />
+                <span className="eyebrow">KẾT QUẢ PHÂN TÍCH</span>
+                <h2>Chưa có phân tích</h2>
+                <p>Chọn một công việc và ngày ở block bên trái, sau đó bấm “Hỏi AI về ngày này”.</p>
+              </div>
             )}
-            <p className="calendar-policy activity-policy">
+            {analysis ? <p className="calendar-policy activity-policy">
               <span className="calendar-policy-info" aria-hidden="true">i</span>
               <span>
                 Thông tin theo lịch truyền thống để tham khảo. Với việc hệ trọng,
                 gia đình nên cân nhắc hoàn cảnh thực tế và phong tục địa phương.
               </span>
-            </p>
+            </p> : null}
           </section>
         </div>
       </div>
@@ -903,45 +899,102 @@ function ActivityDayView() {
 }
 
 function FortuneView() {
-  const [today] = useState(vietnamToday);
-  const [birthDate, setBirthDate] = useState('');
-  const [gender, setGender] = useState<FortuneGender | ''>('');
-  const [birthHour, setBirthHour] = useState<FortuneBirthHour | ''>('');
-  const [focus, setFocus] = useState<FortuneFocus>('overall');
-  const [reading, setReading] = useState<FortuneReading | null>(null);
-  const [source, setSource] = useState<'ai' | 'traditional' | null>(null);
+  const [fullName, setFullName] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthYear, setBirthYear] = useState('');
+  const [calendarType, setCalendarType] = useState<AstrologyCalendarType>('solar');
+  const [isLeapMonth, setIsLeapMonth] = useState(false);
+  const [gender, setGender] = useState<AstrologyGender | ''>('');
+  const [birthTime, setBirthTime] = useState('');
+  const [unknownBirthTime, setUnknownBirthTime] = useState(false);
+  const [birthTimeAccuracy, setBirthTimeAccuracy] = useState<BirthTimeAccuracy>('exact');
+  const [focus, setFocus] = useState<AstrologyFocus>('overall');
+  const [profile, setProfile] = useState<AstrologyProfile | null>(null);
+  const [reading, setReading] = useState<AstrologyInterpretation | null>(null);
+  const [source, setSource] = useState<'ai' | 'engine' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<'calendar' | 'astrology' | 'ai' | null>(null);
+  const [followUp, setFollowUp] = useState('');
+  const [followUpError, setFollowUpError] = useState<string | null>(null);
+  const [followUpAnswer, setFollowUpAnswer] = useState<string | null>(null);
+  const [followUpHistory, setFollowUpHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const [isFollowingUp, setIsFollowingUp] = useState(false);
+
+  function inputFromForm(): AstrologyInput | null {
+    const day = Number(birthDay);
+    const month = Number(birthMonth);
+    const year = Number(birthYear);
+    const name = fullName.trim().replace(/\s+/g, ' ');
+    if (!name || !gender || !Number.isInteger(day) || !Number.isInteger(month) || !Number.isInteger(year)) {
+      return null;
+    }
+    if (unknownBirthTime) {
+      return {
+        fullName: name,
+        gender,
+        birthDate: { day, month, year, calendar: calendarType, ...(calendarType === 'lunar' && isLeapMonth ? { isLeapMonth: true } : {}) },
+        birthTime: null,
+        unknownBirthTime: true,
+      };
+    }
+    const match = /^(\d{2}):(\d{2})$/.exec(birthTime);
+    if (!match || (birthTimeAccuracy !== 'exact' && birthTimeAccuracy !== 'approximate')) return null;
+    return {
+      fullName: name,
+      gender,
+      birthDate: { day, month, year, calendar: calendarType, ...(calendarType === 'lunar' && isLeapMonth ? { isLeapMonth: true } : {}) },
+      birthTime: { hour: Number(match[1]), minute: Number(match[2]), accuracy: birthTimeAccuracy },
+      unknownBirthTime: false,
+    };
+  }
+
   async function requestReading() {
-    if (!birthDate || !gender || !birthHour) {
-      setError('Vui lòng chọn ngày sinh, giới tính và giờ sinh.');
+    const input = inputFromForm();
+    if (!input) {
+      setError('Vui lòng nhập họ tên, ngày sinh, giới tính và giờ sinh hoặc chọn không rõ giờ sinh.');
       return;
     }
-
     setError(null);
-    setIsLoading(true);
+    setProfile(null);
+    setReading(null);
+    setSource(null);
+    setFollowUp('');
+    setFollowUpAnswer(null);
+    setFollowUpError(null);
+    setFollowUpHistory([]);
+    setLoadingStage('calendar');
     try {
-      const response = await fetch('/api/fortune', {
+      const profileResponse = await fetch('/api/astrology/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          birthDate,
-          gender,
-          birthHour,
-          focus,
-          date: inputDateValue(today),
-        }),
+        body: JSON.stringify({ input }),
       });
-      const data = (await response.json()) as {
-        reading?: FortuneReading;
-        source?: 'ai' | 'traditional';
+      const profileData = (await profileResponse.json()) as {
+        profile?: AstrologyProfile;
         message?: string;
       };
-      if (!response.ok || !data.reading) {
-        throw new Error(data.message || 'Chưa thể tạo luận giải.');
+      if (!profileResponse.ok || !profileData.profile) {
+        throw new Error(profileData.message || 'Không thể xử lý ngày sinh.');
       }
-      setReading(data.reading);
-      setSource(data.source || 'traditional');
+      setProfile(profileData.profile);
+      setLoadingStage('astrology');
+      await Promise.resolve();
+      setLoadingStage('ai');
+
+      const response = await fetch('/api/astrology/interpretation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input, focus }),
+      });
+      const data = (await response.json()) as {
+        interpretation?: AstrologyInterpretation;
+        source?: 'ai' | 'engine';
+        message?: string;
+      };
+      if (!response.ok || !data.interpretation) throw new Error(data.message || 'Chưa thể tạo luận giải AI.');
+      setReading(data.interpretation);
+      setSource(data.source || 'engine');
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -949,9 +1002,44 @@ function FortuneView() {
           : 'Chưa thể tạo luận giải. Vui lòng thử lại.',
       );
     } finally {
-      setIsLoading(false);
+      setLoadingStage(null);
     }
   }
+
+  async function requestFollowUp(prompt = followUp) {
+    const question = prompt.trim();
+    const input = inputFromForm();
+    if (!question || !input || !profile || isFollowingUp) return;
+    setFollowUpError(null);
+    setFollowUpAnswer(null);
+    setIsFollowingUp(true);
+    try {
+      const response = await fetch('/api/astrology/interpretation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input, focus, question, interpretation: reading, history: followUpHistory }),
+      });
+      const data = (await response.json()) as { answer?: string; message?: string };
+      if (!response.ok || !data.answer) throw new Error(data.message || 'Chưa thể nhận câu trả lời.');
+      setFollowUpAnswer(data.answer);
+      setFollowUpHistory((current) => [
+        ...current,
+        { role: 'user' as const, content: question },
+        { role: 'assistant' as const, content: data.answer! },
+      ].slice(-6));
+      setFollowUp('');
+    } catch (requestError) {
+      setFollowUpError(requestError instanceof Error ? requestError.message : 'Chưa thể nhận câu trả lời.');
+    } finally {
+      setIsFollowingUp(false);
+    }
+  }
+
+  const isLoading = loadingStage !== null;
+  const fullNameLabel = profile?.identity.fullName || 'Luận giải của bạn';
+  const dateLabel = profile
+    ? `${String(profile.birth.solarDate).split('-').reverse().join('/')} dương lịch`
+    : '';
 
   return (
     <main id="main" className="calendar-tools-page">
@@ -960,40 +1048,69 @@ function FortuneView() {
           <div>
             <div className="eyebrow">THAM KHẢO CÁ NHÂN HÓA</div>
             <h1>Tử vi AI</h1>
-            <p>Luận giải nhẹ nhàng theo Can Chi năm sinh và lịch truyền thống.</p>
+            <p>Luận giải theo ngày giờ sinh do hệ thống tính từ lịch truyền thống.</p>
           </div>
         </div>
 
         <div className="fortune-layout">
-          <section className="fortune-form-panel" aria-labelledby="fortune-form-title">
+          <form
+            className="fortune-form-panel"
+            aria-labelledby="fortune-form-title"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void requestReading();
+            }}
+          >
             <div className="calendar-tool-section-heading">
               <div>
                 <span className="eyebrow">THÔNG TIN</span>
-                <h2 id="fortune-form-title">Lập luận giải</h2>
+                <h2 id="fortune-form-title">Xem tử vi</h2>
               </div>
             </div>
 
             <div className="fortune-fields">
-              <label className="fortune-field fortune-field-date">
-                <span>Ngày sinh</span>
+              <label className="fortune-field fortune-field-name">
+                <span>Họ và tên</span>
                 <Input
-                  aria-label="Ngày sinh"
-                  className="activity-date-input"
-                  type="date"
-                  value={birthDate}
+                  aria-label="Họ và tên"
+                  autoComplete="name"
+                  maxLength={100}
                   onChange={(event) => {
-                    setBirthDate(event.target.value);
+                    setFullName(event.target.value);
                     setError(null);
                   }}
+                  placeholder="Ví dụ: Nguyễn Văn Minh"
+                  value={fullName}
                 />
               </label>
+              <div className="fortune-field fortune-birth-date">
+                <span>Ngày sinh</span>
+                <div className="fortune-birth-date-fields">
+                  <Input aria-label="Ngày sinh" inputMode="numeric" maxLength={2} onChange={(event) => setBirthDay(event.target.value)} placeholder="DD" value={birthDay} />
+                  <Input aria-label="Tháng sinh" inputMode="numeric" maxLength={2} onChange={(event) => setBirthMonth(event.target.value)} placeholder="MM" value={birthMonth} />
+                  <Input aria-label="Năm sinh" inputMode="numeric" maxLength={4} onChange={(event) => setBirthYear(event.target.value)} placeholder="YYYY" value={birthYear} />
+                </div>
+              </div>
+              <div className="fortune-field fortune-calendar-type">
+                <span>Loại lịch</span>
+                <div role="group" aria-label="Loại lịch">
+                  <button aria-pressed={calendarType === 'solar'} data-active={calendarType === 'solar'} onClick={() => { setCalendarType('solar'); setIsLeapMonth(false); }} type="button">Dương lịch</button>
+                  <button aria-pressed={calendarType === 'lunar'} data-active={calendarType === 'lunar'} onClick={() => setCalendarType('lunar')} type="button">Âm lịch</button>
+                </div>
+              </div>
+              {calendarType === 'lunar' ? (
+                <label className="fortune-leap-month">
+                  <Checkbox checked={isLeapMonth} onCheckedChange={(checked) => setIsLeapMonth(checked === true)} />
+                  <span>Tháng nhuận</span>
+                </label>
+              ) : null}
               <label className="fortune-field">
                 <span>Giới tính</span>
                 <Select
-                  items={fortuneGenders.map((item) => ({ value: item.id, label: item.label }))}
+                  items={[{ value: 'male', label: 'Nam' }, { value: 'female', label: 'Nữ' }]}
                   value={gender}
                   onValueChange={(value) => {
-                    setGender(value as FortuneGender);
+                    setGender(value as AstrologyGender);
                     setError(null);
                   }}
                 >
@@ -1001,38 +1118,33 @@ function FortuneView() {
                     <SelectValue placeholder="Chọn giới tính" />
                   </SelectTrigger>
                   <SelectContent>
-                    {fortuneGenders.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
-                    ))}
+                    <SelectItem value="male">Nam</SelectItem>
+                    <SelectItem value="female">Nữ</SelectItem>
                   </SelectContent>
                 </Select>
               </label>
               <label className="fortune-field">
                 <span>Giờ sinh</span>
-                <Select
-                  items={fortuneBirthHours.map((item) => ({ value: item.id, label: item.label }))}
-                  value={birthHour}
-                  onValueChange={(value) => {
-                    setBirthHour(value as FortuneBirthHour);
-                    setError(null);
-                  }}
-                >
-                  <SelectTrigger aria-label="Giờ sinh" className="choice">
-                    <SelectValue placeholder="Chọn giờ sinh" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fortuneBirthHours.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
-                    ))}
-                  </SelectContent>
+                <Input aria-label="Giờ sinh" className="activity-date-input" disabled={unknownBirthTime} inputMode="numeric" maxLength={5} onChange={(event) => setBirthTime(event.target.value)} placeholder="HH:MM" value={birthTime} />
+              </label>
+              <label className="fortune-field">
+                <span>Độ chính xác giờ sinh</span>
+                <Select items={[{ value: 'exact', label: 'Chính xác' }, { value: 'approximate', label: 'Ước chừng' }]} value={birthTimeAccuracy} onValueChange={(value) => setBirthTimeAccuracy(value as BirthTimeAccuracy)} disabled={unknownBirthTime}>
+                  <SelectTrigger aria-label="Độ chính xác giờ sinh" className="choice"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="exact">Chính xác</SelectItem><SelectItem value="approximate">Ước chừng</SelectItem></SelectContent>
                 </Select>
               </label>
             </div>
+            <label className="fortune-unknown-time">
+              <Checkbox checked={unknownBirthTime} onCheckedChange={(checked) => setUnknownBirthTime(checked === true)} />
+              <span>Không rõ giờ sinh</span>
+            </label>
+            {unknownBirthTime ? <p className="fortune-time-note">Bạn vẫn có thể xem luận giải cơ bản. Các nội dung phụ thuộc giờ sinh sẽ không được tính.</p> : null}
 
             <div className="fortune-focus-group" aria-label="Chủ đề luận giải">
               <span>Chủ đề</span>
               <div>
-                {fortuneFocuses.map((item) => (
+                {astrologyFocuses.map((item) => (
                   <button
                     className="fortune-focus-option"
                     data-active={focus === item.id}
@@ -1052,44 +1164,61 @@ function FortuneView() {
             <Button
               className="action-button fortune-submit"
               disabled={isLoading}
-              onClick={() => void requestReading()}
+              type="submit"
             >
               <AIButtonIcon size={19} />
-              {isLoading ? 'Đang luận giải...' : 'Xem luận giải'}
+              {loadingStage === 'calendar' ? 'Đang tính dữ liệu ngày sinh...' : loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : loadingStage === 'ai' ? 'Đang luận giải bằng AI...' : 'Luận giải tử vi'}
             </Button>
             <p className="fortune-disclaimer">
               Nội dung mang tính tham khảo và giải trí, không thay thế tư vấn
               chuyên môn hay quyết định quan trọng.
             </p>
-          </section>
+          </form>
 
           <section className="fortune-reading-panel" aria-live="polite">
-            {reading ? (
+            {profile ? (
               <>
                 <div className="fortune-reading-heading">
                   <div>
                     <span className="eyebrow">
-                      {source === 'ai' ? 'LUẬN GIẢI AI' : 'GỢI Ý THEO LỊCH TRUYỀN THỐNG'}
+                      {source === 'ai' ? 'LUẬN GIẢI AI' : source === 'engine' ? 'DỮ LIỆU ENGINE' : 'HỒ SƠ TỬ VI'}
                     </span>
-                    <h2>{reading.title}</h2>
+                    <h2>{fullNameLabel}</h2>
+                    <p>{profile.identity.gender === 'male' ? 'Nam' : 'Nữ'} · {dateLabel}{profile.birth.birthTime ? ` · ${profile.birth.birthTime}${profile.birth.birthHourBranch ? `, giờ ${profile.birth.birthHourBranch}` : ''}` : ' · Chưa rõ giờ sinh'}</p>
                   </div>
                   <HeritageIcon name={source === 'ai' ? 'message' : 'family-record'} size={24} />
                 </div>
-                <p className="fortune-overview">{reading.overview}</p>
-                <div className="fortune-reading-notes">
-                  {reading.notes.map((note) => (
-                    <section key={note.heading}>
-                      <h3>{note.heading}</h3>
-                      <p>{note.text}</p>
-                    </section>
-                  ))}
+                <div className="fortune-engine-data">
+                  <div><span>Âm lịch</span><strong>{profile.birth.lunarDate.day}/{profile.birth.lunarDate.month}/{profile.birth.lunarDate.year}{profile.birth.lunarDate.isLeapMonth ? ' nhuận' : ''}</strong></div>
+                  <div><span>Can Chi</span><strong>{profile.canChi.year}</strong></div>
+                  <div><span>Nạp âm</span><strong>{profile.fiveElements.napAm || 'Chưa có'}</strong></div>
+                  <div><span>Ngũ hành</span><strong>{profile.fiveElements.yearElement || 'Chưa có'}{profile.fiveElements.yinYang ? ` · ${profile.fiveElements.yinYang}` : ''}</strong></div>
+                  <div><span>Can Chi tháng</span><strong>{profile.canChi.month}</strong></div>
+                  <div><span>Can Chi ngày</span><strong>{profile.canChi.day}</strong></div>
+                  <div><span>Can Chi giờ</span><strong>{profile.canChi.hour || 'Chưa tính do thiếu giờ sinh'}</strong></div>
+                  <div><span>Lá số 12 cung</span><strong>Chưa có engine tính</strong></div>
                 </div>
+                {reading ? <FortuneInterpretation reading={reading} source={source} /> : <p className="fortune-pending-reading">{loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : 'Đang luận giải bằng AI...'}</p>}
+                {reading ? (
+                  <div className="fortune-follow-up">
+                    <span className="eyebrow">HỎI THÊM VỀ HỒ SƠ NÀY</span>
+                    <div className="fortune-quick-actions">
+                      {['Công việc năm nay', 'Tài lộc', 'Tình duyên', 'Gia đạo', 'Điểm mạnh của tôi', '3 năm tới'].map((prompt) => <button key={prompt} onClick={() => void requestFollowUp(prompt)} type="button">{prompt}</button>)}
+                    </div>
+                    <div className="fortune-follow-up-form">
+                      <Input aria-label="Câu hỏi thêm về tử vi" disabled={isFollowingUp} onChange={(event) => setFollowUp(event.target.value)} placeholder="Hỏi sâu hơn về hồ sơ này..." value={followUp} />
+                      <Button disabled={isFollowingUp || !followUp.trim()} onClick={() => void requestFollowUp()} type="button">{isFollowingUp ? 'Đang hỏi...' : 'Hỏi AI'}</Button>
+                    </div>
+                    {followUpError ? <p className="fortune-error" role="alert">{followUpError}</p> : null}
+                    {followUpAnswer ? <p className="fortune-follow-up-answer">{followUpAnswer}</p> : null}
+                  </div>
+                ) : null}
               </>
             ) : (
               <div className="fortune-empty-state">
                 <HeritageIcon name="message" size={31} />
                 <h2>Luận giải của bạn</h2>
-                <p>Chọn chủ đề, ngày sinh, giới tính và giờ sinh rồi xem luận giải tại đây.</p>
+                <p>Nhập họ tên, ngày sinh, giới tính và giờ sinh để hệ thống tạo hồ sơ độc lập tại đây.</p>
               </div>
             )}
           </section>
@@ -1097,6 +1226,49 @@ function FortuneView() {
       </div>
       <Footer />
     </main>
+  );
+}
+
+function FortuneInterpretation({
+  reading,
+  source,
+}: {
+  reading: AstrologyInterpretation;
+  source: 'ai' | 'engine' | null;
+}) {
+  const sections = [
+    { id: 'personality', title: 'Tính cách', value: reading.personality },
+    { id: 'career', title: 'Công danh', value: reading.career },
+    { id: 'wealth', title: 'Tài lộc', value: reading.wealth },
+    { id: 'love', title: 'Tình duyên', value: reading.love },
+    { id: 'family', title: 'Gia đạo', value: reading.family },
+    { id: 'relationships', title: 'Quan hệ xã hội', value: reading.relationships },
+  ];
+  return (
+    <div className="fortune-interpretation">
+      <details className="fortune-interpretation-section" open>
+        <summary>{reading.overview.title}</summary>
+        <p>{reading.overview.summary}</p>
+      </details>
+      {sections.map((section) => (
+        <details className="fortune-interpretation-section" key={section.id}>
+          <summary>{section.title}</summary>
+          <p>{section.value.summary}</p>
+          {section.value.strengths?.length ? <ul>{section.value.strengths.map((item) => <li key={item}>{item}</li>)}</ul> : null}
+          {section.value.opportunities?.length ? <ul>{section.value.opportunities.map((item) => <li key={item}>{item}</li>)}</ul> : null}
+          {section.value.considerations?.length ? <ul>{section.value.considerations.map((item) => <li key={item}>{item}</li>)}</ul> : null}
+        </details>
+      ))}
+      <details className="fortune-interpretation-section">
+        <summary>Vận năm {reading.currentYear.year}</summary>
+        <p>{reading.currentYear.summary}</p>
+        {reading.currentYear.opportunities.length ? <ul>{reading.currentYear.opportunities.map((item) => <li key={item}>{item}</li>)}</ul> : null}
+        {reading.currentYear.considerations.length ? <ul>{reading.currentYear.considerations.map((item) => <li key={item}>{item}</li>)}</ul> : null}
+      </details>
+      {reading.suggestions.length ? <div className="fortune-suggestions"><strong>Gợi ý phát triển</strong><ul>{reading.suggestions.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
+      {source === 'engine' ? <p className="fortune-engine-warning">Luận giải AI hiện chưa sẵn sàng; các nội dung trên chỉ xác nhận dữ kiện do engine tính.</p> : null}
+      <p className="fortune-disclaimer">{reading.disclaimer}</p>
+    </div>
   );
 }
 
@@ -1326,7 +1498,7 @@ export function LunarPage() {
   const params = useSearchParams();
   const tab = params.get('tab');
   const activeTab =
-    tab === 'activities' || tab === 'fortune' || tab === 'memorials'
+    tab === 'activities' || (astrologyEnabled && tab === 'fortune') || tab === 'memorials'
       ? tab
       : 'calendar';
 
@@ -1349,13 +1521,15 @@ export function LunarPage() {
               <HeritageIcon name="activity-calendar" size={18} />
               Xem ngày
             </Link>
-            <Link
-              className={activeTab === 'fortune' ? 'is-active' : ''}
-              href="/lunar-calendar?tab=fortune"
-            >
-              <HeritageIcon name="fortune-ai" size={18} />
-              Tử vi AI
-            </Link>
+            {astrologyEnabled ? (
+              <Link
+                className={activeTab === 'fortune' ? 'is-active' : ''}
+                href="/lunar-calendar?tab=fortune"
+              >
+                <HeritageIcon name="fortune-ai" size={18} />
+                Tử vi AI
+              </Link>
+            ) : null}
             <Link
               className={activeTab === 'memorials' ? 'is-active' : ''}
               href="/lunar-calendar?tab=memorials"
@@ -1368,7 +1542,7 @@ export function LunarPage() {
       </div>
       {activeTab === 'calendar' && <LunarCalendarView />}
       {activeTab === 'activities' && <ActivityDayView />}
-      {activeTab === 'fortune' && <FortuneView />}
+      {astrologyEnabled && activeTab === 'fortune' && <FortuneView />}
       {activeTab === 'memorials' && <MemorialsView />}
     </>
   );

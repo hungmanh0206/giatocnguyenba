@@ -3,9 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import {
-  LoaderCircle,
-} from 'lucide-react';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -536,11 +533,11 @@ export function GalleryPage() {
             <div className="gallery-form-grid">
               <div className="gallery-field gallery-field-title"><span>Tiêu đề</span><Input aria-label="Tiêu đề" disabled={uploadBusy} value={uploadForm.title} onChange={(event) => setUploadValue('title', event.target.value)} /></div>
               <div className="gallery-field"><span>Năm chụp</span><Input aria-label="Năm chụp" disabled={uploadBusy} inputMode="numeric" max="3000" min="1000" type="number" value={uploadForm.year} onChange={(event) => setUploadValue('year', event.target.value)} /></div>
-              <div className="gallery-field gallery-date-field"><span>Ngày chụp</span><Input aria-label="Ngày chụp" className="gallery-date-input" disabled={uploadBusy} type="date" value={uploadForm.takenAt} onChange={(event) => setUploadValue('takenAt', event.target.value)} />{!uploadForm.takenAt && <span aria-hidden="true" className="gallery-date-placeholder">dd/mm/yyyy</span>}<GalleryIcon className="gallery-date-icon" name="calendar-day" size={20} /></div>
+              <div className="gallery-field gallery-date-field"><span>Ngày chụp</span><Input aria-label="Ngày chụp" className="gallery-date-input" disabled={uploadBusy} type="date" value={uploadForm.takenAt} onChange={(event) => setUploadValue('takenAt', event.target.value)} /><GalleryIcon className="gallery-date-icon" name="calendar-day" size={20} /></div>
               <div className="gallery-field gallery-field-full"><span>Mô tả</span><Textarea aria-label="Mô tả" disabled={uploadBusy} rows={3} value={uploadForm.caption} onChange={(event) => setUploadValue('caption', event.target.value)} /></div>
             </div>
             {uploadError && <p className="gallery-form-error" role="alert">{uploadError}</p>}
-            <div className="gallery-dialog-actions"><Button disabled={uploadBusy} onClick={() => closeUpload(false)} type="button" variant="outline">Hủy</Button><Button disabled={uploadBusy || !uploadFile} onClick={() => void uploadPhoto()} type="button">{uploadBusy && <LoaderCircle className="gallery-spinner" />}{uploadState === 'signing' ? 'Đang xác thực...' : uploadState === 'uploading' ? 'Đang tải ảnh...' : uploadState === 'saving' ? 'Đang lưu...' : 'Tải ảnh lên'}</Button></div>
+            <div className="gallery-dialog-actions"><Button disabled={uploadBusy} onClick={() => closeUpload(false)} type="button" variant="outline">Hủy</Button><Button disabled={uploadBusy || !uploadFile} onClick={() => void uploadPhoto()} type="button">{uploadBusy && <GalleryIcon className="gallery-spinner" name="refresh" size={15} />}{uploadState === 'signing' ? 'Đang xác thực...' : uploadState === 'uploading' ? 'Đang tải ảnh...' : uploadState === 'saving' ? 'Đang lưu...' : 'Tải ảnh lên'}</Button></div>
           </div>
         </DialogContent>
       </Dialog>
@@ -557,9 +554,9 @@ export function GalleryPage() {
             <div className="gallery-viewer-copy">
               {editing ? <div className="gallery-edit-form">
                 <div className="gallery-field"><span>Tiêu đề</span><Input aria-label="Tiêu đề" value={editForm.title} onChange={(event) => setEditValue('title', event.target.value)} /></div>
-                <div className="gallery-form-grid"><div className="gallery-field"><span>Năm chụp</span><Input aria-label="Năm chụp" inputMode="numeric" max="3000" min="1000" type="number" value={editForm.year} onChange={(event) => setEditValue('year', event.target.value)} /></div><div className="gallery-field gallery-date-field"><span>Ngày chụp</span><Input aria-label="Ngày chụp" className="gallery-date-input" type="date" value={editForm.takenAt} onChange={(event) => setEditValue('takenAt', event.target.value)} />{!editForm.takenAt && <span aria-hidden="true" className="gallery-date-placeholder">dd/mm/yyyy</span>}<GalleryIcon className="gallery-date-icon" name="calendar-day" size={20} /></div></div>
+                <div className="gallery-form-grid"><div className="gallery-field"><span>Năm chụp</span><Input aria-label="Năm chụp" inputMode="numeric" max="3000" min="1000" type="number" value={editForm.year} onChange={(event) => setEditValue('year', event.target.value)} /></div><div className="gallery-field gallery-date-field"><span>Ngày chụp</span><Input aria-label="Ngày chụp" className="gallery-date-input" type="date" value={editForm.takenAt} onChange={(event) => setEditValue('takenAt', event.target.value)} /><GalleryIcon className="gallery-date-icon" name="calendar-day" size={20} /></div></div>
                 <div className="gallery-field"><span>Mô tả</span><Textarea aria-label="Mô tả" rows={4} value={editForm.caption} onChange={(event) => setEditValue('caption', event.target.value)} /></div>
-                <div className="gallery-dialog-actions"><Button disabled={savingEdit} onClick={() => setEditing(false)} variant="outline">Hủy</Button><Button disabled={savingEdit} onClick={() => void updatePhoto({ ...editForm, year: editForm.year ? Number(editForm.year) : null })}>{savingEdit && <LoaderCircle className="gallery-spinner" />}{savingEdit ? 'Đang lưu...' : 'Lưu thay đổi'}</Button></div>
+                <div className="gallery-dialog-actions"><Button disabled={savingEdit} onClick={() => setEditing(false)} variant="outline">Hủy</Button><Button disabled={savingEdit} onClick={() => void updatePhoto({ ...editForm, year: editForm.year ? Number(editForm.year) : null })}>{savingEdit && <GalleryIcon className="gallery-spinner" name="refresh" size={15} />}{savingEdit ? 'Đang lưu...' : 'Lưu thay đổi'}</Button></div>
               </div> : <>
                 <div className="gallery-viewer-kicker">{activePhoto.albumName}</div>
                 <DialogTitle>{activePhoto.title}</DialogTitle>
@@ -574,7 +571,7 @@ export function GalleryPage() {
       </Dialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && !deleting && setDeleteTarget(null)}>
-        <AlertDialogContent className="gallery-delete-dialog"><AlertDialogHeader><AlertDialogTitle>Xóa ảnh này?</AlertDialogTitle><AlertDialogDescription>Ảnh sẽ bị xóa trực tiếp khỏi Cloudinary. Thao tác này không thể hoàn tác.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={deleting}>Hủy</AlertDialogCancel><AlertDialogAction className="gallery-delete-confirm" disabled={deleting} onClick={() => void deletePhoto()}>{deleting && <LoaderCircle className="gallery-spinner" />}{deleting ? 'Đang xóa...' : 'Xóa vĩnh viễn'}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogContent className="gallery-delete-dialog"><AlertDialogHeader><AlertDialogTitle>Xóa ảnh này?</AlertDialogTitle><AlertDialogDescription>Ảnh sẽ bị xóa trực tiếp khỏi Cloudinary. Thao tác này không thể hoàn tác.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={deleting}>Hủy</AlertDialogCancel><AlertDialogAction className="gallery-delete-confirm" disabled={deleting} onClick={() => void deletePhoto()}>{deleting && <GalleryIcon className="gallery-spinner" name="refresh" size={15} />}{deleting ? 'Đang xóa...' : 'Xóa vĩnh viễn'}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
     </main>
   );

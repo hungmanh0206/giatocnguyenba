@@ -10,8 +10,11 @@ import {
   lunarToSolar,
   solarToLunar,
 } from '../lib/lunar-calendar/service.ts';
-import { getCalendarActivityAdvice } from '../lib/lunar-calendar/activity-advice.ts';
-import { buildFortuneFallback } from '../lib/lunar-calendar/fortune-advice.ts';
+import {
+  evaluateActivityDay,
+  getCalendarActivityAdvice,
+  resolveCustomActivity,
+} from '../lib/lunar-calendar/activity-advice.ts';
 
 const solarParts = (date) => [
   date.getDate(),
@@ -85,20 +88,22 @@ test('day-by-activity guidance is derived from the selected lunar day', () => {
   assert.equal(advice.reasons.length, 3);
 });
 
-test('fortune fallback remains a short reference reading without a model response', () => {
-  const reading = buildFortuneFallback({
-    birthYear: 1988,
-    birthDate: '1988-04-18',
-    gender: 'male',
-    birthHour: 'thin',
-    date: '2024-02-10',
-    focus: 'career',
-  });
+test('almanac evaluation stays deterministic and custom activities resolve before AI', () => {
+  const info = getLunarDayInfo(new Date(2024, 1, 10));
+  assert.equal(info.supported, true);
 
-  assert.match(reading.title, /Công việc/);
-  assert.match(reading.overview, /Can Chi/);
-  assert.equal(reading.notes.length, 3);
-  assert.match(reading.notes[2].text, /Giờ Hoàng đạo/);
+  const evaluation = evaluateActivityDay(info, 'wedding');
+  assert.ok(['excellent', 'good', 'neutral', 'caution', 'avoid'].includes(evaluation.classification));
+  assert.equal(evaluation.calendar.canChiDay, info.canChi.day);
+  assert.equal(evaluation.goodHours[0].from.length, 5);
+  assert.ok(evaluation.alternatives.length <= 3);
+
+  assert.deepEqual(resolveCustomActivity('Ký hợp đồng mua nhà'), {
+    kind: 'resolved',
+    activity: 'buy_house',
+    label: 'Ký hợp đồng mua nhà',
+  });
+  assert.equal(resolveCustomActivity('Làm việc lớn')?.kind, 'ambiguous');
 });
 
 test('lunar month length reports both 29-day and 30-day months', () => {
