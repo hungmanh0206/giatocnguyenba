@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { isSameMonth } from 'date-fns';
@@ -8,10 +8,18 @@ import { vi } from 'date-fns/locale';
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFamily } from './provider';
 import { Footer } from './header';
 import { HeritageIcon } from './heritage-icon';
+import { AIButtonIcon } from '@/components/ai/ai-button-icon';
 import { AIAssistantButton } from '@/components/ai/ai-assistant-button';
 import { Avatar } from './member-avatar';
 import {
@@ -38,8 +46,12 @@ import {
   type CalendarActivityId,
 } from '@/lib/lunar-calendar/activity-advice';
 import {
+  fortuneBirthHours,
   fortuneFocuses,
+  fortuneGenders,
+  type FortuneBirthHour,
   type FortuneFocus,
+  type FortuneGender,
   type FortuneReading,
 } from '@/lib/lunar-calendar/fortune-advice';
 
@@ -573,10 +585,101 @@ function ActivityDayView() {
   const [today] = useState(vietnamToday);
   const [selectedDate, setSelectedDate] = useState(today);
   const [activityId, setActivityId] = useState<CalendarActivityId>('wedding');
+  const [otherActivityInput, setOtherActivityInput] = useState('');
+  const [otherActivity, setOtherActivity] = useState('');
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const analysisController = useRef<AbortController | null>(null);
   const info = getLunarDayInfo(selectedDate);
   const advice = info.supported
     ? getCalendarActivityAdvice(info, activityId)
     : null;
+  const selectedActivity = calendarActivities.find((activity) => activity.id === activityId);
+  const activityLabel = otherActivity || selectedActivity?.label || 'Công việc đang chọn';
+  const isCustomActivity = Boolean(otherActivity);
+
+  useEffect(
+    () => () => {
+      analysisController.current?.abort();
+    },
+    [],
+  );
+
+  function clearAnalysis() {
+    analysisController.current?.abort();
+    analysisController.current = null;
+    setAnalysis(null);
+    setAnalysisError(null);
+    setIsAnalyzing(false);
+  }
+
+  async function requestAnalysis(
+    subject: string,
+    activity?: CalendarActivityId,
+  ) {
+    if (!info.supported) return;
+
+    analysisController.current?.abort();
+    const controller = new AbortController();
+    analysisController.current = controller;
+    setAnalysis(null);
+    setAnalysisError(null);
+    setIsAnalyzing(true);
+
+    try {
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          message: `Hãy phân tích ngày đang chọn cho việc "${subject}". Chỉ dùng dữ kiện lịch trong APP CONTEXT. Trình bày ngắn gọn về mức độ phù hợp, các yếu tố cần lưu ý và gợi ý thực tế; không tự tạo thêm dữ kiện lịch.`,
+          mode: 'calendar',
+          context: {
+            source: activity ? 'activity' : 'calendar',
+            selectedDate: inputDateValue(selectedDate),
+            ...(activity ? { activity } : {}),
+          },
+          history: [],
+        }),
+      });
+      const data = (await response.json()) as { answer?: string; error?: string };
+      if (!response.ok || !data.answer) {
+        throw new Error(data.error || 'Chưa thể tạo phần phân tích.');
+      }
+      if (!controller.signal.aborted) setAnalysis(data.answer);
+    } catch (requestError) {
+      if (controller.signal.aborted) return;
+      setAnalysisError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Chưa thể tạo phần phân tích. Vui lòng thử lại.',
+      );
+    } finally {
+      if (!controller.signal.aborted) setIsAnalyzing(false);
+    }
+  }
+
+  function selectActivity(nextActivity: CalendarActivityId) {
+    const next = calendarActivities.find((activity) => activity.id === nextActivity);
+    setActivityId(nextActivity);
+    setOtherActivity('');
+    setOtherActivityInput('');
+    if (next) void requestAnalysis(next.label, nextActivity);
+  }
+
+  function selectDate(value: string) {
+    setSelectedDate(inputDateToDate(value, today));
+    clearAnalysis();
+  }
+
+  function submitOtherActivity(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const subject = otherActivityInput.trim();
+    if (!subject) return;
+    setOtherActivity(subject);
+    void requestAnalysis(subject);
+  }
 
   return (
     <main id="main" className="calendar-tools-page">
@@ -611,9 +714,7 @@ function ActivityDayView() {
                   className="activity-date-input"
                   type="date"
                   value={inputDateValue(selectedDate)}
-                  onChange={(event) =>
-                    setSelectedDate(inputDateToDate(event.target.value, today))
-                  }
+                  onChange={(event) => selectDate(event.target.value)}
                 />
               </label>
             </div>
@@ -626,7 +727,7 @@ function ActivityDayView() {
                   key={activity.id}
                   type="button"
                   aria-pressed={activity.id === activityId}
-                  onClick={() => setActivityId(activity.id)}
+                  onClick={() => selectActivity(activity.id)}
                 >
                   <HeritageIcon name={activity.icon} size={20} />
                   <span>
@@ -636,6 +737,28 @@ function ActivityDayView() {
                 </button>
               ))}
             </div>
+
+            <form className="activity-custom-form" onSubmit={submitOtherActivity}>
+              <label>
+                <span>Việc khác</span>
+                <Input
+                  aria-label="Nhập công việc khác"
+                  maxLength={120}
+                  placeholder="Ví dụ: ký kết hợp đồng"
+                  value={otherActivityInput}
+                  onChange={(event) => setOtherActivityInput(event.target.value)}
+                />
+              </label>
+              <Button
+                className="activity-custom-submit"
+                disabled={!otherActivityInput.trim() || isAnalyzing}
+                type="submit"
+                variant="outline"
+              >
+                <AIButtonIcon />
+                Phân tích
+              </Button>
+            </form>
           </section>
 
           <section className="activity-result" aria-live="polite">
@@ -644,7 +767,7 @@ function ActivityDayView() {
                 <div className="activity-result-heading">
                   <div>
                     <span className="eyebrow">BƯỚC 2 · {info.solar.weekday}</span>
-                    <h2>{advice.activity.label}</h2>
+                    <h2>{activityLabel}</h2>
                     <p>
                       {info.solar.day}/{info.solar.month}/{info.solar.year} dương lịch · {info.lunar.day}/{info.lunar.month} âm lịch
                     </p>
@@ -654,18 +777,26 @@ function ActivityDayView() {
                   </span>
                 </div>
 
-                <AIAssistantButton
-                  className="calendar-ai-entry"
-                  context={{
-                    source: 'activity',
-                    selectedDate: inputDateValue(selectedDate),
-                    activity: activityId,
-                  }}
-                  label="Hỏi về ngày này"
-                  mode="calendar"
-                />
+                <Button
+                  className="activity-ai-trigger"
+                  disabled={isAnalyzing}
+                  onClick={() =>
+                    void requestAnalysis(
+                      activityLabel,
+                      isCustomActivity ? undefined : activityId,
+                    )
+                  }
+                  variant="outline"
+                >
+                  <AIButtonIcon />
+                  {isAnalyzing ? 'Đang phân tích...' : 'Hỏi về ngày này'}
+                </Button>
 
-                <p className="activity-result-summary">{advice.summary}</p>
+                <p className="activity-result-summary">
+                  {isCustomActivity
+                    ? `Đang tham khảo dữ kiện lịch truyền thống cho ${activityLabel.toLocaleLowerCase('vi')}.`
+                    : advice.summary}
+                </p>
 
                 <div className="activity-result-facts">
                   <div>
@@ -714,6 +845,42 @@ function ActivityDayView() {
                     <li key={reason}>{reason}</li>
                   ))}
                 </ul>
+
+                <section className="activity-ai-analysis" aria-live="polite">
+                  <div>
+                    <span className="eyebrow">PHÂN TÍCH AI</span>
+                    <h3>{activityLabel}</h3>
+                  </div>
+                  {isAnalyzing ? (
+                    <p className="activity-ai-loading">AI đang tổng hợp dữ kiện lịch cho ngày này...</p>
+                  ) : analysis ? (
+                    <div className="activity-ai-answer">
+                      {analysis.split('\n').filter(Boolean).map((paragraph, index) => (
+                        <p key={`${paragraph}-${index}`}>{paragraph}</p>
+                      ))}
+                    </div>
+                  ) : analysisError ? (
+                    <div className="activity-ai-error" role="alert">
+                      <p>{analysisError}</p>
+                      <Button
+                        onClick={() =>
+                          void requestAnalysis(
+                            activityLabel,
+                            isCustomActivity ? undefined : activityId,
+                          )
+                        }
+                        size="sm"
+                        variant="outline"
+                      >
+                        Thử lại
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="activity-ai-placeholder">
+                      Chọn một việc hoặc bấm “Hỏi về ngày này” để xem phần phân tích tại đây.
+                    </p>
+                  )}
+                </section>
               </>
             ) : !info.supported ? (
               <p className="muted">{info.reason}</p>
@@ -737,17 +904,17 @@ function ActivityDayView() {
 
 function FortuneView() {
   const [today] = useState(vietnamToday);
-  const [birthYear, setBirthYear] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [gender, setGender] = useState<FortuneGender | ''>('');
+  const [birthHour, setBirthHour] = useState<FortuneBirthHour | ''>('');
   const [focus, setFocus] = useState<FortuneFocus>('overall');
   const [reading, setReading] = useState<FortuneReading | null>(null);
   const [source, setSource] = useState<'ai' | 'traditional' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   async function requestReading() {
-    const year = Number(birthYear);
-    if (!Number.isInteger(year) || year < 1800 || year > today.getFullYear()) {
-      setError('Vui lòng nhập năm sinh hợp lệ.');
+    if (!birthDate || !gender || !birthHour) {
+      setError('Vui lòng chọn ngày sinh, giới tính và giờ sinh.');
       return;
     }
 
@@ -758,8 +925,9 @@ function FortuneView() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          birthYear: year,
-          birthDate: birthDate || undefined,
+          birthDate,
+          gender,
+          birthHour,
           focus,
           date: inputDateValue(today),
         }),
@@ -806,31 +974,58 @@ function FortuneView() {
             </div>
 
             <div className="fortune-fields">
-              <label className="fortune-field">
-                <span>Năm sinh</span>
-                <Input
-                  aria-label="Năm sinh"
-                  inputMode="numeric"
-                  max={today.getFullYear()}
-                  min="1800"
-                  placeholder="Ví dụ: 1988"
-                  type="number"
-                  value={birthYear}
-                  onChange={(event) => {
-                    setBirthYear(event.target.value);
-                    setError(null);
-                  }}
-                />
-              </label>
-              <label className="fortune-field">
-                <span>Ngày sinh (tùy chọn)</span>
+              <label className="fortune-field fortune-field-date">
+                <span>Ngày sinh</span>
                 <Input
                   aria-label="Ngày sinh"
                   className="activity-date-input"
                   type="date"
                   value={birthDate}
-                  onChange={(event) => setBirthDate(event.target.value)}
+                  onChange={(event) => {
+                    setBirthDate(event.target.value);
+                    setError(null);
+                  }}
                 />
+              </label>
+              <label className="fortune-field">
+                <span>Giới tính</span>
+                <Select
+                  items={fortuneGenders.map((item) => ({ value: item.id, label: item.label }))}
+                  value={gender}
+                  onValueChange={(value) => {
+                    setGender(value as FortuneGender);
+                    setError(null);
+                  }}
+                >
+                  <SelectTrigger aria-label="Giới tính" className="choice">
+                    <SelectValue placeholder="Chọn giới tính" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fortuneGenders.map((item) => (
+                      <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+              <label className="fortune-field">
+                <span>Giờ sinh</span>
+                <Select
+                  items={fortuneBirthHours.map((item) => ({ value: item.id, label: item.label }))}
+                  value={birthHour}
+                  onValueChange={(value) => {
+                    setBirthHour(value as FortuneBirthHour);
+                    setError(null);
+                  }}
+                >
+                  <SelectTrigger aria-label="Giờ sinh" className="choice">
+                    <SelectValue placeholder="Chọn giờ sinh" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fortuneBirthHours.map((item) => (
+                      <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </label>
             </div>
 
@@ -859,19 +1054,9 @@ function FortuneView() {
               disabled={isLoading}
               onClick={() => void requestReading()}
             >
-              <HeritageIcon name="fortune-ai" size={19} />
+              <AIButtonIcon size={19} />
               {isLoading ? 'Đang luận giải...' : 'Xem luận giải'}
             </Button>
-            <AIAssistantButton
-              className="fortune-ai-entry"
-              context={{
-                source: 'fortune',
-                birthYear: Number(birthYear) || undefined,
-                birthDate: birthDate || undefined,
-              }}
-              label="Hỏi Trợ lý"
-              mode="horoscope"
-            />
             <p className="fortune-disclaimer">
               Nội dung mang tính tham khảo và giải trí, không thay thế tư vấn
               chuyên môn hay quyết định quan trọng.
@@ -904,7 +1089,7 @@ function FortuneView() {
               <div className="fortune-empty-state">
                 <HeritageIcon name="message" size={31} />
                 <h2>Luận giải của bạn</h2>
-                <p>Chọn chủ đề, điền năm sinh rồi xem gợi ý cho hôm nay.</p>
+                <p>Chọn chủ đề, ngày sinh, giới tính và giờ sinh rồi xem luận giải tại đây.</p>
               </div>
             )}
           </section>

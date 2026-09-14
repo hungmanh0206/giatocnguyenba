@@ -89,6 +89,8 @@ test('fortune fallback remains a short reference reading without a model respons
   const reading = buildFortuneFallback({
     birthYear: 1988,
     birthDate: '1988-04-18',
+    gender: 'male',
+    birthHour: 'thin',
     date: '2024-02-10',
     focus: 'career',
   });

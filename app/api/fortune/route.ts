@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import {
   buildFortuneFallback,
+  fortuneBirthHours,
+  fortuneGenders,
+  isFortuneBirthHour,
   isFortuneFocus,
+  isFortuneGender,
   parseCalendarDate,
   type FortuneReading,
   type FortuneRequest,
@@ -18,24 +22,35 @@ type OpenAIResponse = {
 };
 
 function readInput(input: Record<string, unknown>): FortuneRequest | null {
-  const birthYear = Number(input.birthYear);
   const focus = input.focus;
   const date = typeof input.date === 'string' ? input.date : undefined;
   const birthDate =
     typeof input.birthDate === 'string' ? input.birthDate : undefined;
+  const gender = input.gender;
+  const birthHour = input.birthHour;
+  const parsedBirthDate = parseCalendarDate(birthDate);
 
   if (
-    !Number.isInteger(birthYear) ||
-    birthYear < 1800 ||
-    birthYear > new Date().getFullYear() ||
+    !parsedBirthDate ||
+    parsedBirthDate.getFullYear() < 1800 ||
+    parsedBirthDate.getFullYear() > new Date().getFullYear() ||
+    !isFortuneGender(gender) ||
+    !isFortuneBirthHour(birthHour) ||
     !isFortuneFocus(focus) ||
     (date !== undefined && !parseCalendarDate(date)) ||
-    (birthDate !== undefined && !parseCalendarDate(birthDate))
+    !birthDate
   ) {
     return null;
   }
 
-  return { birthYear, birthDate, focus, date };
+  return {
+    birthYear: parsedBirthDate.getFullYear(),
+    birthDate,
+    gender,
+    birthHour,
+    focus,
+    date,
+  };
 }
 
 function outputText(payload: OpenAIResponse) {
@@ -85,7 +100,7 @@ async function generateAiReading(input: FortuneRequest) {
       model: process.env.OPENAI_FORTUNE_MODEL?.trim() || 'gpt-5-mini',
       store: false,
       max_output_tokens: 500,
-      input: `Bạn là người viết lời luận giải tử vi truyền thống Việt Nam một cách điềm tĩnh và có trách nhiệm. Đây là nội dung tham khảo/giải trí, không khẳng định dự đoán là sự thật, không đưa lời khuyên đầu tư, y tế, pháp lý hoặc quyết định hệ trọng. Chỉ dùng dữ liệu được đưa, không suy đoán về danh tính.\n\nDữ liệu: năm sinh ${input.birthYear}; ngày sinh ${input.birthDate || 'không cung cấp'}; chủ đề ${input.focus}; ngày cần xem ${input.date || 'hôm nay'}.\n\nTrả về đúng JSON, không bọc markdown: {"title":"...","overview":"...","notes":[{"heading":"...","text":"..."},{"heading":"...","text":"..."},{"heading":"...","text":"..."}]}. Viết bằng tiếng Việt, mỗi phần ngắn gọn, thân thiện và không quyết định thay người dùng.`,
+      input: `Bạn là người viết lời luận giải tử vi truyền thống Việt Nam một cách điềm tĩnh và có trách nhiệm. Đây là nội dung tham khảo/giải trí, không khẳng định dự đoán là sự thật, không đưa lời khuyên đầu tư, y tế, pháp lý hoặc quyết định hệ trọng. Chỉ dùng dữ liệu được đưa, không suy đoán về danh tính.\n\nDữ liệu: năm sinh ${input.birthYear}; ngày sinh ${input.birthDate}; giới tính ${fortuneGenders.find((item) => item.id === input.gender)?.label || input.gender}; giờ sinh ${fortuneBirthHours.find((item) => item.id === input.birthHour)?.label || input.birthHour}; chủ đề ${input.focus}; ngày cần xem ${input.date || 'hôm nay'}.\n\nTrả về đúng JSON, không bọc markdown: {"title":"...","overview":"...","notes":[{"heading":"...","text":"..."},{"heading":"...","text":"..."},{"heading":"...","text":"..."}]}. Viết bằng tiếng Việt, mỗi phần ngắn gọn, thân thiện và không quyết định thay người dùng.`,
     }),
   });
 
@@ -100,7 +115,7 @@ export async function POST(request: Request) {
     const input = readInput((await request.json()) as Record<string, unknown>);
     if (!input) {
       return NextResponse.json(
-        { message: 'Thông tin ngày sinh hoặc chủ đề chưa hợp lệ.' },
+        { message: 'Thông tin ngày sinh, giới tính, giờ sinh hoặc chủ đề chưa hợp lệ.' },
         { status: 400 },
       );
     }

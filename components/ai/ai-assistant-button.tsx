@@ -1,9 +1,9 @@
 'use client';
 
-import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { type AIClientContext, type AIMode } from '@/lib/ai/types';
+import { AIButtonIcon } from './ai-button-icon';
 import { useAIAssistant } from './ai-assistant-provider';
 
 export function AIAssistantButton({
@@ -34,7 +34,7 @@ export function AIAssistantButton({
       type="button"
       variant="outline"
     >
-      <Sparkles size={16} />
+      <AIButtonIcon />
       {label}
     </Button>
   );

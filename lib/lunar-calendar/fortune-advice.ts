@@ -25,6 +25,31 @@ export const fortuneFocuses = [
 
 export type FortuneFocus = (typeof fortuneFocuses)[number]['id'];
 
+export const fortuneGenders = [
+  { id: 'male', label: 'Nam' },
+  { id: 'female', label: 'Nữ' },
+  { id: 'other', label: 'Khác' },
+] as const;
+
+export type FortuneGender = (typeof fortuneGenders)[number]['id'];
+
+export const fortuneBirthHours = [
+  { id: 'ty', label: 'Giờ Tý (23:00 - 00:59)' },
+  { id: 'suu', label: 'Giờ Sửu (01:00 - 02:59)' },
+  { id: 'dan', label: 'Giờ Dần (03:00 - 04:59)' },
+  { id: 'mao', label: 'Giờ Mão (05:00 - 06:59)' },
+  { id: 'thin', label: 'Giờ Thìn (07:00 - 08:59)' },
+  { id: 'ty2', label: 'Giờ Tỵ (09:00 - 10:59)' },
+  { id: 'ngo', label: 'Giờ Ngọ (11:00 - 12:59)' },
+  { id: 'mui', label: 'Giờ Mùi (13:00 - 14:59)' },
+  { id: 'than', label: 'Giờ Thân (15:00 - 16:59)' },
+  { id: 'dau', label: 'Giờ Dậu (17:00 - 18:59)' },
+  { id: 'tuat', label: 'Giờ Tuất (19:00 - 20:59)' },
+  { id: 'hoi', label: 'Giờ Hợi (21:00 - 22:59)' },
+] as const;
+
+export type FortuneBirthHour = (typeof fortuneBirthHours)[number]['id'];
+
 export type FortuneReading = {
   title: string;
   overview: string;
@@ -33,13 +58,23 @@ export type FortuneReading = {
 
 export type FortuneRequest = {
   birthYear: number;
-  birthDate?: string;
+  birthDate: string;
+  gender: FortuneGender;
+  birthHour: FortuneBirthHour;
   focus: FortuneFocus;
   date?: string;
 };
 
 export function isFortuneFocus(value: unknown): value is FortuneFocus {
   return fortuneFocuses.some((focus) => focus.id === value);
+}
+
+export function isFortuneGender(value: unknown): value is FortuneGender {
+  return fortuneGenders.some((gender) => gender.id === value);
+}
+
+export function isFortuneBirthHour(value: unknown): value is FortuneBirthHour {
+  return fortuneBirthHours.some((hour) => hour.id === value);
 }
 
 export function parseCalendarDate(value?: string) {
@@ -82,6 +117,8 @@ export function buildFortuneFallback(input: FortuneRequest): FortuneReading {
   const date = parseCalendarDate(input.date) ?? new Date();
   const info = getLunarDayInfo(date);
   const focus = fortuneFocuses.find((item) => item.id === input.focus);
+  const gender = fortuneGenders.find((item) => item.id === input.gender);
+  const birthHour = fortuneBirthHours.find((item) => item.id === input.birthHour);
   const birthCanChi = getLunarYearCanChi(input.birthYear);
   const focusNote = focusCopy(input.focus);
   const dayContext = info.supported
@@ -90,14 +127,12 @@ export function buildFortuneFallback(input: FortuneRequest): FortuneReading {
 
   return {
     title: `${focus?.label ?? 'Tổng quan'} cho tuổi ${birthCanChi}`,
-    overview: `Bản tham khảo dựa trên Can Chi năm sinh và lịch truyền thống. ${dayContext}`,
+    overview: `Bản tham khảo dựa trên Can Chi năm sinh, ngày sinh${gender ? `, giới tính ${gender.label.toLocaleLowerCase('vi')}` : ''} và lịch truyền thống. ${dayContext}`,
     notes: [
       focusNote,
       {
-        heading: 'Luận theo ngày sinh',
-        text: input.birthDate
-          ? 'Ngày sinh đã được dùng để cá nhân hóa câu trả lời ở mức tham khảo; không có giờ sinh nên không lập lá số chi tiết.'
-          : 'Bạn có thể thêm ngày sinh để luận giải cá nhân hóa hơn. Không có giờ sinh nên hệ thống không lập lá số chi tiết.',
+        heading: 'Luận theo ngày và giờ sinh',
+        text: `Ngày sinh và ${birthHour?.label.toLocaleLowerCase('vi') || 'giờ sinh đã chọn'} được dùng để cá nhân hóa ở mức tham khảo. Hệ thống không lập lá số chi tiết hoặc đưa ra kết luận chắc chắn.`,
       },
       {
         heading: 'Gợi ý trong ngày',
