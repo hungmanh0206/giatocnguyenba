@@ -1,7 +1,7 @@
 'use client';
 
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { HeritageIcon } from '@/components/genealogy/heritage-icon';
 import { cn } from '@/lib/utils';
 
 export type AssistantMessage = {
@@ -75,11 +75,18 @@ export function AIMessage({ message }: { message: AssistantMessage }) {
           className="ai-copy-button"
           onClick={() => void copyAnswer()}
           size="icon-xs"
-          title="Sao chép trả lời"
-          type="button"
-          variant="ghost"
-        >
-          <HeritageIcon name="document" size={14} />
+        title="Sao chép trả lời"
+        type="button"
+        variant="ghost"
+      >
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="ai-copy-icon"
+            height={22}
+            src="/app-icons/ai-copy-documents.png"
+            width={22}
+          />
         </Button>
       ) : null}
     </article>

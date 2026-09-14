@@ -85,6 +85,22 @@ function inputDateToDate(value: string, fallback: Date) {
   return Number.isNaN(date.getTime()) ? fallback : date;
 }
 
+function formatBirthDateInput(value: string) {
+  const trimmed = value.replace(/[^\d/]/g, '').slice(0, 10);
+  if (trimmed.includes('/')) return trimmed;
+  const digits = trimmed.slice(0, 8);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)]
+    .filter(Boolean)
+    .join('/');
+}
+
+function parseBirthDateInput(value: string) {
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value.trim());
+  if (!match) return null;
+  const [, day, month, year] = match;
+  return { day: Number(day), month: Number(month), year: Number(year) };
+}
+
 type ActivityAIInterpretation = {
   shortSummary: string;
   detailedExplanation: string;
@@ -789,15 +805,13 @@ function ActivityDayView() {
 
           <section className="activity-result" aria-live="polite">
             {isAnalyzing ? (
-              <div className="activity-result-state activity-loading-state">
-                <AIButtonIcon size={30} />
-                <span className="eyebrow">ĐANG PHÂN TÍCH</span>
-                <h2>Đang tổng hợp thông tin ngày</h2>
-                <p>Calendar Engine đang tính dữ liệu lịch, sau đó AI sẽ diễn giải đúng theo các dữ kiện này.</p>
-                <span className="activity-loading-line" aria-hidden="true" />
-              </div>
+              <AIProcessingLoader
+                description="AI đang đối chiếu dữ kiện lịch truyền thống và chuẩn bị phần gợi ý cho công việc đã chọn."
+                label="AI ĐANG XEM NGÀY"
+                title="Đang chuẩn bị luận giải"
+              />
             ) : analysis ? (
-              <>
+              <div className="tool-result-scroll">
                 <div className="activity-result-heading">
                   <div>
                     <span className="eyebrow">KẾT QUẢ XEM NGÀY</span>
@@ -811,34 +825,34 @@ function ActivityDayView() {
                   </span>
                 </div>
 
-                <section className="activity-result-summary">
+                <section className="activity-result-summary activity-result-block">
                   <span className="activity-section-label">KẾT LUẬN NHANH</span>
                   <p>{analysis.evaluation.summaryReason}</p>
                 </section>
 
                 <div className="activity-factor-grid">
-                  <section>
+                  <section className="activity-result-block">
                     <span className="activity-section-label">ĐIỂM THUẬN</span>
                     {analysis.evaluation.goodFactors.length ? <ul>{analysis.evaluation.goodFactors.map((factor) => <li key={factor.code}>{factor.label}</li>)}</ul> : <p>Chưa ghi nhận điểm thuận nổi bật từ dữ liệu hiện có.</p>}
                   </section>
-                  <section>
+                  <section className="activity-result-block">
                     <span className="activity-section-label">ĐIỂM CẦN LƯU Ý</span>
                     {analysis.evaluation.warningFactors.length ? <ul>{analysis.evaluation.warningFactors.map((factor) => <li data-severity={factor.severity} key={factor.code}>{factor.label}</li>)}</ul> : <p>Chưa ghi nhận cảnh báo riêng trong dữ liệu hiện có.</p>}
                   </section>
                 </div>
 
                 <div className="activity-hour-grid">
-                  <section>
+                  <section className="activity-result-block">
                     <span className="activity-section-label">GIỜ PHÙ HỢP</span>
                     <div>{analysis.evaluation.goodHours.map((hour) => <span key={hour.branch}>{hour.from}-{hour.to} · {hour.branch}</span>)}</div>
                   </section>
-                  {analysis.evaluation.badHours.length ? <section>
+                  {analysis.evaluation.badHours.length ? <section className="activity-result-block">
                     <span className="activity-section-label">GIỜ NÊN TRÁNH</span>
                     <div>{analysis.evaluation.badHours.map((hour) => <span key={hour.branch}>{hour.from}-{hour.to} · {hour.branch}</span>)}</div>
                   </section> : null}
                 </div>
 
-                <section>
+                <section className="activity-result-block activity-facts-block">
                   <span className="activity-section-label">THÔNG TIN NGÀY</span>
                   <div className="activity-result-facts">
                     <div><span>Can Chi ngày</span><strong>{analysis.evaluation.calendar.canChiDay}</strong></div>
@@ -851,22 +865,29 @@ function ActivityDayView() {
                   </div>
                 </section>
 
-                <section className="activity-directions">
+                <section className="activity-directions activity-result-block">
                   <span className="activity-section-label">HƯỚNG XUẤT HÀNH</span>
                   <p>Hỷ Thần: <strong>{analysis.evaluation.directions.joyGod}</strong></p>
                   <p>Tài Thần: <strong>{analysis.evaluation.directions.wealthGod}</strong></p>
                 </section>
 
-                {analysis.evaluation.alternatives.length ? <section className="activity-alternatives">
+                {analysis.evaluation.alternatives.length ? <section className="activity-alternatives activity-result-block">
                   <span className="activity-section-label">NGÀY PHÙ HỢP HƠN</span>
                   <div>{analysis.evaluation.alternatives.map((alternative) => <article key={alternative.solarDate}><strong>{alternative.solarDate}</strong><small>{alternative.lunarDate}</small><em>{labelForActivityLevel(alternative.classification)}</em></article>)}</div>
                 </section> : null}
 
-                <section className="activity-ai-analysis">
+                <section className="activity-ai-analysis activity-result-block">
                   <span className="activity-section-label">PHÂN TÍCH AI</span>
-                  {analysis.interpretation ? <div className="activity-ai-answer"><p>{analysis.interpretation.shortSummary}</p><p>{analysis.interpretation.detailedExplanation}</p>{analysis.interpretation.practicalSuggestion ? <p><strong>Gợi ý:</strong> {analysis.interpretation.practicalSuggestion}</p> : null}</div> : <p className="activity-ai-placeholder">AI hiện chưa sẵn sàng; các dữ kiện lịch và đánh giá từ engine vẫn được hiển thị đầy đủ ở trên.</p>}
+                  {analysis.interpretation ? <div className="activity-ai-answer"><p>{analysis.interpretation.shortSummary}</p><p>{analysis.interpretation.detailedExplanation}</p>{analysis.interpretation.practicalSuggestion ? <p><strong>Gợi ý:</strong> {analysis.interpretation.practicalSuggestion}</p> : null}</div> : <p className="activity-ai-placeholder">Phần gợi ý chi tiết đang được hoàn thiện. Bạn vẫn có thể tham khảo các thông tin ngày ở trên.</p>}
                 </section>
-              </>
+                <p className="calendar-policy activity-policy">
+                  <span className="calendar-policy-info" aria-hidden="true">i</span>
+                  <span>
+                    Thông tin theo lịch truyền thống để tham khảo. Với việc hệ trọng,
+                    gia đình nên cân nhắc hoàn cảnh thực tế và phong tục địa phương.
+                  </span>
+                </p>
+              </div>
             ) : analysisError ? (
               <div className="activity-result-state activity-error-state" role="alert">
                 <HeritageIcon name="info" size={25} />
@@ -883,13 +904,6 @@ function ActivityDayView() {
                 <p>Chọn một công việc và ngày ở block bên trái, sau đó bấm “Hỏi AI về ngày này”.</p>
               </div>
             )}
-            {analysis ? <p className="calendar-policy activity-policy">
-              <span className="calendar-policy-info" aria-hidden="true">i</span>
-              <span>
-                Thông tin theo lịch truyền thống để tham khảo. Với việc hệ trọng,
-                gia đình nên cân nhắc hoàn cảnh thực tế và phong tục địa phương.
-              </span>
-            </p> : null}
           </section>
         </div>
       </div>
@@ -900,9 +914,7 @@ function ActivityDayView() {
 
 function FortuneView() {
   const [fullName, setFullName] = useState('');
-  const [birthDay, setBirthDay] = useState('');
-  const [birthMonth, setBirthMonth] = useState('');
-  const [birthYear, setBirthYear] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [calendarType, setCalendarType] = useState<AstrologyCalendarType>('solar');
   const [isLeapMonth, setIsLeapMonth] = useState(false);
   const [gender, setGender] = useState<AstrologyGender | ''>('');
@@ -912,7 +924,6 @@ function FortuneView() {
   const [focus, setFocus] = useState<AstrologyFocus>('overall');
   const [profile, setProfile] = useState<AstrologyProfile | null>(null);
   const [reading, setReading] = useState<AstrologyInterpretation | null>(null);
-  const [source, setSource] = useState<'ai' | 'engine' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingStage, setLoadingStage] = useState<'calendar' | 'astrology' | 'ai' | null>(null);
   const [followUp, setFollowUp] = useState('');
@@ -922,18 +933,16 @@ function FortuneView() {
   const [isFollowingUp, setIsFollowingUp] = useState(false);
 
   function inputFromForm(): AstrologyInput | null {
-    const day = Number(birthDay);
-    const month = Number(birthMonth);
-    const year = Number(birthYear);
+    const birthday = parseBirthDateInput(birthDate);
     const name = fullName.trim().replace(/\s+/g, ' ');
-    if (!name || !gender || !Number.isInteger(day) || !Number.isInteger(month) || !Number.isInteger(year)) {
+    if (!name || !gender || !birthday) {
       return null;
     }
     if (unknownBirthTime) {
       return {
         fullName: name,
         gender,
-        birthDate: { day, month, year, calendar: calendarType, ...(calendarType === 'lunar' && isLeapMonth ? { isLeapMonth: true } : {}) },
+        birthDate: { ...birthday, calendar: calendarType, ...(calendarType === 'lunar' && isLeapMonth ? { isLeapMonth: true } : {}) },
         birthTime: null,
         unknownBirthTime: true,
       };
@@ -943,7 +952,7 @@ function FortuneView() {
     return {
       fullName: name,
       gender,
-      birthDate: { day, month, year, calendar: calendarType, ...(calendarType === 'lunar' && isLeapMonth ? { isLeapMonth: true } : {}) },
+      birthDate: { ...birthday, calendar: calendarType, ...(calendarType === 'lunar' && isLeapMonth ? { isLeapMonth: true } : {}) },
       birthTime: { hour: Number(match[1]), minute: Number(match[2]), accuracy: birthTimeAccuracy },
       unknownBirthTime: false,
     };
@@ -958,7 +967,6 @@ function FortuneView() {
     setError(null);
     setProfile(null);
     setReading(null);
-    setSource(null);
     setFollowUp('');
     setFollowUpAnswer(null);
     setFollowUpError(null);
@@ -994,7 +1002,6 @@ function FortuneView() {
       };
       if (!response.ok || !data.interpretation) throw new Error(data.message || 'Chưa thể tạo luận giải AI.');
       setReading(data.interpretation);
-      setSource(data.source || 'engine');
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -1085,11 +1092,18 @@ function FortuneView() {
               </label>
               <div className="fortune-field fortune-birth-date">
                 <span>Ngày sinh</span>
-                <div className="fortune-birth-date-fields">
-                  <Input aria-label="Ngày sinh" inputMode="numeric" maxLength={2} onChange={(event) => setBirthDay(event.target.value)} placeholder="DD" value={birthDay} />
-                  <Input aria-label="Tháng sinh" inputMode="numeric" maxLength={2} onChange={(event) => setBirthMonth(event.target.value)} placeholder="MM" value={birthMonth} />
-                  <Input aria-label="Năm sinh" inputMode="numeric" maxLength={4} onChange={(event) => setBirthYear(event.target.value)} placeholder="YYYY" value={birthYear} />
-                </div>
+                <Input
+                  aria-label="Ngày sinh, tháng sinh, năm sinh"
+                  className="fortune-date-input"
+                  inputMode="numeric"
+                  maxLength={10}
+                  onChange={(event) => {
+                    setBirthDate(formatBirthDateInput(event.target.value));
+                    setError(null);
+                  }}
+                  placeholder="DD/MM/YYYY"
+                  value={birthDate}
+                />
               </div>
               <div className="fortune-field fortune-calendar-type">
                 <span>Loại lịch</span>
@@ -1176,29 +1190,28 @@ function FortuneView() {
           </form>
 
           <section className="fortune-reading-panel" aria-live="polite">
-            {profile ? (
-              <>
+            {loadingStage ? (
+              <AIProcessingLoader
+                description={loadingStage === 'calendar' ? 'AI đang chuẩn hóa ngày sinh và các dữ kiện lịch cần thiết.' : loadingStage === 'astrology' ? 'AI đang tổng hợp hồ sơ để chuẩn bị phần luận giải riêng.' : 'AI đang viết phần luận giải theo thông tin bạn đã cung cấp.'}
+                label="TRỢ LÝ AI ĐANG LÀM VIỆC"
+                title={loadingStage === 'calendar' ? 'Đang đọc dữ kiện ngày sinh' : loadingStage === 'astrology' ? 'Đang lập hồ sơ tử vi' : 'Đang viết luận giải'}
+              />
+            ) : profile ? (
+              <div className="tool-result-scroll">
                 <div className="fortune-reading-heading">
                   <div>
-                    <span className="eyebrow">
-                      {source === 'ai' ? 'LUẬN GIẢI AI' : source === 'engine' ? 'DỮ LIỆU ENGINE' : 'HỒ SƠ TỬ VI'}
-                    </span>
+                    <span className="eyebrow">LUẬN GIẢI TỬ VI</span>
                     <h2>{fullNameLabel}</h2>
                     <p>{profile.identity.gender === 'male' ? 'Nam' : 'Nữ'} · {dateLabel}{profile.birth.birthTime ? ` · ${profile.birth.birthTime}${profile.birth.birthHourBranch ? `, giờ ${profile.birth.birthHourBranch}` : ''}` : ' · Chưa rõ giờ sinh'}</p>
                   </div>
-                  <HeritageIcon name={source === 'ai' ? 'message' : 'family-record'} size={24} />
                 </div>
-                <div className="fortune-engine-data">
-                  <div><span>Âm lịch</span><strong>{profile.birth.lunarDate.day}/{profile.birth.lunarDate.month}/{profile.birth.lunarDate.year}{profile.birth.lunarDate.isLeapMonth ? ' nhuận' : ''}</strong></div>
-                  <div><span>Can Chi</span><strong>{profile.canChi.year}</strong></div>
-                  <div><span>Nạp âm</span><strong>{profile.fiveElements.napAm || 'Chưa có'}</strong></div>
-                  <div><span>Ngũ hành</span><strong>{profile.fiveElements.yearElement || 'Chưa có'}{profile.fiveElements.yinYang ? ` · ${profile.fiveElements.yinYang}` : ''}</strong></div>
-                  <div><span>Can Chi tháng</span><strong>{profile.canChi.month}</strong></div>
-                  <div><span>Can Chi ngày</span><strong>{profile.canChi.day}</strong></div>
-                  <div><span>Can Chi giờ</span><strong>{profile.canChi.hour || 'Chưa tính do thiếu giờ sinh'}</strong></div>
-                  <div><span>Lá số 12 cung</span><strong>Chưa có engine tính</strong></div>
-                </div>
-                {reading ? <FortuneInterpretation reading={reading} source={source} /> : <p className="fortune-pending-reading">{loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : 'Đang luận giải bằng AI...'}</p>}
+                <dl className="fortune-profile-facts">
+                  <div><dt>Âm lịch</dt><dd>{profile.birth.lunarDate.day}/{profile.birth.lunarDate.month}/{profile.birth.lunarDate.year}{profile.birth.lunarDate.isLeapMonth ? ' nhuận' : ''}</dd></div>
+                  <div><dt>Can Chi năm</dt><dd>{profile.canChi.year}</dd></div>
+                  <div><dt>Nạp âm</dt><dd>{profile.fiveElements.napAm || 'Đang cập nhật'}</dd></div>
+                  <div><dt>Ngũ hành</dt><dd>{profile.fiveElements.yearElement || 'Đang cập nhật'}{profile.fiveElements.yinYang ? ` · ${profile.fiveElements.yinYang}` : ''}</dd></div>
+                </dl>
+                {reading ? <FortuneInterpretation reading={reading} /> : <p className="fortune-pending-reading">{loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : 'Đang luận giải bằng AI...'}</p>}
                 {reading ? (
                   <div className="fortune-follow-up">
                     <span className="eyebrow">HỎI THÊM VỀ HỒ SƠ NÀY</span>
@@ -1213,7 +1226,7 @@ function FortuneView() {
                     {followUpAnswer ? <p className="fortune-follow-up-answer">{followUpAnswer}</p> : null}
                   </div>
                 ) : null}
-              </>
+              </div>
             ) : (
               <div className="fortune-empty-state">
                 <HeritageIcon name="message" size={31} />
@@ -1229,12 +1242,30 @@ function FortuneView() {
   );
 }
 
+function AIProcessingLoader({
+  description,
+  label,
+  title,
+}: {
+  description: string;
+  label: string;
+  title: string;
+}) {
+  return (
+    <div className="ai-processing-loader" role="status">
+      <span className="ai-processing-mark" aria-hidden="true"><AIButtonIcon size={38} /></span>
+      <span className="eyebrow">{label}</span>
+      <h2>{title}</h2>
+      <p>{description}</p>
+      <span className="ai-processing-dots" aria-hidden="true"><i /><i /><i /></span>
+    </div>
+  );
+}
+
 function FortuneInterpretation({
   reading,
-  source,
 }: {
   reading: AstrologyInterpretation;
-  source: 'ai' | 'engine' | null;
 }) {
   const sections = [
     { id: 'personality', title: 'Tính cách', value: reading.personality },
@@ -1266,7 +1297,6 @@ function FortuneInterpretation({
         {reading.currentYear.considerations.length ? <ul>{reading.currentYear.considerations.map((item) => <li key={item}>{item}</li>)}</ul> : null}
       </details>
       {reading.suggestions.length ? <div className="fortune-suggestions"><strong>Gợi ý phát triển</strong><ul>{reading.suggestions.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
-      {source === 'engine' ? <p className="fortune-engine-warning">Luận giải AI hiện chưa sẵn sàng; các nội dung trên chỉ xác nhận dữ kiện do engine tính.</p> : null}
       <p className="fortune-disclaimer">{reading.disclaimer}</p>
     </div>
   );

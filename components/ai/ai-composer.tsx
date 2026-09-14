@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, type KeyboardEvent } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { HeritageIcon } from '@/components/genealogy/heritage-icon';
 
 export function AIComposer({
   disabled,
@@ -49,7 +49,14 @@ export function AIComposer({
         title="Gửi câu hỏi"
         type="button"
       >
-        <HeritageIcon name="next" size={17} />
+        <Image
+          alt=""
+          aria-hidden="true"
+          className="ai-send-icon"
+          height={26}
+          src="/app-icons/ai-send-paper-plane.png"
+          width={26}
+        />
       </Button>
     </div>
   );

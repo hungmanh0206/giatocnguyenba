@@ -84,10 +84,10 @@ export function buildEngineOnlyInterpretation(profile: AstrologyProfile): Astrol
     ? `Giờ sinh ${profile.birth.birthTime}${profile.birth.birthHourBranch ? `, giờ ${profile.birth.birthHourBranch}` : ''} đã được hệ thống chuẩn hóa.`
     : 'Chưa có giờ sinh nên hệ thống không tính Can Chi giờ và không đưa ra phần phụ thuộc giờ sinh.';
   const dataNote = `Dữ liệu hiện có gồm ngày dương ${profile.birth.solarDate}, ngày âm ${profile.birth.lunarDate.day}/${profile.birth.lunarDate.month}/${profile.birth.lunarDate.year}${profile.birth.lunarDate.isLeapMonth ? ' nhuận' : ''}, Can Chi năm ${profile.canChi.year} và Nạp âm ${profile.fiveElements.napAm || 'chưa có'}.`;
-  const unavailable = 'Luận giải AI hiện tạm thời chưa khả dụng. Hệ thống chỉ hiển thị dữ kiện do Calendar Engine và Astrology Engine đã tính, không tự suy diễn phần còn thiếu.';
+  const unavailable = 'Phần luận giải chi tiết đang được hoàn thiện. Bạn có thể dùng những thông tin ngày sinh ở trên để tham khảo và thử lại sau.';
 
   return {
-    overview: { title: 'Dữ liệu tử vi đã tính', summary: `${dataNote} ${timeNote}` },
+    overview: { title: 'Tổng quan ngày sinh', summary: `${dataNote} ${timeNote}` },
     personality: { summary: unavailable, strengths: [], considerations: [] },
     career: { summary: unavailable, strengths: [], considerations: [] },
     wealth: { summary: unavailable, opportunities: [], considerations: [] },
@@ -215,7 +215,7 @@ export async function generateAstrologyFollowUp({
     return { answer: result.answer, source: 'ai' as const };
   } catch {
     return {
-      answer: 'Luận giải AI hiện tạm thời chưa khả dụng. Hệ thống vẫn đã giữ các dữ kiện ngày sinh do engine tính ở phía trên.',
+      answer: 'Hiện chưa thể tạo câu trả lời chi tiết. Thông tin ngày sinh và phần luận giải trước đó vẫn được giữ nguyên để bạn tham khảo.',
       source: 'engine' as const,
     };
   }

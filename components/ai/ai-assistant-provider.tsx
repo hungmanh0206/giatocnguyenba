@@ -69,6 +69,8 @@ function AIAssistantDrawer({
   active,
   messages,
   onMessagesChange,
+  onDeleteConversation,
+  onNewConversation,
   onOpenChange,
   onClearContext,
   open,
@@ -76,6 +78,8 @@ function AIAssistantDrawer({
   active: AssistantState;
   messages: AssistantMessage[];
   onMessagesChange: (messages: AssistantMessage[]) => void;
+  onDeleteConversation: () => void;
+  onNewConversation: () => void;
   onOpenChange: (open: boolean) => void;
   onClearContext: () => void;
   open: boolean;
@@ -83,6 +87,13 @@ function AIAssistantDrawer({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [lastPrompt, setLastPrompt] = useState('');
+
+  function resetConversation(action: () => void) {
+    if (pending) return;
+    setError('');
+    setLastPrompt('');
+    action();
+  }
 
   const send = useCallback(
     async (rawMessage: string) => {
@@ -143,8 +154,35 @@ function AIAssistantDrawer({
           <HeritageIcon name="close" size={16} />
         </SheetClose>
         <SheetHeader className="ai-sheet-header">
-          <SheetTitle>Trợ lý AI</SheetTitle>
-          <SheetDescription>Tra cứu trong phạm vi dữ liệu hiện có.</SheetDescription>
+          <div className="ai-sheet-heading-copy">
+            <SheetTitle>Trợ lý AI</SheetTitle>
+            <SheetDescription>Tra cứu trong phạm vi dữ liệu hiện có.</SheetDescription>
+          </div>
+          <div className="ai-conversation-actions" aria-label="Quản lý đoạn chat">
+            <Button
+              className="ai-conversation-action"
+              disabled={pending}
+              onClick={() => resetConversation(onNewConversation)}
+              title="Đoạn chat mới"
+              type="button"
+              variant="outline"
+            >
+              <HeritageIcon name="reset" size={14} />
+              <span className="ai-conversation-action-label">Chat mới</span>
+            </Button>
+            <Button
+              aria-label="Xóa đoạn chat"
+              className="ai-conversation-action ai-conversation-delete"
+              disabled={pending || messages.length === 0}
+              onClick={() => resetConversation(onDeleteConversation)}
+              title="Xóa đoạn chat"
+              type="button"
+              variant="outline"
+            >
+              <HeritageIcon name="delete" size={14} />
+              <span className="ai-conversation-action-label">Xóa</span>
+            </Button>
+          </div>
         </SheetHeader>
         <AIContextHeader
           context={active.context}
@@ -222,6 +260,14 @@ export function AIAssistantProvider({ children }: PropsWithChildren) {
     setMessages([]);
   }, []);
 
+  const startNewConversation = useCallback(() => {
+    setMessages([]);
+  }, []);
+
+  const deleteConversation = useCallback(() => {
+    setMessages([]);
+  }, []);
+
   const value = useMemo(
     () => ({ enabled: isEnabled, openAIAssistant }),
     [openAIAssistant],
@@ -236,6 +282,8 @@ export function AIAssistantProvider({ children }: PropsWithChildren) {
         active={active}
         messages={messages}
         onMessagesChange={setMessages}
+        onDeleteConversation={deleteConversation}
+        onNewConversation={startNewConversation}
         onOpenChange={setOpen}
         onClearContext={clearContext}
         open={open}
