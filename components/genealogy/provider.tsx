@@ -136,7 +136,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
     try {
       const { auth } = getFirebaseServices();
-      return onAuthStateChanged(auth, (nextUser) => {
+      return onAuthStateChanged(auth, (nextUser: User | null) => {
         const safeUser = nextUser
           ? {
               uid: nextUser.uid,

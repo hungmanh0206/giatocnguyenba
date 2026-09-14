@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFamily } from './provider';
 import { Footer } from './header';
 import { HeritageIcon } from './heritage-icon';
+import { AIAssistantButton } from '@/components/ai/ai-assistant-button';
 import { Avatar } from './member-avatar';
 import {
   MemorialDetailDialog,
@@ -21,7 +22,6 @@ import { Choice, branchOptions, ResultsPagination } from './common';
 import {
   memberBranchName,
   memberName,
-  type Member,
 } from '@/lib/family';
 import { dateLabel, vietnamToday } from '@/lib/lunar';
 import {
@@ -261,6 +261,13 @@ function LunarCalendarView() {
                     <small>Năm {info.canChi.year}</small>
                   </div>
                 </div>
+                <AIAssistantButton
+                  className="calendar-day-ai-entry"
+                  context={{ source: 'calendar', selectedDate: inputDateValue(selected) }}
+                  contextLabel={`Đang xem ngày ${dateLabel(selected)}`}
+                  label="Luận giải ngày này"
+                  mode="calendar"
+                />
 
                 <section className="day-events">
                   <h3>
@@ -647,6 +654,17 @@ function ActivityDayView() {
                   </span>
                 </div>
 
+                <AIAssistantButton
+                  className="calendar-ai-entry"
+                  context={{
+                    source: 'activity',
+                    selectedDate: inputDateValue(selectedDate),
+                    activity: activityId,
+                  }}
+                  label="Hỏi về ngày này"
+                  mode="calendar"
+                />
+
                 <p className="activity-result-summary">{advice.summary}</p>
 
                 <div className="activity-result-facts">
@@ -718,9 +736,7 @@ function ActivityDayView() {
 }
 
 function FortuneView() {
-  const { members } = useFamily();
   const [today] = useState(vietnamToday);
-  const [memberId, setMemberId] = useState('custom');
   const [birthYear, setBirthYear] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [focus, setFocus] = useState<FortuneFocus>('overall');
@@ -728,27 +744,6 @@ function FortuneView() {
   const [source, setSource] = useState<'ai' | 'traditional' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const memberOptions = useMemo(
-    () => [
-      { value: 'custom', label: 'Tự nhập năm sinh' },
-      ...members
-        .filter((person) => person.born !== undefined)
-        .map((person) => ({
-          value: person.id,
-          label: `${memberName(person)} · ${person.born}`,
-        })),
-    ],
-    [members],
-  );
-
-  function selectMember(nextMemberId: string) {
-    setMemberId(nextMemberId);
-    setError(null);
-    if (nextMemberId === 'custom') return;
-    const member = members.find((person) => person.id === nextMemberId);
-    if (member?.born) setBirthYear(String(member.born));
-  }
-
   async function requestReading() {
     const year = Number(birthYear);
     if (!Number.isInteger(year) || year < 1800 || year > today.getFullYear()) {
@@ -811,15 +806,6 @@ function FortuneView() {
             </div>
 
             <div className="fortune-fields">
-              <div className="fortune-field fortune-member-field">
-                <span>Thành viên gia phả</span>
-                <Choice
-                  label="Chọn thành viên gia phả"
-                  value={memberId}
-                  onChange={selectMember}
-                  options={memberOptions}
-                />
-              </div>
               <label className="fortune-field">
                 <span>Năm sinh</span>
                 <Input
@@ -876,6 +862,16 @@ function FortuneView() {
               <HeritageIcon name="fortune-ai" size={19} />
               {isLoading ? 'Đang luận giải...' : 'Xem luận giải'}
             </Button>
+            <AIAssistantButton
+              className="fortune-ai-entry"
+              context={{
+                source: 'fortune',
+                birthYear: Number(birthYear) || undefined,
+                birthDate: birthDate || undefined,
+              }}
+              label="Hỏi Trợ lý"
+              mode="horoscope"
+            />
             <p className="fortune-disclaimer">
               Nội dung mang tính tham khảo và giải trí, không thay thế tư vấn
               chuyên môn hay quyết định quan trọng.

@@ -25,6 +25,7 @@ import { useFamily } from './provider';
 import { Avatar, MemberTile } from './home';
 import { Footer } from './header';
 import { HeritageIcon } from './heritage-icon';
+import { AIAssistantButton } from '@/components/ai/ai-assistant-button';
 import {
   Choice,
   branchOptions,
@@ -392,14 +393,28 @@ export function MemberDetail({ id }: { id: string }) {
               </p>
             </div>
           </div>
-          <Button
-            className="action-button profile-tree-button"
-            render={<Link href={`/family-tree?person=${id}`} />}
-            nativeButton={false}
-          >
-            <HeritageIcon name="tree" size={19} />
-            Xem trên cây
-          </Button>
+          <div className="profile-hero-actions">
+            <AIAssistantButton
+              context={{ source: 'member', personId: id }}
+              contextLabel={`${memberName(p)} · Đời ${p.generation}`}
+              label="Hỏi về người này"
+              mode="genealogy"
+            />
+            <AIAssistantButton
+              context={{ source: 'member', personId: id }}
+              contextLabel={`${memberName(p)} · Luận giải tham khảo`}
+              label="Xem tử vi"
+              mode="horoscope"
+            />
+            <Button
+              className="action-button profile-tree-button"
+              render={<Link href={`/family-tree?person=${id}`} />}
+              nativeButton={false}
+            >
+              <HeritageIcon name="tree" size={19} />
+              Xem trên cây
+            </Button>
+          </div>
         </div>
         <div className="profile-layout">
           <aside className="profile-info-panel">

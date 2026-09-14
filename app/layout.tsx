@@ -3,6 +3,7 @@ import { FamilyProvider } from '@/components/genealogy/provider';
 import { Header } from '@/components/genealogy/header';
 import { MotionProvider } from '@/components/genealogy/motion-provider';
 import { GenealogyTools } from '@/components/genealogy/webmcp';
+import { AIAssistantProvider } from '@/components/ai/ai-assistant-provider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,11 +21,13 @@ export default function RootLayout({
     <html lang="vi">
       <body>
         <FamilyProvider>
-          <MotionProvider>
-            <GenealogyTools />
-            <Header />
-            {children}
-          </MotionProvider>
+          <AIAssistantProvider>
+            <MotionProvider>
+              <GenealogyTools />
+              <Header />
+              {children}
+            </MotionProvider>
+          </AIAssistantProvider>
         </FamilyProvider>
       </body>
     </html>
