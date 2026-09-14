@@ -218,6 +218,28 @@ function AIAssistantDrawer({
   );
 }
 
+function AIAssistantLauncher({ onOpen }: { onOpen: () => void }) {
+  return (
+    <Button
+      aria-label="Mở Trợ lý AI"
+      className="ai-assistant-fab"
+      onClick={onOpen}
+      title="Trợ lý AI"
+      type="button"
+    >
+      <Image
+        alt=""
+        aria-hidden="true"
+        className="ai-assistant-fab-icon"
+        height={48}
+        loading="eager"
+        src="/app-icons/ai-new-chat.png"
+        width={48}
+      />
+    </Button>
+  );
+}
+
 export function AIAssistantProvider({ children }: PropsWithChildren) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<AssistantState>(() => createState());
@@ -279,6 +301,7 @@ export function AIAssistantProvider({ children }: PropsWithChildren) {
         onOpenChange={setOpen}
         open={open}
       />
+      <AIAssistantLauncher onOpen={() => openAIAssistant()} />
     </AIAssistantContext.Provider>
   );
 }

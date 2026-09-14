@@ -590,7 +590,7 @@ function TreeCanvas() {
               <SearchBox
                 query={query}
                 setQuery={setQuery}
-                placeholder="Tìm trong gia phả…"
+                ariaLabel="Tìm trong gia phả"
               />
               {query && (
                 <div className="search-results">

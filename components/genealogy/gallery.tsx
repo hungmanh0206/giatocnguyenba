@@ -481,7 +481,7 @@ export function GalleryPage() {
         <section className="gallery-toolbar" aria-label="Tìm và lọc kho ảnh">
           <label className="gallery-search">
             <GalleryIcon name="search" size={19} />
-            <Input aria-label="Tìm kiếm ảnh" placeholder="Tìm trong kho ảnh..." value={query} onChange={(event) => setQuery(event.target.value)} />
+            <Input aria-label="Tìm kiếm ảnh" value={query} onChange={(event) => setQuery(event.target.value)} />
             {query && <Button aria-label="Xóa tìm kiếm" className="gallery-search-clear" size="icon-xs" variant="ghost" onClick={() => setQuery('')}><GalleryIcon name="close" size={17} /></Button>}
           </label>
           <div className="gallery-filter-group">
@@ -533,7 +533,13 @@ export function GalleryPage() {
             <div className="gallery-form-grid">
               <div className="gallery-field gallery-field-title"><span>Tiêu đề</span><Input aria-label="Tiêu đề" disabled={uploadBusy} value={uploadForm.title} onChange={(event) => setUploadValue('title', event.target.value)} /></div>
               <div className="gallery-field"><span>Năm chụp</span><Input aria-label="Năm chụp" disabled={uploadBusy} inputMode="numeric" max="3000" min="1000" type="number" value={uploadForm.year} onChange={(event) => setUploadValue('year', event.target.value)} /></div>
-              <div className="gallery-field gallery-date-field"><span>Ngày chụp</span><Input aria-label="Ngày chụp" className="gallery-date-input" disabled={uploadBusy} type="date" value={uploadForm.takenAt} onChange={(event) => setUploadValue('takenAt', event.target.value)} /><GalleryIcon className="gallery-date-icon" name="calendar-day" size={20} /></div>
+              <div className="gallery-field gallery-date-field">
+                <span>Ngày chụp</span>
+                <span className="gallery-date-control">
+                  <Input aria-label="Ngày chụp" className="gallery-date-input" disabled={uploadBusy} type="date" value={uploadForm.takenAt} onChange={(event) => setUploadValue('takenAt', event.target.value)} />
+                  <GalleryIcon className="gallery-date-icon" name="calendar-day" size={20} />
+                </span>
+              </div>
               <div className="gallery-field gallery-field-full"><span>Mô tả</span><Textarea aria-label="Mô tả" disabled={uploadBusy} rows={3} value={uploadForm.caption} onChange={(event) => setUploadValue('caption', event.target.value)} /></div>
             </div>
             {uploadError && <p className="gallery-form-error" role="alert">{uploadError}</p>}
@@ -554,7 +560,16 @@ export function GalleryPage() {
             <div className="gallery-viewer-copy">
               {editing ? <div className="gallery-edit-form">
                 <div className="gallery-field"><span>Tiêu đề</span><Input aria-label="Tiêu đề" value={editForm.title} onChange={(event) => setEditValue('title', event.target.value)} /></div>
-                <div className="gallery-form-grid"><div className="gallery-field"><span>Năm chụp</span><Input aria-label="Năm chụp" inputMode="numeric" max="3000" min="1000" type="number" value={editForm.year} onChange={(event) => setEditValue('year', event.target.value)} /></div><div className="gallery-field gallery-date-field"><span>Ngày chụp</span><Input aria-label="Ngày chụp" className="gallery-date-input" type="date" value={editForm.takenAt} onChange={(event) => setEditValue('takenAt', event.target.value)} /><GalleryIcon className="gallery-date-icon" name="calendar-day" size={20} /></div></div>
+                <div className="gallery-form-grid">
+                  <div className="gallery-field"><span>Năm chụp</span><Input aria-label="Năm chụp" inputMode="numeric" max="3000" min="1000" type="number" value={editForm.year} onChange={(event) => setEditValue('year', event.target.value)} /></div>
+                  <div className="gallery-field gallery-date-field">
+                    <span>Ngày chụp</span>
+                    <span className="gallery-date-control">
+                      <Input aria-label="Ngày chụp" className="gallery-date-input" type="date" value={editForm.takenAt} onChange={(event) => setEditValue('takenAt', event.target.value)} />
+                      <GalleryIcon className="gallery-date-icon" name="calendar-day" size={20} />
+                    </span>
+                  </div>
+                </div>
                 <div className="gallery-field"><span>Mô tả</span><Textarea aria-label="Mô tả" rows={4} value={editForm.caption} onChange={(event) => setEditValue('caption', event.target.value)} /></div>
                 <div className="gallery-dialog-actions"><Button disabled={savingEdit} onClick={() => setEditing(false)} variant="outline">Hủy</Button><Button disabled={savingEdit} onClick={() => void updatePhoto({ ...editForm, year: editForm.year ? Number(editForm.year) : null })}>{savingEdit && <GalleryIcon className="gallery-spinner" name="refresh" size={15} />}{savingEdit ? 'Đang lưu...' : 'Lưu thay đổi'}</Button></div>
               </div> : <>

@@ -656,7 +656,6 @@ export function AdminPage() {
                       type="number"
                       min={birthYears?.min || 1600}
                       max={birthYears?.max || new Date().getFullYear()}
-                      placeholder="Chưa rõ"
                       value={editing.born ?? ''}
                       onChange={(e) =>
                         update(
@@ -809,7 +808,6 @@ export function AdminPage() {
                     min={1}
                     max={999}
                     inputMode="numeric"
-                    placeholder="Ví dụ: 3"
                     value={editing.siblingOrder ?? ''}
                     onChange={(event) =>
                       update(
@@ -940,7 +938,6 @@ export function AdminPage() {
                         type="number"
                         min={1600}
                         max={new Date().getFullYear()}
-                        placeholder="Chưa rõ"
                         value={editingDeathDate?.year ?? editing.died ?? ''}
                         onChange={(e) => updateLunarDeathDate('year', e.target.value)}
                       />

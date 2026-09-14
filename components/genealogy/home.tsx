@@ -258,10 +258,9 @@ export function HomePage() {
           </div>
           <div className="hero-search">
             <HeritageIcon name="search" size={21} />
-            <Input
-              aria-label="Tìm người thân"
-              placeholder="Tìm người thân trong gia phả…"
-              value={query}
+              <Input
+                aria-label="Tìm người thân"
+                value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             <span className="search-hint">Họ và tên</span>

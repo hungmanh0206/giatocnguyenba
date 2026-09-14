@@ -21,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { BrandIcon } from './brand-icon';
 import { HeritageIcon } from './heritage-icon';
 import { useFamily } from './provider';
-import { AIAssistantButton } from '@/components/ai/ai-assistant-button';
 const navigation = [
   ['/', 'Trang chủ'],
   ['/family-tree', 'Gia phả'],
@@ -219,11 +218,6 @@ export function Header() {
               </Link>
             ))}
             <div className="mobile-account-links">
-              <AIAssistantButton
-                className="mobile-account-entry mobile-ai-entry"
-                label="Trợ lý AI"
-                onOpened={() => setNavigationOpen(false)}
-              />
               {!connection.user ? (
                 <Button
                   className="mobile-account-entry"
@@ -272,7 +266,6 @@ export function Header() {
             </div>
           </nav>
           <div className="header-actions">
-            <AIAssistantButton className="header-ai-entry" label="Trợ lý" />
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={

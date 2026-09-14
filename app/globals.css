@@ -6564,6 +6564,35 @@ main#main.admin-page {
   background: #fff7ef;
 }
 
+.ai-assistant-fab {
+  position: fixed;
+  z-index: 45;
+  right: 24px;
+  bottom: 24px;
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid #e0c5a1;
+  border-radius: 50%;
+  padding: 5px;
+  background: #fffdf8;
+  box-shadow: 0 10px 24px #4b2d1c2e;
+}
+
+.ai-assistant-fab:hover {
+  border-color: #b8754f;
+  background: #fff7ec;
+  transform: translateY(-2px);
+}
+
+.ai-assistant-fab-icon {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px #5d17162b);
+}
+
 .ai-button-icon {
   width: 20px;
   height: 20px;
@@ -6672,8 +6701,16 @@ main#main.admin-page {
     min-height: 230px;
   }
 
-  .header-ai-entry {
-    display: none;
+  .ai-assistant-fab {
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    width: 54px;
+    height: 54px;
+  }
+
+  .ai-assistant-fab-icon {
+    width: 41px;
+    height: 41px;
   }
 
   .profile-hero-actions {
@@ -10628,7 +10665,12 @@ main#main .timeline-entry p {
   height: 38px !important;
 }
 .gallery-date-field {
+  min-width: 0;
+}
+.gallery-date-control {
   position: relative;
+  display: block;
+  min-width: 0;
 }
 .gallery-date-input {
   padding-right: 42px !important;
@@ -10646,12 +10688,15 @@ main#main .timeline-entry p {
 .gallery-date-icon {
   position: absolute;
   z-index: 4;
+  top: 50%;
   right: 11px;
-  bottom: 9px;
+  bottom: auto;
   width: 20px;
   height: 20px;
+  margin: 0;
   object-fit: contain;
   pointer-events: none;
+  transform: translateY(-50%);
 }
 .gallery-field textarea {
   min-height: 86px;
@@ -12610,8 +12655,13 @@ main#main .timeline-entry p {
 }
 
 .activity-date-field {
-  position: relative;
   width: 170px;
+}
+
+.tool-date-control {
+  position: relative;
+  display: block;
+  min-width: 0;
 }
 
 .activity-date-input {
@@ -12633,15 +12683,21 @@ main#main .timeline-entry p {
   opacity: 0;
 }
 
-.activity-date-icon {
+.tool-date-icon {
   position: absolute;
-  z-index: 1;
+  z-index: 2;
+  top: 50%;
   right: 10px;
-  bottom: 9px;
+  display: block;
   width: 21px;
   height: 21px;
   object-fit: contain;
   pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.tool-date-control > .tool-date-icon {
+  margin: 0;
 }
 
 .activity-option-grid {
@@ -12779,14 +12835,14 @@ main#main .timeline-entry p {
 
 .activity-analyze-button .ai-button-icon,
 .fortune-submit .ai-button-icon {
-  width: 32px;
-  height: 32px;
-  padding: 3px;
-  border: 1px solid #ffe8c7;
-  border-radius: 8px;
-  background: #fffdf8;
-  box-shadow: 0 1px 3px #58171352;
-  filter: drop-shadow(0 1px 1px #5a17153d);
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 1px 1px #5a171652);
 }
 
 .activity-resolution {
@@ -12844,9 +12900,30 @@ main#main .timeline-entry p {
   color: #766657;
 }
 
-.activity-empty-state {
+.tool-empty-state {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
   align-content: start;
-  padding-top: 1px;
+  justify-items: start;
+  gap: 7px;
+  padding: 0;
+}
+
+.tool-empty-state h2 {
+  margin: 0;
+  color: #3f3026;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.tool-empty-state p {
+  max-width: 440px;
+  margin: 0;
+  color: #766657;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .activity-result-state .heritage-icon,
@@ -13186,27 +13263,32 @@ main#main .timeline-entry p {
 }
 
 .activity-ai-analysis {
+  display: grid;
+  gap: 12px;
   margin-top: 18px;
-  padding: 15px 16px;
+  padding: 17px 18px;
   border: 1px solid #ecd9ca;
   border-radius: 6px;
   background: #fff9f4;
 }
 
 .activity-ai-conclusion {
+  display: grid;
+  gap: 8px;
   margin-top: 14px;
-  padding: 15px 16px;
+  padding: 16px 18px;
   border: 1px solid #dfc5a4;
-  border-left: 3px solid #9a312d;
+  border-left: 4px solid #9a312d;
   border-radius: 6px;
-  background: #fffaf2;
+  background: #fffdf8;
+  box-shadow: 0 3px 10px #4b2d1c0a;
 }
 
 .activity-ai-conclusion p {
-  margin: 8px 0 0;
+  margin: 0;
   color: #4e3d30;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.65;
 }
 
@@ -13214,7 +13296,7 @@ main#main .timeline-entry p {
 .activity-ai-placeholder,
 .activity-ai-answer,
 .activity-ai-error {
-  margin-top: 11px;
+  margin-top: 0;
 }
 
 .activity-ai-loading,
@@ -13227,9 +13309,9 @@ main#main .timeline-entry p {
 
 .activity-ai-answer {
   display: grid;
-  gap: 9px;
+  gap: 12px;
   color: #5a4a3d;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.65;
 }
 
@@ -13356,7 +13438,9 @@ main#main .timeline-entry p {
 }
 
 .activity-policy {
-  margin-top: 17px;
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid #ebe2d6;
 }
 
 .fortune-fields {
@@ -13386,20 +13470,6 @@ main#main .timeline-entry p {
 .fortune-date-input {
   font-variant-numeric: tabular-nums;
   padding-right: 42px !important;
-}
-
-.fortune-date-field {
-  position: relative;
-}
-
-.fortune-date-icon {
-  position: absolute;
-  right: 10px;
-  bottom: 9px;
-  width: 21px;
-  height: 21px;
-  object-fit: contain;
-  pointer-events: none;
 }
 
 .fortune-calendar-type > div {
@@ -13539,35 +13609,53 @@ main#main .timeline-entry p {
 
 .fortune-reading-heading {
   align-items: flex-start;
-  padding-bottom: 16px;
+  padding-bottom: 15px;
   border-bottom: 1px solid #ebe2d6;
 }
 
+.fortune-reading-heading > div {
+  min-width: 0;
+}
+
+.fortune-reading-heading p {
+  margin: 7px 0 0;
+  color: #6e5e50;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
 .fortune-reading-summary {
-  margin-top: 18px;
-  padding: 15px 16px;
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 16px 18px;
   border: 1px solid #dfc5a4;
-  border-left: 3px solid #9a312d;
+  border-left: 4px solid #9a312d;
   border-radius: 6px;
-  background: #fffaf2;
+  background: #fffdf8;
+  box-shadow: 0 3px 10px #4b2d1c0a;
 }
 
 .fortune-reading-summary h3 {
-  margin: 5px 0 0;
+  margin: 0;
   color: #4a372b;
-  font-size: 17px;
-  line-height: 1.35;
+  font-size: 18px;
+  line-height: 1.3;
 }
 
 .fortune-reading-summary p {
-  margin: 7px 0 0;
+  margin: 0;
   color: #5d4d3e;
   font-size: 14px;
+  font-weight: 500;
   line-height: 1.65;
 }
 
 .fortune-profile-section {
-  margin-top: 18px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #ebe2d6;
 }
 
 .fortune-profile-facts {
@@ -13612,8 +13700,8 @@ main#main .timeline-entry p {
 
 .fortune-interpretation {
   display: grid;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 9px;
+  margin-top: 18px;
 }
 
 .fortune-interpretation-section {
@@ -13629,7 +13717,7 @@ main#main .timeline-entry p {
   padding: 0 14px;
   cursor: pointer;
   color: #76532e;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   list-style: none;
 }
@@ -13653,8 +13741,8 @@ main#main .timeline-entry p {
 .fortune-interpretation-section p {
   margin: -1px 14px 15px;
   color: #695b4c;
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1.65;
 }
 
 .fortune-interpretation-section ul,
@@ -13722,6 +13810,20 @@ main#main .timeline-entry p {
 
 .fortune-follow-up-form button {
   min-height: 40px;
+}
+
+.fortune-follow-up-send {
+  width: 40px;
+  min-width: 40px;
+  padding: 5px !important;
+  background: #982d28;
+}
+
+.fortune-follow-up-send-icon {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px #5d171633);
 }
 
 .fortune-follow-up-answer {
@@ -13806,28 +13908,6 @@ main#main .timeline-entry p {
   line-height: 1.65;
 }
 
-.fortune-empty-state {
-  display: grid;
-  min-height: 0;
-  flex: 1;
-  align-content: start;
-  justify-items: start;
-  gap: 8px;
-  padding-top: 1px;
-}
-
-.fortune-empty-state h2 {
-  margin: 2px 0 0;
-}
-
-.fortune-empty-state p {
-  max-width: 330px;
-  margin: 0;
-  color: #806f5d;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
 @media (max-width: 900px) {
   .activity-day-layout,
   .fortune-layout {
@@ -13844,6 +13924,10 @@ main#main .timeline-entry p {
 }
 
 @media (max-width: 767px) {
+  body:has(.calendar-tools-page) .ai-assistant-fab {
+    display: none;
+  }
+
   .lunar-tabs-band .family-tree-tabs {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -13905,7 +13989,7 @@ main#main .timeline-entry p {
   .calendar-tool-section-heading h2,
   .activity-result-heading h2,
   .fortune-reading-heading h2,
-  .fortune-empty-state h2 {
+  .tool-empty-state h2 {
     font-size: 19px;
   }
 
@@ -13998,18 +14082,20 @@ main#main .timeline-entry p {
   }
 
   .fortune-follow-up-form {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .fortune-follow-up-form button {
-    width: 100%;
+  .fortune-follow-up-form .fortune-follow-up-send {
+    width: 40px;
   }
 
+  .activity-result,
   .fortune-reading-panel {
-    min-height: 300px;
+    height: clamp(320px, 64dvh, 460px);
+    min-height: 0;
   }
 
-  .fortune-empty-state {
+  .tool-empty-state {
     min-height: 265px;
   }
 }

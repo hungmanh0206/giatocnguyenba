@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { isSameMonth } from 'date-fns';
@@ -92,16 +93,14 @@ function inputDateToDate(value: string, fallback: Date) {
 }
 
 function formatBirthDateInput(value: string) {
-  const trimmed = value.replace(/[^\d/]/g, '').slice(0, 10);
-  if (trimmed.includes('/')) return trimmed;
-  const digits = trimmed.slice(0, 8);
+  const digits = value.replace(/\D/g, '').slice(0, 8);
   return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)]
     .filter(Boolean)
     .join('/');
 }
 
 function parseBirthDateInput(value: string) {
-  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value.trim());
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(formatBirthDateInput(value));
   if (!match) return null;
   const [, day, month, year] = match;
   return { day: Number(day), month: Number(month), year: Number(year) };
@@ -752,14 +751,16 @@ function ActivityDayView() {
               <h2 id="activity-picker-title">Việc cần xem</h2>
               <label className="activity-date-field">
                 <span>Ngày dương</span>
-                <Input
-                  aria-label="Chọn ngày dương lịch"
-                  className="activity-date-input"
-                  type="date"
-                  value={inputDateValue(selectedDate)}
-                  onChange={(event) => selectDate(event.target.value)}
-                />
-                <HeritageIcon className="activity-date-icon" name="solar-calendar" size={18} />
+                <span className="tool-date-control">
+                  <Input
+                    aria-label="Chọn ngày dương lịch"
+                    className="activity-date-input"
+                    type="date"
+                    value={inputDateValue(selectedDate)}
+                    onChange={(event) => selectDate(event.target.value)}
+                  />
+                  <HeritageIcon className="tool-date-icon" name="today" size={18} />
+                </span>
               </label>
             </div>
 
@@ -788,7 +789,6 @@ function ActivityDayView() {
                 aria-label="Nhập công việc khác"
                 id="other-activity"
                 maxLength={120}
-                placeholder="Ví dụ: ký hợp đồng mua nhà"
                 value={otherActivityInput}
                 onChange={(event) => changeOtherActivity(event.target.value)}
               />
@@ -813,7 +813,7 @@ function ActivityDayView() {
               onClick={() => void requestAnalysis()}
               type="button"
             >
-                <AIButtonIcon />
+                <AIButtonIcon variant="light" />
                 {isAnalyzing ? 'Đang phân tích...' : 'Hỏi AI về ngày này'}
             </Button>
             <label className="ai-model-switch">
@@ -937,7 +937,7 @@ function ActivityDayView() {
                 <small>Kiểm tra lựa chọn ở block bên trái rồi bấm “Hỏi AI về ngày này” để thử lại.</small>
               </div>
             ) : (
-              <div className="activity-result-state activity-empty-state">
+              <div className="tool-empty-state activity-empty-state">
                 <span className="eyebrow">KẾT QUẢ PHÂN TÍCH</span>
                 <h2>Chưa có phân tích</h2>
                 <p>Chọn một công việc và ngày ở block bên trái, sau đó bấm “Hỏi AI về ngày này”.</p>
@@ -1126,25 +1126,25 @@ function FortuneView() {
                     setFullName(event.target.value);
                     setError(null);
                   }}
-                  placeholder="Ví dụ: Nguyễn Văn Minh"
                   value={fullName}
                 />
               </label>
               <div className="fortune-field fortune-birth-date fortune-date-field">
                 <span>Ngày sinh</span>
-                <Input
-                  aria-label="Ngày sinh, tháng sinh, năm sinh"
-                  className="fortune-date-input"
-                  inputMode="numeric"
-                  maxLength={10}
-                  onChange={(event) => {
-                    setBirthDate(formatBirthDateInput(event.target.value));
-                    setError(null);
-                  }}
-                  placeholder="DD/MM/YYYY"
-                  value={birthDate}
-                />
-                <HeritageIcon className="fortune-date-icon" name="solar-calendar" size={18} />
+                <span className="tool-date-control">
+                  <Input
+                    aria-label="Ngày sinh, tháng sinh, năm sinh"
+                    className="fortune-date-input"
+                    inputMode="numeric"
+                    maxLength={10}
+                    onChange={(event) => {
+                      setBirthDate(formatBirthDateInput(event.target.value));
+                      setError(null);
+                    }}
+                    value={birthDate}
+                  />
+                  <HeritageIcon className="tool-date-icon" name="today" size={18} />
+                </span>
               </div>
               <div className="fortune-field fortune-calendar-type">
                 <span>Loại lịch</span>
@@ -1180,7 +1180,7 @@ function FortuneView() {
               </label>
               <label className="fortune-field">
                 <span>Giờ sinh</span>
-                <Input aria-label="Giờ sinh" className="activity-date-input" disabled={unknownBirthTime} inputMode="numeric" maxLength={5} onChange={(event) => setBirthTime(event.target.value)} placeholder="HH:MM" value={birthTime} />
+                <Input aria-label="Giờ sinh" className="activity-date-input" disabled={unknownBirthTime} inputMode="numeric" maxLength={5} onChange={(event) => setBirthTime(event.target.value)} value={birthTime} />
               </label>
               <label className="fortune-field">
                 <span>Độ chính xác giờ sinh</span>
@@ -1221,7 +1221,7 @@ function FortuneView() {
               disabled={isLoading}
               type="submit"
             >
-              <AIButtonIcon size={19} />
+              <AIButtonIcon size={19} variant="light" />
               {loadingStage === 'calendar' ? 'Đang tính dữ liệu ngày sinh...' : loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : loadingStage === 'ai' ? 'Đang luận giải bằng AI...' : 'Luận giải tử vi'}
             </Button>
             <label className="ai-model-switch fortune-model-switch">
@@ -1285,8 +1285,17 @@ function FortuneView() {
                       {['Công việc năm nay', 'Tài lộc', 'Tình duyên', 'Gia đạo', 'Điểm mạnh của tôi', '3 năm tới'].map((prompt) => <button key={prompt} onClick={() => void requestFollowUp(prompt)} type="button">{prompt}</button>)}
                     </div>
                     <div className="fortune-follow-up-form">
-                      <Input aria-label="Câu hỏi thêm về tử vi" disabled={isFollowingUp} onChange={(event) => setFollowUp(event.target.value)} placeholder="Hỏi sâu hơn về hồ sơ này..." value={followUp} />
-                      <Button disabled={isFollowingUp || !followUp.trim()} onClick={() => void requestFollowUp()} type="button">{isFollowingUp ? 'Đang hỏi...' : 'Hỏi AI'}</Button>
+                      <Input aria-label="Câu hỏi thêm về tử vi" disabled={isFollowingUp} onChange={(event) => setFollowUp(event.target.value)} value={followUp} />
+                      <Button
+                        aria-label={isFollowingUp ? 'Đang hỏi AI' : 'Hỏi AI'}
+                        className="fortune-follow-up-send"
+                        disabled={isFollowingUp || !followUp.trim()}
+                        onClick={() => void requestFollowUp()}
+                        title={isFollowingUp ? 'Đang hỏi AI' : 'Hỏi AI'}
+                        type="button"
+                      >
+                        <Image alt="" aria-hidden="true" className="fortune-follow-up-send-icon" height={25} src="/app-icons/ai-send-paper-plane.png" width={25} />
+                      </Button>
                     </div>
                     {followUpError ? <p className="fortune-error" role="alert">{followUpError}</p> : null}
                     {followUpAnswer ? <p className="fortune-follow-up-answer">{followUpAnswer}</p> : null}
@@ -1294,7 +1303,8 @@ function FortuneView() {
                 ) : null}
               </div>
             ) : (
-              <div className="fortune-empty-state">
+              <div className="tool-empty-state fortune-empty-state">
+                <span className="eyebrow">KẾT QUẢ LUẬN GIẢI</span>
                 <h2>Luận giải của bạn</h2>
                 <p>Nhập họ tên, ngày sinh, giới tính và giờ sinh để hệ thống tạo hồ sơ độc lập tại đây.</p>
               </div>

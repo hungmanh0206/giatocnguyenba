@@ -124,18 +124,17 @@ export function ResultsPagination({
 export function SearchBox({
   query,
   setQuery,
-  placeholder = 'Tìm theo họ và tên…',
+  ariaLabel = 'Tìm theo họ và tên',
 }: {
   query: string;
   setQuery: (q: string) => void;
-  placeholder?: string;
+  ariaLabel?: string;
 }) {
   return (
     <div className="search-box">
       <HeritageIcon name="search" size={19} />
       <Input
-        aria-label={placeholder}
-        placeholder={placeholder}
+        aria-label={ariaLabel}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />

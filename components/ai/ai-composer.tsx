@@ -36,7 +36,6 @@ export function AIComposer({
         disabled={disabled}
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={onKeyDown}
-        placeholder="Hỏi về gia phả hoặc lịch..."
         rows={2}
         value={draft}
       />

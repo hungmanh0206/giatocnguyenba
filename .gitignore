@@ -42,3 +42,5 @@ next-env.d.ts
 *.tsbuildinfo
 
 .vercel
+.env.local
+.pnpm-store/
