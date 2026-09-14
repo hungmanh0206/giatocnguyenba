@@ -52,6 +52,10 @@ export class GeminiProvider implements AIProvider {
 
       const payload = (await response.json().catch(() => ({}))) as GeminiResponse;
       if (!response.ok) {
+        console.warn('[ai] Gemini generation failed', {
+          status: response.status,
+          reason: payload.error?.status || 'unknown',
+        });
         if (response.status === 429 || payload.error?.status === 'RESOURCE_EXHAUSTED') {
           throw new AIProviderError('quota');
         }
