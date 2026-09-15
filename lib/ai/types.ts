@@ -2,7 +2,12 @@ import type { CalendarActivityId } from '@/lib/lunar-calendar/activity-advice';
 import type { GenealogyRelationshipResult } from '@/lib/genealogy/relationship-engine';
 import type { MarriageStatus, ParentageKind } from '@/lib/family';
 
-export const aiModes = ['general', 'genealogy', 'calendar', 'horoscope'] as const;
+export const aiModes = [
+  'general',
+  'genealogy',
+  'calendar',
+  'horoscope',
+] as const;
 
 export type AIMode = (typeof aiModes)[number];
 export const aiModelPreferences = ['auto', 'gemini', 'openai'] as const;
@@ -24,6 +29,9 @@ export type AIHistoryMessage = {
 export type AIClientContext = {
   source?: AISource;
   personId?: string;
+  // Resolved server-side IDs from earlier turns. The browser never supplies
+  // person records, only references the assistant has already confirmed.
+  referencePersonIds?: string[];
   selectedDate?: string;
   activity?: CalendarActivityId;
   birthYear?: number;
@@ -35,6 +43,7 @@ export type AIClientContext = {
 };
 
 export type AIChatRequest = {
+  conversationId?: string;
   message: string;
   mode: AIMode;
   context: AIClientContext;
@@ -66,11 +75,16 @@ export type AIGenealogyPerson = {
     relationshipCode?: string;
     term?: string;
   }>;
-  spouseRelations: Array<{ person: AIPersonFact; status?: MarriageStatus; order?: number }>;
+  spouseRelations: Array<{
+    person: AIPersonFact;
+    status?: MarriageStatus;
+    order?: number;
+  }>;
 };
 
 export type AIGenealogyContext = {
   people: AIGenealogyPerson[];
+  referencePeople?: AIGenealogyPerson[];
   founder?: AIGenealogyPerson;
   matches?: AIPersonFact[];
   relationship?: GenealogyRelationshipResult;
@@ -153,7 +167,32 @@ export type AIProviderRequest = {
   history: AIHistoryMessage[];
   context: AIResolvedContext;
   systemInstruction: string;
+  agentTools?: AIAgentToolSet;
   responseMimeType?: 'application/json';
+};
+
+export type AIAgentToolDefinition = {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+};
+
+export type AIAgentToolCall = {
+  id?: string;
+  name: string;
+  args: Record<string, unknown>;
+};
+
+export type AIAgentToolResult = {
+  id?: string;
+  name: string;
+  response: { result?: unknown; error?: string };
+};
+
+export type AIAgentToolSet = {
+  declarations: AIAgentToolDefinition[];
+  execute: (calls: AIAgentToolCall[]) => Promise<AIAgentToolResult[]>;
+  forceFirstTool?: boolean;
 };
 
 export type AIProviderResponse = {
@@ -166,6 +205,7 @@ export type AIChatResponse = {
   provider: 'gemini' | 'openai' | 'mock';
   contextUsed: {
     personId?: string;
+    resolvedPersonIds?: string[];
     selectedDate?: string;
     activity?: string;
   };

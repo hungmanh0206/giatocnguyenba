@@ -1,7 +1,26 @@
-import { calendarActivities, type CalendarActivityId } from '../lunar-calendar/activity-advice.ts';
-import { aiModelPreferences, aiModes, type AIChatRequest, type AIClientContext, type AIHistoryMessage, type AIMode, type AIModelPreference, type AISource } from './types.ts';
+import {
+  calendarActivities,
+  type CalendarActivityId,
+} from '../lunar-calendar/activity-advice.ts';
+import {
+  aiModelPreferences,
+  aiModes,
+  type AIChatRequest,
+  type AIClientContext,
+  type AIHistoryMessage,
+  type AIMode,
+  type AIModelPreference,
+  type AISource,
+} from './types.ts';
 
-const sources = ['global', 'family-tree', 'member', 'calendar', 'activity', 'fortune'] as const;
+const sources = [
+  'global',
+  'family-tree',
+  'member',
+  'calendar',
+  'activity',
+  'fortune',
+] as const;
 const maxMessageLength = 1_200;
 const maxHistoryMessages = 8;
 const maxHistoryMessageLength = 1_000;
@@ -27,7 +46,8 @@ function validPersonId(value: unknown) {
 }
 
 function parseContext(value: unknown): AIClientContext | null {
-  if (value !== undefined && (typeof value !== 'object' || value === null)) return null;
+  if (value !== undefined && (typeof value !== 'object' || value === null))
+    return null;
   const input = (value || {}) as Record<string, unknown>;
   const source = sources.includes(input.source as AISource)
     ? (input.source as AISource)
@@ -45,20 +65,33 @@ function parseContext(value: unknown): AIClientContext | null {
     : undefined;
   const birthYear = Number(input.birthYear);
   const dateRange = input.dateRange as Record<string, unknown> | undefined;
-  const rangeFrom = typeof dateRange?.from === 'string' ? dateRange.from : undefined;
+  const rangeFrom =
+    typeof dateRange?.from === 'string' ? dateRange.from : undefined;
   const rangeTo = typeof dateRange?.to === 'string' ? dateRange.to : undefined;
   const validRange =
     rangeFrom && rangeTo && parseIsoDate(rangeFrom) && parseIsoDate(rangeTo)
       ? { from: rangeFrom, to: rangeTo }
       : undefined;
+  const referencePersonIds = Array.isArray(input.referencePersonIds)
+    ? [
+        ...new Set(
+          input.referencePersonIds
+            .map(validPersonId)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ].slice(0, 3)
+    : undefined;
 
   return {
     source,
     personId: validPersonId(input.personId),
+    referencePersonIds,
     selectedDate,
     activity,
     birthYear:
-      Number.isInteger(birthYear) && birthYear >= 1800 && birthYear <= new Date().getFullYear()
+      Number.isInteger(birthYear) &&
+      birthYear >= 1800 &&
+      birthYear <= new Date().getFullYear()
         ? birthYear
         : undefined,
     birthDate,
@@ -69,20 +102,18 @@ function parseContext(value: unknown): AIClientContext | null {
 function parseHistory(value: unknown): AIHistoryMessage[] | null {
   if (value === undefined) return [];
   if (!Array.isArray(value)) return null;
-  return value
-    .slice(-maxHistoryMessages)
-    .flatMap((item) => {
-      if (typeof item !== 'object' || item === null) return [];
-      const message = item as Record<string, unknown>;
-      if (
-        (message.role !== 'user' && message.role !== 'assistant') ||
-        typeof message.content !== 'string'
-      ) {
-        return [];
-      }
-      const content = message.content.trim().slice(0, maxHistoryMessageLength);
-      return content ? [{ role: message.role, content }] : [];
-    });
+  return value.slice(-maxHistoryMessages).flatMap((item) => {
+    if (typeof item !== 'object' || item === null) return [];
+    const message = item as Record<string, unknown>;
+    if (
+      (message.role !== 'user' && message.role !== 'assistant') ||
+      typeof message.content !== 'string'
+    ) {
+      return [];
+    }
+    const content = message.content.trim().slice(0, maxHistoryMessageLength);
+    return content ? [{ role: message.role, content }] : [];
+  });
 }
 
 export function parseAIChatRequest(value: unknown): AIChatRequest | null {
@@ -93,14 +124,31 @@ export function parseAIChatRequest(value: unknown): AIChatRequest | null {
   const context = parseContext(input.context);
   const history = parseHistory(input.history);
 
-  if (!message || message.length > maxMessageLength || !aiModes.includes(mode) || !context || !history) {
+  if (
+    !message ||
+    message.length > maxMessageLength ||
+    !aiModes.includes(mode) ||
+    !context ||
+    !history
+  ) {
     return null;
   }
-  return { message, mode, context, history };
+  const conversationId =
+    typeof input.conversationId === 'string' &&
+    /^[A-Za-z0-9_-]{8,100}$/.test(input.conversationId)
+      ? input.conversationId
+      : undefined;
+  return {
+    ...(conversationId ? { conversationId } : {}),
+    message,
+    mode,
+    context,
+    history,
+  };
 }
 
 export function parseAIModelPreference(value: unknown): AIModelPreference {
   return aiModelPreferences.includes(value as AIModelPreference)
-    ? value as AIModelPreference
+    ? (value as AIModelPreference)
     : 'auto';
 }

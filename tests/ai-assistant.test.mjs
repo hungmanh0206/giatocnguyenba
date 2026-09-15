@@ -27,17 +27,40 @@ test('AI input accepts a minimal browser context but rejects injected person rec
       context: { source: 'global' },
       history: [],
     })?.context,
-    { source: 'global', personId: undefined, selectedDate: undefined, activity: undefined, birthYear: undefined, birthDate: undefined, dateRange: undefined },
+    {
+      source: 'global',
+      personId: undefined,
+      referencePersonIds: undefined,
+      selectedDate: undefined,
+      activity: undefined,
+      birthYear: undefined,
+      birthDate: undefined,
+      dateRange: undefined,
+    },
   );
   assert.equal(
     parseAIChatRequest({
       message: 'Hỏi thành viên',
       mode: 'genealogy',
-      context: { source: 'member', personId: 'P001', person: { name: 'Dữ liệu giả' } },
+      context: {
+        source: 'member',
+        personId: 'P001',
+        person: { name: 'Dữ liệu giả' },
+      },
       history: [],
     })?.context.personId,
     'P001',
   );
+});
+
+test('a verified person reference is preserved for a follow-up turn', () => {
+  const context = buildGenealogyContext({
+    members: seedMembers,
+    message: 'Ông ấy có mấy người con?',
+    referencePersonIds: ['P001'],
+  });
+  assert.equal(context.referencePeople?.[0]?.person.id, 'P001');
+  assert.equal(context.people[0]?.person.id, 'P001');
 });
 
 test('genealogy resolver only returns the matched family subset and direct facts', async () => {
@@ -69,7 +92,9 @@ test('genealogy assistant resolves the clan founder and family graph before usin
     message: 'Thủy tổ là ai?',
     history: [],
     context: resolvedContext({ genealogy: founderContext }),
-    systemInstruction: buildSystemPrompt(resolvedContext({ genealogy: founderContext })),
+    systemInstruction: buildSystemPrompt(
+      resolvedContext({ genealogy: founderContext }),
+    ),
   });
   assert.match(founderAnswer.answer, /Nguyễn Bá Linh/);
   assert.match(founderAnswer.answer, /thủy tổ/i);
@@ -78,7 +103,10 @@ test('genealogy assistant resolves the clan founder and family graph before usin
     members: seedMembers,
     message: 'Nguyễn Bá Linh và Nguyễn Văn Xum có quan hệ gì?',
   });
-  assert.match(relationshipContext.relationship?.explanation || '', /cháu|ông|bà/i);
+  assert.match(
+    relationshipContext.relationship?.explanation || '',
+    /cháu|ông|bà/i,
+  );
 });
 
 test('calendar assistant context comes from the existing lunar calendar engine', () => {

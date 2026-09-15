@@ -7,9 +7,14 @@ import { buildHoroscopeContext } from './build-horoscope-context';
 import { loadFamilyMembers } from './load-family-members';
 import { vietnamToday } from '../../lunar.ts';
 
-function requiresGenealogy(request: AIChatRequest) {
-  if (request.context.personId || request.mode === 'genealogy') return true;
-  return /gia phả|con ai|cha mẹ|cha\b|mẹ|vợ|chồng|phối ngẫu|anh chị em|anh em|bác|chú|cô\b|cậu|dì|thím|mợ|dượng|con nuôi|cha dượng|mẹ kế|cùng cha|cùng mẹ|ngày giỗ|húy kỵ|tổ tiên|tổ tiên chung|hậu duệ|thủy tổ|thuy to|khai tổ|ông tổ|bà tổ|chi họ|nhánh nội|nhánh ngoại|đời thứ|thành viên|mối quan hệ|quan hệ|là ai|la ai|thông tin/i.test(
+export function requiresGenealogy(request: AIChatRequest) {
+  if (
+    request.context.personId ||
+    request.context.referencePersonIds?.length ||
+    request.mode === 'genealogy'
+  )
+    return true;
+  return /gia phả|con ai|cha mẹ|cha\b|mẹ|vợ|chồng|phối ngẫu|anh chị em|anh em|bác|chú|cô\b|cậu|dì|thím|mợ|dượng|con nuôi|cha dượng|mẹ kế|cùng cha|cùng mẹ|ngày giỗ|húy kỵ|tổ tiên|tổ tiên chung|hậu duệ|thủy tổ|thuy to|khai tổ|ông tổ|bà tổ|chi họ|nhánh nội|nhánh ngoại|đời thứ|thành viên|mối quan hệ|quan hệ|là ai|la ai|thông tin|thống kê|bao nhiêu người|đông nhất|nhiều người nhất|lịch sử gia đình|tiểu sử|sự kiện gia đình/i.test(
     request.message,
   );
 }
@@ -40,13 +45,17 @@ function calendarClientContext(request: AIChatRequest) {
   return { ...request.context, selectedDate: dateInput(date) };
 }
 
-export async function buildAIContext(request: AIChatRequest): Promise<AIResolvedContext> {
+export async function buildAIContext(
+  request: AIChatRequest,
+): Promise<AIResolvedContext> {
   const members = await membersFor(request);
   const general = buildGeneralContext();
   const warnings: string[] = [];
   const calendarContext = calendarClientContext(request);
   const calendar =
-    request.mode === 'calendar' || calendarContext.selectedDate || calendarContext.dateRange
+    request.mode === 'calendar' ||
+    calendarContext.selectedDate ||
+    calendarContext.dateRange
       ? buildCalendarContext(calendarContext)
       : undefined;
 
@@ -62,13 +71,19 @@ export async function buildAIContext(request: AIChatRequest): Promise<AIResolved
             members,
             message: request.message,
             personId: request.context.personId,
+            referencePersonIds: request.context.referencePersonIds,
             includeMemorials: asksForMemorials(request),
           }),
         }
       : {}),
     ...(calendar ? { calendar } : {}),
     ...(request.mode === 'horoscope'
-      ? { horoscope: buildHoroscopeContext({ context: request.context, members }) }
+      ? {
+          horoscope: buildHoroscopeContext({
+            context: request.context,
+            members,
+          }),
+        }
       : {}),
     warnings,
   };

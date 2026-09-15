@@ -11,26 +11,43 @@ function createGeminiProvider() {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return null;
 
-  const model = process.env.AI_MODEL?.trim() || 'gemini-3.8-flash';
-  const fallbackModel = process.env.AI_FALLBACK_MODEL?.trim() || 'gemini-3.6-flash';
+  const model =
+    process.env.GEMINI_MODEL?.trim() ||
+    process.env.AI_MODEL?.trim() ||
+    'gemini-3.8-flash';
+  const fallbackModel =
+    process.env.AI_FALLBACK_MODEL?.trim() || 'gemini-3.6-flash';
   return new GeminiProvider(apiKey, model, fallbackModel);
+}
+
+export function hasGeminiProvider() {
+  return Boolean(process.env.GEMINI_API_KEY?.trim());
 }
 
 function createOpenAIProvider() {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) return null;
 
-  const model = process.env.OPENAI_MODEL?.trim()
-    || process.env.OPENAI_FORTUNE_MODEL?.trim()
-    || 'gpt-5-mini';
+  const model =
+    process.env.OPENAI_MODEL?.trim() ||
+    process.env.OPENAI_FORTUNE_MODEL?.trim() ||
+    'gpt-5-mini';
   return new OpenAIProvider(apiKey, model);
 }
 
-export function getAIProvider(preference: AIModelPreference = 'auto'): AIProvider {
-  const provider = process.env.AI_PROVIDER?.trim().toLocaleLowerCase()
-    || (process.env.GEMINI_API_KEY ? 'gemini' : process.env.OPENAI_API_KEY ? 'openai' : 'mock');
+export function getAIProvider(
+  preference: AIModelPreference = 'auto',
+): AIProvider {
+  const provider =
+    process.env.AI_PROVIDER?.trim().toLocaleLowerCase() ||
+    (process.env.GEMINI_API_KEY
+      ? 'gemini'
+      : process.env.OPENAI_API_KEY
+        ? 'openai'
+        : 'mock');
   if (provider === 'mock') return new MockProvider();
-  if (provider !== 'gemini' && provider !== 'openai') throw new AIProviderError('configuration');
+  if (provider !== 'gemini' && provider !== 'openai')
+    throw new AIProviderError('configuration');
 
   const gemini = createGeminiProvider();
   const openai = createOpenAIProvider();
@@ -47,7 +64,11 @@ export function getAIProvider(preference: AIModelPreference = 'auto'): AIProvide
   const primary = provider === 'openai' ? openai : gemini;
   const fallback = provider === 'openai' ? gemini : openai;
   const localFallback = new MockProvider();
-  if (primary && fallback) return new FallbackProvider(new FallbackProvider(primary, fallback), localFallback);
+  if (primary && fallback)
+    return new FallbackProvider(
+      new FallbackProvider(primary, fallback),
+      localFallback,
+    );
   if (primary) return new FallbackProvider(primary, localFallback);
   if (fallback) return new FallbackProvider(fallback, localFallback);
   return localFallback;

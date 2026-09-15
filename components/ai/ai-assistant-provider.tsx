@@ -20,7 +20,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { type AIChatResponse, type AIClientContext, type AIMode } from '@/lib/ai/types';
+import {
+  type AIChatResponse,
+  type AIClientContext,
+  type AIMode,
+} from '@/lib/ai/types';
 import { AIComposer } from './ai-composer';
 import { AIMessage, type AssistantMessage } from './ai-message';
 import { AIQuickActions } from './ai-quick-actions';
@@ -31,10 +35,18 @@ const storageKey = 'nguyen-ba-ai-assistant-session';
 const isEnabled = process.env.NEXT_PUBLIC_AI_ASSISTANT_ENABLED !== 'false';
 
 type AssistantState = {
+  conversationId: string;
   mode: AIMode;
   context: AIClientContext;
   contextLabel?: string;
   signature: string;
+};
+
+type StoredAssistantSession = {
+  signature?: string;
+  messages?: AssistantMessage[];
+  conversationId?: string;
+  referencePersonIds?: string[];
 };
 
 type OpenAIAssistantOptions = {
@@ -54,11 +66,56 @@ function createState(options: OpenAIAssistantOptions = {}): AssistantState {
   const mode = options.mode || 'general';
   const context = { source: 'global' as const, ...options.context };
   return {
+    conversationId: createConversationId(),
     mode,
     context,
     contextLabel: options.contextLabel,
     signature: JSON.stringify({ mode, context }),
   };
+}
+
+function createConversationId() {
+  return `ai_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function initialAssistantSession() {
+  const active = createState();
+  if (typeof window === 'undefined')
+    return { active, messages: [] as AssistantMessage[] };
+  try {
+    const value = JSON.parse(
+      window.sessionStorage.getItem(storageKey) || '{}',
+    ) as StoredAssistantSession;
+    if (
+      value.signature !== active.signature ||
+      !Array.isArray(value.messages)
+    ) {
+      return { active, messages: [] as AssistantMessage[] };
+    }
+    return {
+      active: {
+        ...active,
+        ...(typeof value.conversationId === 'string' &&
+        /^ai_[A-Za-z0-9_]{8,100}$/.test(value.conversationId)
+          ? { conversationId: value.conversationId }
+          : {}),
+        context: {
+          ...active.context,
+          ...(Array.isArray(value.referencePersonIds)
+            ? {
+                referencePersonIds: value.referencePersonIds
+                  .filter((id): id is string => typeof id === 'string')
+                  .slice(0, 3),
+              }
+            : {}),
+        },
+      },
+      messages: value.messages.slice(-16),
+    };
+  } catch {
+    window.sessionStorage.removeItem(storageKey);
+    return { active, messages: [] as AssistantMessage[] };
+  }
 }
 
 function messageId(role: AssistantMessage['role']) {
@@ -71,6 +128,7 @@ function AIAssistantDrawer({
   onMessagesChange,
   onDeleteConversation,
   onNewConversation,
+  onResolvedPeople,
   onOpenChange,
   open,
 }: {
@@ -79,6 +137,7 @@ function AIAssistantDrawer({
   onMessagesChange: (messages: AssistantMessage[]) => void;
   onDeleteConversation: () => void;
   onNewConversation: () => void;
+  onResolvedPeople: (personIds: string[]) => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
@@ -97,8 +156,14 @@ function AIAssistantDrawer({
     async (rawMessage: string) => {
       const message = rawMessage.trim();
       if (!message || pending) return;
-      const userMessage: AssistantMessage = { id: messageId('user'), role: 'user', content: message };
-      const history = messages.slice(-8).map(({ role, content }) => ({ role, content }));
+      const userMessage: AssistantMessage = {
+        id: messageId('user'),
+        role: 'user',
+        content: message,
+      };
+      const history = messages
+        .slice(-8)
+        .map(({ role, content }) => ({ role, content }));
       const nextMessages = [...messages, userMessage].slice(-16);
       onMessagesChange(nextMessages);
       setPending(true);
@@ -113,21 +178,35 @@ function AIAssistantDrawer({
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal,
           body: JSON.stringify({
+            conversationId: active.conversationId,
             message,
             mode: active.mode,
             context: active.context,
             history,
           }),
         });
-        const payload = (await response.json()) as AIChatResponse & { error?: string };
-        if (!response.ok || !payload.answer) throw new Error(payload.error || 'Không thể nhận phản hồi.');
-        onMessagesChange([
-          ...nextMessages,
-          { id: messageId('assistant'), role: 'assistant' as const, content: payload.answer },
-        ].slice(-16));
+        const payload = (await response.json()) as AIChatResponse & {
+          error?: string;
+        };
+        if (!response.ok || !payload.answer)
+          throw new Error(payload.error || 'Không thể nhận phản hồi.');
+        if (payload.contextUsed.resolvedPersonIds?.length) {
+          onResolvedPeople(payload.contextUsed.resolvedPersonIds);
+        }
+        onMessagesChange(
+          [
+            ...nextMessages,
+            {
+              id: messageId('assistant'),
+              role: 'assistant' as const,
+              content: payload.answer,
+            },
+          ].slice(-16),
+        );
       } catch (requestError) {
         setError(
-          requestError instanceof DOMException && requestError.name === 'AbortError'
+          requestError instanceof DOMException &&
+            requestError.name === 'AbortError'
             ? 'Trợ lý AI tạm thời chưa phản hồi. Vui lòng thử lại sau.'
             : requestError instanceof Error
               ? requestError.message
@@ -138,7 +217,7 @@ function AIAssistantDrawer({
         setPending(false);
       }
     },
-    [active, messages, onMessagesChange, pending],
+    [active, messages, onMessagesChange, onResolvedPeople, pending],
   );
 
   return (
@@ -154,9 +233,14 @@ function AIAssistantDrawer({
         <SheetHeader className="ai-sheet-header">
           <div className="ai-sheet-heading-copy">
             <SheetTitle>Trợ lý AI</SheetTitle>
-            <SheetDescription>Tra cứu trong phạm vi dữ liệu hiện có.</SheetDescription>
+            <SheetDescription>
+              Tra cứu trong phạm vi dữ liệu hiện có.
+            </SheetDescription>
           </div>
-          <div className="ai-conversation-actions" aria-label="Quản lý đoạn chat">
+          <div
+            className="ai-conversation-actions"
+            aria-label="Quản lý đoạn chat"
+          >
             <Button
               className="ai-conversation-action"
               disabled={pending}
@@ -192,27 +276,44 @@ function AIAssistantDrawer({
         <div className="ai-assistant-scroll">
           {messages.length ? (
             <div className="ai-messages" aria-live="polite">
-              {messages.map((message) => <AIMessage key={message.id} message={message} />)}
+              {messages.map((message) => (
+                <AIMessage key={message.id} message={message} />
+              ))}
             </div>
           ) : (
             <div className="ai-empty-state">
               <AIButtonIcon size={28} />
               <strong>Xin chào, mình có thể giúp gì?</strong>
               <p>Hỏi về thành viên, quan hệ gia phả, lịch âm hoặc ngày giỗ.</p>
-              <AIQuickActions mode={active.mode} onChoose={(prompt) => void send(prompt)} />
+              <AIQuickActions
+                mode={active.mode}
+                onChoose={(prompt) => void send(prompt)}
+              />
             </div>
           )}
-          {pending ? <p className="ai-pending" role="status">Đang tìm dữ liệu và soạn trả lời...</p> : null}
+          {pending ? (
+            <output className="ai-pending">
+              Đang tìm dữ liệu và soạn trả lời...
+            </output>
+          ) : null}
           {error ? (
             <div className="ai-error" role="alert">
               <span>{error}</span>
-              <Button onClick={() => void send(lastPrompt)} size="sm" type="button" variant="outline">
+              <Button
+                onClick={() => void send(lastPrompt)}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
                 <HeritageIcon name="reset" size={14} /> Thử lại
               </Button>
             </div>
           ) : null}
         </div>
-        <AIComposer disabled={pending} onSend={(message) => void send(message)} />
+        <AIComposer
+          disabled={pending}
+          onSend={(message) => void send(message)}
+        />
       </SheetContent>
     </Sheet>
   );
@@ -241,45 +342,71 @@ function AIAssistantLauncher({ onOpen }: { onOpen: () => void }) {
 }
 
 export function AIAssistantProvider({ children }: PropsWithChildren) {
+  const [initialSession] = useState(initialAssistantSession);
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState<AssistantState>(() => createState());
-  const [messages, setMessages] = useState<AssistantMessage[]>([]);
+  const [active, setActive] = useState<AssistantState>(initialSession.active);
+  const [messages, setMessages] = useState<AssistantMessage[]>(
+    initialSession.messages,
+  );
   const signatureRef = useRef(active.signature);
 
   useEffect(() => {
-    const stored = window.sessionStorage.getItem(storageKey);
-    if (!stored) return;
-    try {
-      const value = JSON.parse(stored) as { signature?: string; messages?: AssistantMessage[] };
-      if (value.signature === signatureRef.current && Array.isArray(value.messages)) {
-        setMessages(value.messages.slice(-16));
+    window.sessionStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        signature: active.signature,
+        messages,
+        conversationId: active.conversationId,
+        referencePersonIds: active.context.referencePersonIds,
+      }),
+    );
+  }, [
+    active.context.referencePersonIds,
+    active.conversationId,
+    active.signature,
+    messages,
+  ]);
+
+  const openAIAssistant = useCallback(
+    (options: OpenAIAssistantOptions = {}) => {
+      if (!isEnabled) return;
+      const next = createState(options);
+      if (signatureRef.current !== next.signature) {
+        signatureRef.current = next.signature;
+        setMessages([]);
       }
-    } catch {
-      window.sessionStorage.removeItem(storageKey);
-    }
-  }, []);
-
-  useEffect(() => {
-    window.sessionStorage.setItem(storageKey, JSON.stringify({ signature: active.signature, messages }));
-  }, [active.signature, messages]);
-
-  const openAIAssistant = useCallback((options: OpenAIAssistantOptions = {}) => {
-    if (!isEnabled) return;
-    const next = createState(options);
-    if (signatureRef.current !== next.signature) {
-      signatureRef.current = next.signature;
-      setMessages([]);
-    }
-    setActive(next);
-    setOpen(true);
-  }, []);
+      setActive(next);
+      setOpen(true);
+    },
+    [],
+  );
 
   const startNewConversation = useCallback(() => {
     setMessages([]);
+    setActive((current) => ({
+      ...current,
+      conversationId: createConversationId(),
+      context: { ...current.context, referencePersonIds: undefined },
+    }));
   }, []);
 
   const deleteConversation = useCallback(() => {
     setMessages([]);
+    setActive((current) => ({
+      ...current,
+      conversationId: createConversationId(),
+      context: { ...current.context, referencePersonIds: undefined },
+    }));
+  }, []);
+
+  const rememberResolvedPeople = useCallback((personIds: string[]) => {
+    setActive((current) => ({
+      ...current,
+      context: {
+        ...current.context,
+        referencePersonIds: personIds.slice(0, 3),
+      },
+    }));
   }, []);
 
   const value = useMemo(
@@ -298,6 +425,7 @@ export function AIAssistantProvider({ children }: PropsWithChildren) {
         onMessagesChange={setMessages}
         onDeleteConversation={deleteConversation}
         onNewConversation={startNewConversation}
+        onResolvedPeople={rememberResolvedPeople}
         onOpenChange={setOpen}
         open={open}
       />
