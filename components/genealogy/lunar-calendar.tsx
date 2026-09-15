@@ -764,6 +764,11 @@ function ActivityDayView() {
   }
 
   async function requestAnalysis() {
+    if (!canAnalyze) {
+      setAnalysisError('Hãy chọn một việc cần xem hoặc nhập việc khác trước khi hỏi AI.');
+      return;
+    }
+
     analysisController.current?.abort();
     const controller = new AbortController();
     analysisController.current = controller;
@@ -858,32 +863,19 @@ function ActivityDayView() {
           <section className="activity-picker" aria-labelledby="activity-picker-title">
             <div className="calendar-tool-section-heading activity-picker-heading">
               <h2 id="activity-picker-title">Việc cần xem</h2>
-              <div className="activity-picker-tools">
-                <Button
-                  aria-label="Đặt lại xem ngày"
-                  className="tool-reset-button"
-                  onClick={resetActivityTool}
-                  size="icon-sm"
-                  title="Đặt lại"
-                  type="button"
-                  variant="ghost"
-                >
-                  <HeritageIcon name="reset" size={16} />
-                </Button>
-                <label className="activity-date-field">
-                  <span>Ngày dương</span>
-                  <span className="tool-date-control">
-                    <Input
-                      aria-label="Chọn ngày dương lịch"
-                      className="activity-date-input"
-                      type="date"
-                      value={inputDateValue(selectedDate)}
-                      onChange={(event) => selectDate(event.target.value)}
-                    />
-                    <HeritageIcon className="tool-date-icon" name="today" size={18} />
-                  </span>
-                </label>
-              </div>
+              <label className="activity-date-field">
+                <span>Ngày dương</span>
+                <span className="tool-date-control">
+                  <Input
+                    aria-label="Chọn ngày dương lịch"
+                    className="activity-date-input"
+                    type="date"
+                    value={inputDateValue(selectedDate)}
+                    onChange={(event) => selectDate(event.target.value)}
+                  />
+                  <HeritageIcon className="tool-date-icon" name="today" size={18} />
+                </span>
+              </label>
             </div>
 
             <div className="activity-option-grid">
@@ -931,30 +923,43 @@ function ActivityDayView() {
 
             <Button
               className="activity-analyze-button"
-              disabled={!canAnalyze || isAnalyzing}
+              disabled={isAnalyzing}
               onClick={() => void requestAnalysis()}
               type="button"
             >
                 <AIButtonIcon variant="light" />
                 {isAnalyzing ? 'Đang phân tích...' : 'Hỏi AI về ngày này'}
             </Button>
-            <label className="ai-model-switch">
-              <span>Mô hình AI</span>
-              <Select
-                items={aiModelOptions}
-                value={modelPreference}
-                onValueChange={(value) => setModelPreference(value as AIModelPreference)}
+            <div className="ai-model-controls">
+              <label className="ai-model-switch">
+                <span>Mô hình AI</span>
+                <Select
+                  items={aiModelOptions}
+                  value={modelPreference}
+                  onValueChange={(value) => setModelPreference(value as AIModelPreference)}
+                >
+                  <SelectTrigger aria-label="Mô hình AI cho xem ngày" className="choice">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aiModelOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+              <Button
+                aria-label="Đặt lại xem ngày"
+                className="tool-reset-button"
+                onClick={resetActivityTool}
+                size="xs"
+                title="Đặt lại xem ngày"
+                type="button"
+                variant="ghost"
               >
-                <SelectTrigger aria-label="Mô hình AI cho xem ngày" className="choice">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {aiModelOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </label>
+                Đặt lại
+              </Button>
+            </div>
           </section>
 
           <section className="activity-result" aria-live="polite">
@@ -1359,18 +1364,6 @@ function FortuneView() {
                 <span className="eyebrow">THÔNG TIN</span>
                 <h2 id="fortune-form-title">Xem tử vi</h2>
               </div>
-              <Button
-                aria-label="Đặt lại tử vi"
-                className="tool-reset-button"
-                disabled={isLoading || isFollowingUp}
-                onClick={resetFortuneTool}
-                size="icon-sm"
-                title="Đặt lại"
-                type="button"
-                variant="ghost"
-              >
-                <HeritageIcon name="reset" size={16} />
-              </Button>
             </div>
 
             <div className="fortune-fields">
@@ -1485,23 +1478,37 @@ function FortuneView() {
               <AIButtonIcon size={19} variant="light" />
               {loadingStage === 'calendar' ? 'Đang tính dữ liệu ngày sinh...' : loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : loadingStage === 'ai' ? 'Đang luận giải bằng AI...' : 'Luận giải tử vi'}
             </Button>
-            <label className="ai-model-switch fortune-model-switch">
-              <span>Mô hình AI</span>
-              <Select
-                items={aiModelOptions}
-                value={modelPreference}
-                onValueChange={(value) => setModelPreference(value as AIModelPreference)}
+            <div className="ai-model-controls fortune-model-controls">
+              <label className="ai-model-switch fortune-model-switch">
+                <span>Mô hình AI</span>
+                <Select
+                  items={aiModelOptions}
+                  value={modelPreference}
+                  onValueChange={(value) => setModelPreference(value as AIModelPreference)}
+                >
+                  <SelectTrigger aria-label="Mô hình AI cho tử vi" className="choice">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aiModelOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+              <Button
+                aria-label="Đặt lại tử vi"
+                className="tool-reset-button"
+                disabled={isLoading || isFollowingUp}
+                onClick={resetFortuneTool}
+                size="xs"
+                title="Đặt lại tử vi"
+                type="button"
+                variant="ghost"
               >
-                <SelectTrigger aria-label="Mô hình AI cho tử vi" className="choice">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {aiModelOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </label>
+                Đặt lại
+              </Button>
+            </div>
             <p className="fortune-disclaimer">
               Nội dung mang tính tham khảo và giải trí, không thay thế tư vấn
               chuyên môn hay quyết định quan trọng.
@@ -1877,6 +1884,13 @@ export function LunarPage() {
               Lịch âm
             </Link>
             <Link
+              className={activeTab === 'memorials' ? 'is-active' : ''}
+              href="/lunar-calendar?tab=memorials"
+            >
+              <HeritageIcon name="memorial" size={18} />
+              Ngày giỗ
+            </Link>
+            <Link
               className={activeTab === 'activities' ? 'is-active' : ''}
               href="/lunar-calendar?tab=activities"
             >
@@ -1892,13 +1906,6 @@ export function LunarPage() {
                 Tử vi AI
               </Link>
             ) : null}
-            <Link
-              className={activeTab === 'memorials' ? 'is-active' : ''}
-              href="/lunar-calendar?tab=memorials"
-            >
-              <HeritageIcon name="memorial" size={18} />
-              Ngày giỗ
-            </Link>
           </nav>
         </div>
       </div>

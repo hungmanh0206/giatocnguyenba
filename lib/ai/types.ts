@@ -167,6 +167,8 @@ export type AIProviderRequest = {
   history: AIHistoryMessage[];
   context: AIResolvedContext;
   systemInstruction: string;
+  // A server-side deadline shared across nested provider fallbacks.
+  deadlineAt?: number;
   agentTools?: AIAgentToolSet;
   responseMimeType?: 'application/json';
 };

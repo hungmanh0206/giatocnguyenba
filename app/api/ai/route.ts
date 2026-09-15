@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { buildAIContext } from '@/lib/ai/context';
+import { buildGeneralContext } from '@/lib/ai/context/build-general-context';
 import { createAIAgentToolRegistry } from '@/lib/ai/agent/tool-registry';
 import { loadFamilyMembers } from '@/lib/ai/context/load-family-members';
 import { getAIProvider, hasGeminiProvider } from '@/lib/ai/providers';
-import { structuredGenealogyAnswer } from '@/lib/ai/providers/mock-provider';
+import { MockProvider, structuredGenealogyAnswer } from '@/lib/ai/providers/mock-provider';
 import { buildSystemPrompt } from '@/lib/ai/system-prompt';
 import { AIProviderError, type AIChatResponse } from '@/lib/ai/types';
 import { parseAIChatRequest } from '@/lib/ai/validation';
@@ -13,6 +14,7 @@ export const dynamic = 'force-dynamic';
 
 const windowMs = 60_000;
 const maxRequestsPerWindow = 12;
+const responseDeadlineMs = 28_000;
 const requestWindows = new Map<string, { count: number; resetAt: number }>();
 
 function clientAddress(request: Request) {
@@ -38,6 +40,12 @@ function jsonError(message: string, status: number) {
   return NextResponse.json(
     { error: message },
     { status, headers: { 'Cache-Control': 'no-store' } },
+  );
+}
+
+function asksForAppGuidance(message: string) {
+  return /cách dùng|hướng dẫn|làm sao (?:xem|dùng|mở)|mở (?:cây )?gia phả|dùng (?:cây )?gia phả/i.test(
+    message,
   );
 }
 
@@ -138,16 +146,57 @@ export async function POST(request: Request) {
   if (!parsed)
     return jsonError('Nội dung hỏi hoặc ngữ cảnh không hợp lệ.', 400);
 
-  try {
-    const startedAt = Date.now();
-    const context = await buildAIContext(parsed);
-    logGenealogyResolution(context);
-    const localAnswer = structuredGenealogyAnswer({
+  if (asksForAppGuidance(parsed.message)) {
+    const context = {
+      mode: parsed.mode,
+      source: parsed.context.source || 'global',
+      appFeatures: buildGeneralContext().appFeatures,
+      warnings: [],
+    };
+    const result = await new MockProvider().generate({
       message: parsed.message,
       history: parsed.history,
       context,
       systemInstruction: buildSystemPrompt(context),
+      deadlineAt: Date.now() + responseDeadlineMs,
     });
+    return NextResponse.json(
+      {
+        answer: result.answer,
+        provider: result.provider,
+        contextUsed: contextUsed(parsed, context),
+      } satisfies AIChatResponse,
+      { headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
+  try {
+    const startedAt = Date.now();
+    const deadlineAt = startedAt + responseDeadlineMs;
+    const context = await buildAIContext(parsed);
+    logGenealogyResolution(context);
+    const localRequest = {
+      message: parsed.message,
+      history: parsed.history,
+      context,
+      systemInstruction: buildSystemPrompt(context),
+      deadlineAt,
+    };
+    const localAnswer = structuredGenealogyAnswer(localRequest);
+
+    // Relationship Engine answers are quicker and more dependable than a
+    // remote model when the requested fact is already confirmed locally.
+    if (localAnswer) {
+      return NextResponse.json(
+        {
+          answer: localAnswer,
+          provider: 'mock',
+          contextUsed: contextUsed(parsed, context),
+          ...(context.warnings.length ? { warnings: context.warnings } : {}),
+        } satisfies AIChatResponse,
+        { headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
 
     // A factual request gets Gemini's tool-calling loop first. The prompt only
     // contains a minimal resolved context; the registry supplies every further
@@ -160,6 +209,7 @@ export async function POST(request: Request) {
           history: parsed.history,
           context,
           systemInstruction: buildSystemPrompt(context),
+          deadlineAt,
           agentTools: registry,
         });
         const trace = registry.getTrace();
@@ -202,24 +252,12 @@ export async function POST(request: Request) {
       }
     }
 
-    // The deterministic graph answer remains an offline/provider-quota
-    // fallback, never the primary reasoning path while Gemini is available.
-    if (localAnswer) {
-      return NextResponse.json(
-        {
-          answer: localAnswer,
-          provider: 'mock',
-          contextUsed: contextUsed(parsed, context),
-          ...(context.warnings.length ? { warnings: context.warnings } : {}),
-        } satisfies AIChatResponse,
-        { headers: { 'Cache-Control': 'no-store' } },
-      );
-    }
     const result = await getAIProvider().generate({
       message: parsed.message,
       history: parsed.history,
       context,
       systemInstruction: buildSystemPrompt(context),
+      deadlineAt,
     });
     const response: AIChatResponse = {
       answer: result.answer,
@@ -231,23 +269,29 @@ export async function POST(request: Request) {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch (error) {
-    if (error instanceof AIProviderError) {
-      if (error.code === 'quota') {
-        return jsonError(
-          'Trợ lý AI đã đạt giới hạn sử dụng tạm thời. Các tính năng Gia phả và Lịch vẫn hoạt động bình thường.',
-          429,
-        );
-      }
-      if (error.code === 'configuration') {
-        return jsonError(
-          'Trợ lý AI hiện chưa được cấu hình. Vui lòng thử lại sau.',
-          503,
-        );
-      }
-    }
-    return jsonError(
-      'Trợ lý AI tạm thời chưa phản hồi. Vui lòng thử lại sau.',
-      503,
+    console.error('[ai] Falling back to the local assistant response', {
+      reason: error instanceof AIProviderError ? error.code : 'unexpected',
+    });
+    const context = {
+      mode: parsed.mode,
+      source: parsed.context.source || 'global',
+      appFeatures: buildGeneralContext().appFeatures,
+      warnings: [],
+    };
+    const result = await new MockProvider().generate({
+      message: parsed.message,
+      history: parsed.history,
+      context,
+      systemInstruction: buildSystemPrompt(context),
+    });
+    return NextResponse.json(
+      {
+        answer: result.answer,
+        provider: result.provider,
+        contextUsed: contextUsed(parsed, context),
+        warnings: ['Dịch vụ AI đang chậm; câu trả lời này dùng dữ liệu dự phòng của hệ thống.'],
+      } satisfies AIChatResponse,
+      { headers: { 'Cache-Control': 'no-store' } },
     );
   }
 }

@@ -21,8 +21,14 @@ export class OpenAIProvider implements AIProvider {
   ) {}
 
   async generate(input: AIProviderRequest): Promise<AIProviderResponse> {
+    const timeoutMs = Math.min(
+      35_000,
+      (input.deadlineAt ?? Date.now() + 35_000) - Date.now(),
+    );
+    if (timeoutMs <= 0) throw new AIProviderError('unavailable');
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 35_000);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch('https://api.openai.com/v1/responses', {

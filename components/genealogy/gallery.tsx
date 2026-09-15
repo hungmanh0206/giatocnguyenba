@@ -124,6 +124,31 @@ function GalleryIcon({
   );
 }
 
+function GalleryDateInput({
+  disabled = false,
+  onValueChange,
+  value,
+}: {
+  disabled?: boolean;
+  onValueChange: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <span className="gallery-date-control">
+      <Input
+        aria-label="Ngày chụp"
+        className="gallery-date-input"
+        disabled={disabled}
+        type="date"
+        value={value}
+        onChange={(event) => onValueChange(event.target.value)}
+      />
+      {!value && <span aria-hidden="true" className="gallery-date-placeholder">Chọn ngày</span>}
+      <GalleryIcon className="gallery-date-icon" name="calendar-day" size={18} />
+    </span>
+  );
+}
+
 export function GalleryPage() {
   const { connection } = useFamily();
   const isSuperAdmin = connection.role === 'super_admin';
@@ -535,7 +560,11 @@ export function GalleryPage() {
               <div className="gallery-field"><span>Năm chụp</span><Input aria-label="Năm chụp" disabled={uploadBusy} inputMode="numeric" max="3000" min="1000" type="number" value={uploadForm.year} onChange={(event) => setUploadValue('year', event.target.value)} /></div>
               <div className="gallery-field gallery-date-field">
                 <span>Ngày chụp</span>
-                <Input aria-label="Ngày chụp" className="gallery-date-input" disabled={uploadBusy} type="date" value={uploadForm.takenAt} onChange={(event) => setUploadValue('takenAt', event.target.value)} />
+                <GalleryDateInput
+                  disabled={uploadBusy}
+                  value={uploadForm.takenAt}
+                  onValueChange={(value) => setUploadValue('takenAt', value)}
+                />
               </div>
               <div className="gallery-field gallery-field-full"><span>Mô tả</span><Textarea aria-label="Mô tả" disabled={uploadBusy} rows={3} value={uploadForm.caption} onChange={(event) => setUploadValue('caption', event.target.value)} /></div>
             </div>
@@ -561,7 +590,10 @@ export function GalleryPage() {
                   <div className="gallery-field"><span>Năm chụp</span><Input aria-label="Năm chụp" inputMode="numeric" max="3000" min="1000" type="number" value={editForm.year} onChange={(event) => setEditValue('year', event.target.value)} /></div>
                   <div className="gallery-field gallery-date-field">
                     <span>Ngày chụp</span>
-                    <Input aria-label="Ngày chụp" className="gallery-date-input" type="date" value={editForm.takenAt} onChange={(event) => setEditValue('takenAt', event.target.value)} />
+                    <GalleryDateInput
+                      value={editForm.takenAt}
+                      onValueChange={(value) => setEditValue('takenAt', value)}
+                    />
                   </div>
                 </div>
                 <div className="gallery-field"><span>Mô tả</span><Textarea aria-label="Mô tả" rows={4} value={editForm.caption} onChange={(event) => setEditValue('caption', event.target.value)} /></div>

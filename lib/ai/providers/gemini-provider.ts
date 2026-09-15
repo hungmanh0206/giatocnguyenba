@@ -55,8 +55,9 @@ export class GeminiProvider implements AIProvider {
   }
 
   async generate(input: AIProviderRequest): Promise<AIProviderResponse> {
+    const deadlineAt = input.deadlineAt ?? Date.now() + 55_000;
     try {
-      return await this.generateWithModel(input, this.model);
+      return await this.generateWithModel(input, this.model, deadlineAt);
     } catch (error) {
       if (
         !(error instanceof AIProviderError) ||
@@ -70,16 +71,20 @@ export class GeminiProvider implements AIProvider {
       console.warn(
         '[ai] Primary Gemini model unavailable; using fallback model',
       );
-      return this.generateWithModel(input, this.fallbackModel);
+      return this.generateWithModel(input, this.fallbackModel, deadlineAt);
     }
   }
 
   private async generateWithModel(
     input: AIProviderRequest,
     model: string,
+    deadlineAt: number,
   ): Promise<AIProviderResponse> {
+    const timeoutMs = Math.min(55_000, deadlineAt - Date.now());
+    if (timeoutMs <= 0) throw new AIProviderError('unavailable');
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 55_000);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const contents: GeminiContent[] = [

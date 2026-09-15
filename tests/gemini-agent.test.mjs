@@ -96,6 +96,23 @@ test('Gemini provider executes a function call and returns the following answer'
   }
 });
 
+test('Gemini provider honors a shared request deadline before starting a network call', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new Error('fetch should not run after the deadline');
+  };
+
+  try {
+    const provider = new GeminiProvider('test-key', 'gemini-test');
+    await assert.rejects(
+      provider.generate({ ...baseRequest, deadlineAt: Date.now() - 1 }),
+      (error) => error?.code === 'unavailable',
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('agent registry exposes concise verified statistics, records tool trace, and never exposes the full graph', async () => {
   const registry = createAIAgentToolRegistry(seedMembers);
   const results = await registry.execute([

@@ -33,6 +33,7 @@ import { HeritageIcon } from '@/components/genealogy/heritage-icon';
 
 const storageKey = 'nguyen-ba-ai-assistant-session';
 const isEnabled = process.env.NEXT_PUBLIC_AI_ASSISTANT_ENABLED !== 'false';
+const requestTimeoutMs = 36_000;
 
 type AssistantState = {
   conversationId: string;
@@ -170,7 +171,10 @@ function AIAssistantDrawer({
       setError('');
       setLastPrompt(message);
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 20_000);
+      const timeout = window.setTimeout(
+        () => controller.abort(),
+        requestTimeoutMs,
+      );
 
       try {
         const response = await fetch('/api/ai', {
