@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createAstrologyProfile } from '../lib/astrology/engine.ts';
-import { parseAstrologyInput } from '../lib/astrology/validation.ts';
+import { parseAstrologyFocus, parseAstrologyInput } from '../lib/astrology/validation.ts';
 
 function solarInput(overrides = {}) {
   return {
@@ -64,4 +64,9 @@ test('astrology request validation requires a trimmed name and does not guess ge
   assert.equal(parseAstrologyInput(solarInput({ fullName: '   ' })), null);
   assert.equal(parseAstrologyInput(solarInput({ gender: 'other' })), null);
   assert.equal(parseAstrologyInput(solarInput())?.fullName, 'Nguyễn Văn Minh');
+});
+
+test('astrology focus remains unset until the user chooses a topic', () => {
+  assert.equal(parseAstrologyFocus(undefined), null);
+  assert.equal(parseAstrologyFocus('overall'), 'overall');
 });

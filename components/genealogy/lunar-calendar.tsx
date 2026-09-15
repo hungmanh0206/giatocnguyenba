@@ -73,6 +73,8 @@ const calendarYearOptions = Array.from({ length: 400 }, (_, offset) => {
 });
 
 const astrologyEnabled = process.env.NEXT_PUBLIC_ASTROLOGY_ENABLED !== 'false';
+const activityToolStorageKey = 'nguyen-ba-activity-tool-session-v1';
+const fortuneToolStorageKey = 'nguyen-ba-fortune-tool-session-v1';
 const aiModelOptions = [
   { value: 'auto', label: 'Tự động (Gemini → OpenAI)' },
   { value: 'gemini', label: 'Gemini' },
@@ -92,18 +94,46 @@ function inputDateToDate(value: string, fallback: Date) {
   return Number.isNaN(date.getTime()) ? fallback : date;
 }
 
-function formatBirthDateInput(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)]
-    .filter(Boolean)
-    .join('/');
+function readToolSession<T>(key: string): T | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const stored = JSON.parse(window.sessionStorage.getItem(key) || 'null');
+    return stored && typeof stored === 'object' ? (stored as T) : null;
+  } catch {
+    window.sessionStorage.removeItem(key);
+    return null;
+  }
+}
+
+function writeToolSession(key: string, value: unknown) {
+  if (typeof window === 'undefined') return;
+  window.sessionStorage.setItem(key, JSON.stringify(value));
+}
+
+function clearToolSession(key: string) {
+  if (typeof window === 'undefined') return;
+  window.sessionStorage.removeItem(key);
 }
 
 function parseBirthDateInput(value: string) {
-  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(formatBirthDateInput(value));
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  const local = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
+  const match = iso || local;
   if (!match) return null;
-  const [, day, month, year] = match;
+  const [, first, second, third] = match;
+  const [day, month, year] = iso
+    ? [third, second, first]
+    : [first, second, third];
   return { day: Number(day), month: Number(month), year: Number(year) };
+}
+
+function birthDateInputValue(value: string | undefined) {
+  const birthday = parseBirthDateInput(value || '');
+  if (!birthday) return '';
+
+  const { day, month, year } = birthday;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
 type ActivityAIInterpretation = {
@@ -117,6 +147,43 @@ type ActivityAnalysis = {
   interpretation: ActivityAIInterpretation | null;
   source: 'ai' | 'engine';
 };
+
+type ActivityToolSession = {
+  selectedDate?: string;
+  activityId?: CalendarActivityId | null;
+  otherActivityInput?: string;
+  modelPreference?: AIModelPreference;
+  analysis?: ActivityAnalysis | null;
+};
+
+type FortuneToolSession = {
+  fullName?: string;
+  birthDate?: string;
+  gender?: AstrologyGender | '';
+  birthTime?: string;
+  unknownBirthTime?: boolean;
+  birthTimeAccuracy?: BirthTimeAccuracy;
+  focus?: AstrologyFocus | null;
+  modelPreference?: AIModelPreference;
+  submittedInput?: AstrologyInput | null;
+  profile?: AstrologyProfile | null;
+  reading?: AstrologyInterpretation | null;
+  followUp?: string;
+  followUpAnswer?: string | null;
+  followUpHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+};
+
+function isKnownActivity(value: unknown): value is CalendarActivityId {
+  return typeof value === 'string' && calendarActivities.some((item) => item.id === value);
+}
+
+function isKnownFocus(value: unknown): value is AstrologyFocus {
+  return typeof value === 'string' && astrologyFocuses.some((item) => item.id === value);
+}
+
+function isKnownModel(value: unknown): value is AIModelPreference {
+  return value === 'auto' || value === 'gemini' || value === 'openai';
+}
 
 function LunarCalendarView() {
   const { members } = useFamily();
@@ -630,6 +697,7 @@ function ActivityDayView() {
   const [analysis, setAnalysis] = useState<ActivityAnalysis | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const analysisController = useRef<AbortController | null>(null);
   const customResolution = useMemo(
     () => resolveCustomActivity(otherActivityInput),
@@ -646,9 +714,50 @@ function ActivityDayView() {
     [],
   );
 
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const saved = readToolSession<ActivityToolSession>(activityToolStorageKey);
+      if (saved) {
+        setSelectedDate(inputDateToDate(saved.selectedDate || inputDateValue(today), today));
+        setActivityId(isKnownActivity(saved.activityId) ? saved.activityId : null);
+        setOtherActivityInput(saved.otherActivityInput || '');
+        setModelPreference(isKnownModel(saved.modelPreference) ? saved.modelPreference : 'auto');
+        setAnalysis(saved.analysis?.evaluation ? saved.analysis : null);
+      }
+      setSessionReady(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [today]);
+
+  useEffect(() => {
+    if (!sessionReady) return;
+
+    writeToolSession(activityToolStorageKey, {
+      selectedDate: inputDateValue(selectedDate),
+      activityId,
+      otherActivityInput,
+      modelPreference,
+      analysis,
+    } satisfies ActivityToolSession);
+  }, [activityId, analysis, modelPreference, otherActivityInput, selectedDate, sessionReady]);
+
   function clearAnalysis() {
     analysisController.current?.abort();
     analysisController.current = null;
+    setAnalysis(null);
+    setAnalysisError(null);
+    setIsAnalyzing(false);
+  }
+
+  function resetActivityTool() {
+    analysisController.current?.abort();
+    analysisController.current = null;
+    clearToolSession(activityToolStorageKey);
+    setSelectedDate(today);
+    setActivityId(null);
+    setOtherActivityInput('');
+    setModelPreference('auto');
     setAnalysis(null);
     setAnalysisError(null);
     setIsAnalyzing(false);
@@ -749,19 +858,32 @@ function ActivityDayView() {
           <section className="activity-picker" aria-labelledby="activity-picker-title">
             <div className="calendar-tool-section-heading activity-picker-heading">
               <h2 id="activity-picker-title">Việc cần xem</h2>
-              <label className="activity-date-field">
-                <span>Ngày dương</span>
-                <span className="tool-date-control">
-                  <Input
-                    aria-label="Chọn ngày dương lịch"
-                    className="activity-date-input"
-                    type="date"
-                    value={inputDateValue(selectedDate)}
-                    onChange={(event) => selectDate(event.target.value)}
-                  />
-                  <HeritageIcon className="tool-date-icon" name="today" size={18} />
-                </span>
-              </label>
+              <div className="activity-picker-tools">
+                <Button
+                  aria-label="Đặt lại xem ngày"
+                  className="tool-reset-button"
+                  onClick={resetActivityTool}
+                  size="icon-sm"
+                  title="Đặt lại"
+                  type="button"
+                  variant="ghost"
+                >
+                  <HeritageIcon name="reset" size={16} />
+                </Button>
+                <label className="activity-date-field">
+                  <span>Ngày dương</span>
+                  <span className="tool-date-control">
+                    <Input
+                      aria-label="Chọn ngày dương lịch"
+                      className="activity-date-input"
+                      type="date"
+                      value={inputDateValue(selectedDate)}
+                      onChange={(event) => selectDate(event.target.value)}
+                    />
+                    <HeritageIcon className="tool-date-icon" name="today" size={18} />
+                  </span>
+                </label>
+              </div>
             </div>
 
             <div className="activity-option-grid">
@@ -960,7 +1082,7 @@ function FortuneView() {
   const [birthTime, setBirthTime] = useState('');
   const [unknownBirthTime, setUnknownBirthTime] = useState(false);
   const [birthTimeAccuracy, setBirthTimeAccuracy] = useState<BirthTimeAccuracy>('exact');
-  const [focus, setFocus] = useState<AstrologyFocus>('overall');
+  const [focus, setFocus] = useState<AstrologyFocus | null>(null);
   const [modelPreference, setModelPreference] = useState<AIModelPreference>('auto');
   const [submittedInput, setSubmittedInput] = useState<AstrologyInput | null>(null);
   const [profile, setProfile] = useState<AstrologyProfile | null>(null);
@@ -973,6 +1095,7 @@ function FortuneView() {
   const [followUpHistory, setFollowUpHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [isFollowingUp, setIsFollowingUp] = useState(false);
   const [fortuneFormHeight, setFortuneFormHeight] = useState<number | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
     const form = fortuneFormRef.current;
@@ -991,6 +1114,52 @@ function FortuneView() {
   const fortuneLayoutStyle = fortuneFormHeight
     ? ({ '--fortune-panel-height': `${fortuneFormHeight}px` } as CSSProperties)
     : undefined;
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const saved = readToolSession<FortuneToolSession>(fortuneToolStorageKey);
+      if (saved) {
+        setFullName(saved.fullName || '');
+        setBirthDate(birthDateInputValue(saved.birthDate));
+        setGender(saved.gender === 'male' || saved.gender === 'female' ? saved.gender : '');
+        setBirthTime(saved.birthTime || '');
+        setUnknownBirthTime(saved.unknownBirthTime === true);
+        setBirthTimeAccuracy(saved.birthTimeAccuracy === 'approximate' ? 'approximate' : 'exact');
+        setFocus(isKnownFocus(saved.focus) ? saved.focus : null);
+        setModelPreference(isKnownModel(saved.modelPreference) ? saved.modelPreference : 'auto');
+        setSubmittedInput(saved.submittedInput || null);
+        setProfile(saved.profile || null);
+        setReading(saved.reading || null);
+        setFollowUp(saved.followUp || '');
+        setFollowUpAnswer(saved.followUpAnswer || null);
+        setFollowUpHistory(Array.isArray(saved.followUpHistory) ? saved.followUpHistory : []);
+      }
+      setSessionReady(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    if (!sessionReady) return;
+
+    writeToolSession(fortuneToolStorageKey, {
+      fullName,
+      birthDate,
+      gender,
+      birthTime,
+      unknownBirthTime,
+      birthTimeAccuracy,
+      focus,
+      modelPreference,
+      submittedInput,
+      profile,
+      reading,
+      followUp,
+      followUpAnswer,
+      followUpHistory,
+    } satisfies FortuneToolSession);
+  }, [birthDate, birthTime, birthTimeAccuracy, focus, followUp, followUpAnswer, followUpHistory, fullName, gender, modelPreference, profile, reading, sessionReady, submittedInput, unknownBirthTime]);
 
   const birthDatePreview = useMemo(() => {
     const birthday = parseBirthDateInput(birthDate);
@@ -1138,6 +1307,26 @@ function FortuneView() {
     }
   }
 
+  function resetFortuneTool() {
+    clearToolSession(fortuneToolStorageKey);
+    setFullName('');
+    setBirthDate('');
+    setGender('');
+    setBirthTime('');
+    setUnknownBirthTime(false);
+    setBirthTimeAccuracy('exact');
+    setFocus(null);
+    setModelPreference('auto');
+    setSubmittedInput(null);
+    setProfile(null);
+    setReading(null);
+    setError(null);
+    setFollowUp('');
+    setFollowUpError(null);
+    setFollowUpAnswer(null);
+    setFollowUpHistory([]);
+  }
+
   const isLoading = loadingStage !== null;
   const fullNameLabel = profile?.identity.fullName || 'Luận giải của bạn';
   const dateLabel = profile
@@ -1170,6 +1359,18 @@ function FortuneView() {
                 <span className="eyebrow">THÔNG TIN</span>
                 <h2 id="fortune-form-title">Xem tử vi</h2>
               </div>
+              <Button
+                aria-label="Đặt lại tử vi"
+                className="tool-reset-button"
+                disabled={isLoading || isFollowingUp}
+                onClick={resetFortuneTool}
+                size="icon-sm"
+                title="Đặt lại"
+                type="button"
+                variant="ghost"
+              >
+                <HeritageIcon name="reset" size={16} />
+              </Button>
             </div>
 
             <div className="fortune-fields">
@@ -1192,10 +1393,9 @@ function FortuneView() {
                   <Input
                     aria-label="Ngày sinh, tháng sinh, năm sinh"
                     className="fortune-date-input"
-                    inputMode="numeric"
-                    maxLength={10}
+                    type="date"
                     onChange={(event) => {
-                      setBirthDate(formatBirthDateInput(event.target.value));
+                      setBirthDate(event.target.value);
                       setError(null);
                     }}
                     value={birthDate}
@@ -1239,18 +1439,20 @@ function FortuneView() {
                 <span>Giờ sinh</span>
                 <Input aria-label="Giờ sinh" className="activity-date-input" disabled={unknownBirthTime} inputMode="numeric" maxLength={5} onChange={(event) => setBirthTime(event.target.value)} value={birthTime} />
               </label>
-              <label className="fortune-field">
-                <span>Độ chính xác giờ sinh</span>
-                <Select items={[{ value: 'exact', label: 'Chính xác' }, { value: 'approximate', label: 'Ước chừng' }]} value={birthTimeAccuracy} onValueChange={(value) => setBirthTimeAccuracy(value as BirthTimeAccuracy)} disabled={unknownBirthTime}>
-                  <SelectTrigger aria-label="Độ chính xác giờ sinh" className="choice"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="exact">Chính xác</SelectItem><SelectItem value="approximate">Ước chừng</SelectItem></SelectContent>
-                </Select>
-              </label>
+              <div className="fortune-time-accuracy-row">
+                <label className="fortune-field">
+                  <span>Độ chính xác giờ sinh</span>
+                  <Select items={[{ value: 'exact', label: 'Chính xác' }, { value: 'approximate', label: 'Ước chừng' }]} value={birthTimeAccuracy} onValueChange={(value) => setBirthTimeAccuracy(value as BirthTimeAccuracy)} disabled={unknownBirthTime}>
+                    <SelectTrigger aria-label="Độ chính xác giờ sinh" className="choice"><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="exact">Chính xác</SelectItem><SelectItem value="approximate">Ước chừng</SelectItem></SelectContent>
+                  </Select>
+                </label>
+                <label className="fortune-unknown-time">
+                  <Checkbox checked={unknownBirthTime} onCheckedChange={(checked) => setUnknownBirthTime(checked === true)} />
+                  <span>Không rõ giờ sinh</span>
+                </label>
+              </div>
             </div>
-            <label className="fortune-unknown-time">
-              <Checkbox checked={unknownBirthTime} onCheckedChange={(checked) => setUnknownBirthTime(checked === true)} />
-              <span>Không rõ giờ sinh</span>
-            </label>
             {unknownBirthTime ? <p className="fortune-time-note">Bạn vẫn có thể xem luận giải cơ bản. Các nội dung phụ thuộc giờ sinh sẽ không được tính.</p> : null}
 
             <div className="fortune-focus-group" aria-label="Chủ đề luận giải">
@@ -1263,7 +1465,9 @@ function FortuneView() {
                     key={item.id}
                     type="button"
                     aria-pressed={focus === item.id}
-                    onClick={() => setFocus(item.id)}
+                    onClick={() =>
+                      setFocus((current) => current === item.id ? null : item.id)
+                    }
                   >
                     <strong>{item.label}</strong>
                     <small>{item.description}</small>

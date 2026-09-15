@@ -45,10 +45,10 @@ export function parseAstrologyInput(value: unknown): AstrologyInput | null {
   };
 }
 
-export function parseAstrologyFocus(value: unknown): AstrologyFocus {
+export function parseAstrologyFocus(value: unknown): AstrologyFocus | null {
   return astrologyFocuses.some((focus) => focus.id === value)
     ? value as AstrologyFocus
-    : 'overall';
+    : null;
 }
 
 export function parseFollowUpQuestion(value: unknown) {
