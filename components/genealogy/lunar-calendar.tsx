@@ -35,6 +35,7 @@ import {
   memberName,
 } from '@/lib/family';
 import { dateLabel, vietnamToday } from '@/lib/lunar';
+import { openNativeDatePicker } from '@/lib/utils';
 import {
   getFamilyEventsForDate,
   getLunarDayInfo,
@@ -114,21 +115,86 @@ function ToolDateInput({
   onValueChange: (value: string) => void;
   value: string;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
   return (
     <span className="tool-date-control">
-      <span aria-hidden="true" className={value ? 'tool-date-value' : 'tool-date-value is-placeholder'}>
-        {dateControlLabel(value)}
-      </span>
-      <HeritageIcon className="tool-date-icon" name="today" size={18} />
-      <Input
+      <button
+        aria-label={ariaLabel}
+        className="tool-date-trigger"
+        disabled={disabled}
+        onClick={() => openNativeDatePicker(inputRef.current)}
+        type="button"
+      >
+        <span className={value ? 'tool-date-value' : 'tool-date-value is-placeholder'}>
+          {dateControlLabel(value)}
+        </span>
+        <HeritageIcon className="tool-date-icon" name="today" size={18} />
+      </button>
+      <input
+        ref={inputRef}
         aria-label={ariaLabel}
         className="tool-date-input"
         disabled={disabled}
+        tabIndex={-1}
         type="date"
         value={value}
         onChange={(event) => onValueChange(event.target.value)}
       />
     </span>
+  );
+}
+
+type FortuneAnswerSection = {
+  content: string;
+  title: string;
+};
+
+function answerParagraphs(value: string) {
+  return value
+    .trim()
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.replace(/\s*\n\s*/g, ' ').trim())
+    .filter(Boolean);
+}
+
+function splitFortuneAnswer(value: string) {
+  const answer = value.trim();
+  const headingPattern = /\*\*([^*\n]{2,80}?):\*\*/g;
+  const matches = Array.from(answer.matchAll(headingPattern));
+
+  if (matches.length === 0) {
+    return { introduction: '', paragraphs: answerParagraphs(answer), sections: [] as FortuneAnswerSection[] };
+  }
+
+  const introduction = answer.slice(0, matches[0].index).trim();
+  const sections = matches.flatMap((match, index) => {
+    const content = answer.slice(match.index! + match[0].length, matches[index + 1]?.index).trim();
+    const title = match[1].trim();
+    return content && title ? [{ title, content }] : [];
+  });
+
+  return { introduction, paragraphs: [] as string[], sections };
+}
+
+function FortuneFollowUpAnswer({ answer }: { answer: string }) {
+  const formatted = splitFortuneAnswer(answer);
+
+  return (
+    <section aria-label="Câu trả lời từ AI" className="fortune-follow-up-answer">
+      {answerParagraphs(formatted.introduction).map((paragraph, index) => <p className="fortune-follow-up-introduction" key={`${paragraph}-${index}`}>{paragraph}</p>)}
+      {formatted.paragraphs.map((paragraph, index) => <p className="fortune-follow-up-introduction" key={`${paragraph}-${index}`}>{paragraph}</p>)}
+      {formatted.sections.length > 0 ? (
+        <div className="fortune-follow-up-answer-sections">
+          {formatted.sections.map((section, index) => (
+            <section className="fortune-follow-up-answer-section" key={`${section.title}-${index}`}>
+              <h4>{section.title}</h4>
+              {answerParagraphs(section.content).map((paragraph, paragraphIndex) => <p key={`${paragraph}-${paragraphIndex}`}>{paragraph}</p>)}
+            </section>
+          ))}
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -1609,7 +1675,7 @@ function FortuneView() {
                     </form>
                     {isFollowingUp ? <p className="fortune-follow-up-status" role="status"><AIButtonIcon size={15} variant="light" /> AI đang chuẩn bị câu trả lời...</p> : null}
                     {followUpError ? <p className="fortune-error" role="alert">{followUpError}</p> : null}
-                    {followUpAnswer ? <p className="fortune-follow-up-answer">{followUpAnswer}</p> : null}
+                    {followUpAnswer ? <FortuneFollowUpAnswer answer={followUpAnswer} /> : null}
                   </div>
                 ) : null}
               </div>

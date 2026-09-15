@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   AlertDialog,
@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { getFirebaseServices } from '@/lib/firebase/client';
+import { openNativeDatePicker } from '@/lib/utils';
 import {
   GALLERY_ALLOWED_TYPES,
   GALLERY_MAX_FILE_BYTES,
@@ -133,18 +134,29 @@ function GalleryDateInput({
   onValueChange: (value: string) => void;
   value: string;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const formattedValue = value ? value.split('-').reverse().join('/') : 'Chọn ngày';
 
   return (
     <span className="gallery-date-control">
-      <span aria-hidden="true" className={value ? 'gallery-date-value' : 'gallery-date-value is-placeholder'}>
-        {formattedValue}
-      </span>
-      <GalleryIcon className="gallery-date-icon" name="calendar-day" size={18} />
-      <Input
+      <button
+        aria-label="Ngày chụp"
+        className="gallery-date-trigger"
+        disabled={disabled}
+        onClick={() => openNativeDatePicker(inputRef.current)}
+        type="button"
+      >
+        <span className={value ? 'gallery-date-value' : 'gallery-date-value is-placeholder'}>
+          {formattedValue}
+        </span>
+        <GalleryIcon className="gallery-date-icon" name="calendar-day" size={16} />
+      </button>
+      <input
+        ref={inputRef}
         aria-label="Ngày chụp"
         className="gallery-date-input"
         disabled={disabled}
+        tabIndex={-1}
         type="date"
         value={value}
         onChange={(event) => onValueChange(event.target.value)}
