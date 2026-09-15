@@ -286,7 +286,7 @@ function AIAssistantDrawer({
             </div>
           ) : (
             <div className="ai-empty-state">
-              <AIButtonIcon size={28} />
+              <AIButtonIcon size={40} />
               <strong>Xin chào, mình có thể giúp gì?</strong>
               <p>Hỏi về thành viên, quan hệ gia phả, lịch âm hoặc ngày giỗ.</p>
               <AIQuickActions

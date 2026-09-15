@@ -23,7 +23,6 @@ import { useFamily } from './provider';
 import { Footer } from './header';
 import { HeritageIcon } from './heritage-icon';
 import { AIButtonIcon } from '@/components/ai/ai-button-icon';
-import { AIAssistantButton } from '@/components/ai/ai-assistant-button';
 import { Avatar } from './member-avatar';
 import {
   MemorialDetailDialog,
@@ -493,14 +492,6 @@ function LunarCalendarView() {
                     <small>Năm {info.canChi.year}</small>
                   </div>
                 </div>
-                <AIAssistantButton
-                  className="calendar-day-ai-entry"
-                  context={{ source: 'calendar', selectedDate: inputDateValue(selected) }}
-                  contextLabel={`Đang xem ngày ${dateLabel(selected)}`}
-                  label="Luận giải ngày này"
-                  mode="calendar"
-                />
-
                 <section className="day-events">
                   <h3>
                     <HeritageIcon name="memorial" size={18} /> Ngày giỗ{' '}

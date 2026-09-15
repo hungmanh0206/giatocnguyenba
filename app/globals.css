@@ -6457,8 +6457,8 @@ main#main.admin-page {
 }
 
 .ai-empty-state > .ai-button-icon {
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
 }
 
 .ai-context-icon .heritage-icon {
@@ -6646,12 +6646,6 @@ main#main.admin-page {
 
 .calendar-ai-entry {
   margin-top: 14px;
-}
-
-.calendar-day-ai-entry {
-  width: calc(100% - 28px);
-  justify-content: center;
-  margin: 0 14px 16px;
 }
 
 .fortune-ai-entry {
