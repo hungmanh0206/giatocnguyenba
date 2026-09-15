@@ -9,7 +9,6 @@ import { isSameMonth } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -61,7 +60,6 @@ import type {
   AstrologyInput,
   AstrologyInterpretation,
   AstrologyProfile,
-  BirthTimeAccuracy,
 } from '@/lib/astrology/types';
 import { astrologyFocuses, type AstrologyFocus } from '@/lib/astrology/types';
 import type { AIModelPreference } from '@/lib/ai/types';
@@ -275,8 +273,6 @@ type FortuneToolSession = {
   birthDate?: string;
   gender?: AstrologyGender | '';
   birthTime?: string;
-  unknownBirthTime?: boolean;
-  birthTimeAccuracy?: BirthTimeAccuracy;
   focus?: AstrologyFocus | null;
   modelPreference?: AIModelPreference;
   submittedInput?: AstrologyInput | null;
@@ -1221,8 +1217,6 @@ function FortuneView() {
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState<AstrologyGender | ''>('');
   const [birthTime, setBirthTime] = useState('');
-  const [unknownBirthTime, setUnknownBirthTime] = useState(false);
-  const [birthTimeAccuracy, setBirthTimeAccuracy] = useState<BirthTimeAccuracy>('exact');
   const [focus, setFocus] = useState<AstrologyFocus | null>(null);
   const [modelPreference, setModelPreference] = useState<AIModelPreference>('auto');
   const [submittedInput, setSubmittedInput] = useState<AstrologyInput | null>(null);
@@ -1265,8 +1259,6 @@ function FortuneView() {
         setGender(saved.gender === 'male' || saved.gender === 'female' ? saved.gender : '');
         const savedBirthTime = saved.birthTime || '';
         setBirthTime(/^\d{2}:\d{2}$/.test(savedBirthTime) ? savedBirthTime : '');
-        setUnknownBirthTime(saved.unknownBirthTime === true);
-        setBirthTimeAccuracy(saved.birthTimeAccuracy === 'approximate' ? 'approximate' : 'exact');
         setFocus(isKnownFocus(saved.focus) ? saved.focus : null);
         setModelPreference(isKnownModel(saved.modelPreference) ? saved.modelPreference : 'auto');
         setSubmittedInput(saved.submittedInput || null);
@@ -1290,8 +1282,6 @@ function FortuneView() {
       birthDate,
       gender,
       birthTime,
-      unknownBirthTime,
-      birthTimeAccuracy,
       focus,
       modelPreference,
       submittedInput,
@@ -1301,7 +1291,7 @@ function FortuneView() {
       followUpAnswer,
       followUpHistory,
     } satisfies FortuneToolSession);
-  }, [birthDate, birthTime, birthTimeAccuracy, focus, followUp, followUpAnswer, followUpHistory, fullName, gender, modelPreference, profile, reading, sessionReady, submittedInput, unknownBirthTime]);
+  }, [birthDate, birthTime, focus, followUp, followUpAnswer, followUpHistory, fullName, gender, modelPreference, profile, reading, sessionReady, submittedInput]);
 
   const birthDatePreview = useMemo(() => {
     const birthday = parseBirthDateInput(birthDate);
@@ -1337,22 +1327,13 @@ function FortuneView() {
     if (!name || !gender || !birthday) {
       return null;
     }
-    if (unknownBirthTime) {
-      return {
-        fullName: name,
-        gender,
-        birthDate: { ...birthday, calendar: 'solar' },
-        birthTime: null,
-        unknownBirthTime: true,
-      };
-    }
     const match = /^(\d{2}):(\d{2})$/.exec(birthTime);
-    if (!match || (birthTimeAccuracy !== 'exact' && birthTimeAccuracy !== 'approximate')) return null;
+    if (!match) return null;
     return {
       fullName: name,
       gender,
       birthDate: { ...birthday, calendar: 'solar' },
-      birthTime: { hour: Number(match[1]), minute: Number(match[2]), accuracy: birthTimeAccuracy },
+      birthTime: { hour: Number(match[1]), minute: Number(match[2]), accuracy: 'exact' },
       unknownBirthTime: false,
     };
   }
@@ -1364,7 +1345,7 @@ function FortuneView() {
     }
     const input = inputFromForm();
     if (!input) {
-      setError('Vui lòng nhập họ tên, ngày sinh, giới tính và giờ sinh hoặc chọn không rõ giờ sinh.');
+      setError('Vui lòng nhập họ tên, ngày sinh, giới tính và giờ sinh.');
       return;
     }
     setError(null);
@@ -1459,8 +1440,6 @@ function FortuneView() {
     setBirthDate('');
     setGender('');
     setBirthTime('');
-    setUnknownBirthTime(false);
-    setBirthTimeAccuracy('exact');
     setFocus(null);
     setModelPreference('auto');
     setSubmittedInput(null);
@@ -1527,6 +1506,25 @@ function FortuneView() {
                   value={fullName}
                 />
               </label>
+              <label className="fortune-field">
+                <span>Giới tính</span>
+                <Select
+                  items={[{ value: 'male', label: 'Nam' }, { value: 'female', label: 'Nữ' }]}
+                  value={gender}
+                  onValueChange={(value) => {
+                    setGender(value as AstrologyGender);
+                    setError(null);
+                  }}
+                >
+                  <SelectTrigger aria-label="Giới tính" className="choice">
+                    <SelectValue placeholder="Chọn giới tính" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Nam</SelectItem>
+                    <SelectItem value="female">Nữ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
               <div className="fortune-field fortune-birth-date fortune-date-field">
                 <span>Ngày sinh dương lịch</span>
                 <ToolDateInput
@@ -1537,6 +1535,42 @@ function FortuneView() {
                     setError(null);
                   }}
                 />
+              </div>
+              <div className="fortune-field">
+                <span>Giờ sinh</span>
+                <div aria-label="Giờ sinh theo định dạng 24 giờ" className="fortune-time-picker" role="group">
+                  <Select
+                    items={birthHourOptions}
+                    value={selectedBirthHour}
+                    onValueChange={(value) => {
+                      setBirthTime(`${value}:${storedBirthMinute}`);
+                      setError(null);
+                    }}
+                  >
+                    <SelectTrigger aria-label="Chọn giờ sinh" className="choice">
+                      <SelectValue placeholder="HH" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {birthHourOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <span aria-hidden="true" className="fortune-time-separator">:</span>
+                  <Select
+                    items={birthMinuteOptions}
+                    value={selectedBirthMinute}
+                    onValueChange={(value) => {
+                      setBirthTime(`${storedBirthHour}:${value}`);
+                      setError(null);
+                    }}
+                  >
+                    <SelectTrigger aria-label="Chọn phút sinh" className="choice">
+                      <SelectValue placeholder="mm" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {birthMinuteOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               {birthDatePreview ? (
                 <div className="fortune-birth-calendar-preview" aria-live="polite">
@@ -1551,86 +1585,7 @@ function FortuneView() {
                   </div>
                 </div>
               ) : null}
-              <div className="fortune-inline-fields">
-                <label className="fortune-field">
-                  <span>Giới tính</span>
-                  <Select
-                    items={[{ value: 'male', label: 'Nam' }, { value: 'female', label: 'Nữ' }]}
-                    value={gender}
-                    onValueChange={(value) => {
-                      setGender(value as AstrologyGender);
-                      setError(null);
-                    }}
-                  >
-                    <SelectTrigger aria-label="Giới tính" className="choice">
-                      <SelectValue placeholder="Chọn giới tính" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Nam</SelectItem>
-                      <SelectItem value="female">Nữ</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </label>
-                <div className="fortune-field">
-                  <span>Giờ sinh</span>
-                  <div aria-label="Giờ sinh theo định dạng 24 giờ" className="fortune-time-picker" role="group">
-                    <Select
-                      disabled={unknownBirthTime}
-                      items={birthHourOptions}
-                      value={selectedBirthHour}
-                      onValueChange={(value) => {
-                        setBirthTime(`${value}:${storedBirthMinute}`);
-                        setError(null);
-                      }}
-                    >
-                      <SelectTrigger aria-label="Chọn giờ sinh" className="choice">
-                        <SelectValue placeholder="HH" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {birthHourOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <span aria-hidden="true" className="fortune-time-separator">:</span>
-                    <Select
-                      disabled={unknownBirthTime}
-                      items={birthMinuteOptions}
-                      value={selectedBirthMinute}
-                      onValueChange={(value) => {
-                        setBirthTime(`${storedBirthHour}:${value}`);
-                        setError(null);
-                      }}
-                    >
-                      <SelectTrigger aria-label="Chọn phút sinh" className="choice">
-                        <SelectValue placeholder="mm" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {birthMinuteOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <label className="fortune-unknown-time">
-                  <Checkbox
-                    checked={unknownBirthTime}
-                    onCheckedChange={(checked) => {
-                      setUnknownBirthTime(checked === true);
-                      setError(null);
-                    }}
-                  />
-                  <span>Không rõ giờ sinh</span>
-                </label>
-              </div>
-              <div className="fortune-time-accuracy-row">
-                <label className="fortune-field">
-                  <span>Mức độ chính xác giờ sinh</span>
-                  <Select items={[{ value: 'exact', label: 'Chính xác' }, { value: 'approximate', label: 'Ước chừng' }]} value={birthTimeAccuracy} onValueChange={(value) => setBirthTimeAccuracy(value as BirthTimeAccuracy)} disabled={unknownBirthTime}>
-                    <SelectTrigger aria-label="Mức độ chính xác giờ sinh" className="choice"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="exact">Chính xác</SelectItem><SelectItem value="approximate">Ước chừng</SelectItem></SelectContent>
-                  </Select>
-                </label>
-              </div>
             </div>
-            {unknownBirthTime ? <p className="fortune-time-note">Bạn vẫn có thể xem luận giải cơ bản. Các nội dung phụ thuộc giờ sinh sẽ không được tính.</p> : null}
 
             <div className="fortune-focus-group" aria-label="Chủ đề muốn xem">
               <span>Chủ đề muốn xem</span>
