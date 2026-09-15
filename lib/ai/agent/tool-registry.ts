@@ -156,6 +156,23 @@ const declarations: AIAgentToolDefinition[] = [
     },
   },
   {
+    name: 'validate_relationship',
+    description:
+      'Xác thực một mã quan hệ do mô hình suy luận bằng Relationship Engine. Phải gọi trước khi khẳng định quan hệ suy luận như FIRST_COUSIN.',
+    parameters: {
+      type: 'object',
+      properties: {
+        person_a_id: personIdSchema,
+        person_b_id: personIdSchema,
+        candidate_relationship_code: {
+          type: 'string',
+          description: 'Mã ứng viên, ví dụ PATERNAL_FIRST_COUSIN hoặc FIRST_COUSIN.',
+        },
+      },
+      required: ['person_a_id', 'person_b_id', 'candidate_relationship_code'],
+    },
+  },
+  {
     name: 'get_relationship_path',
     description: 'Lấy đường quan hệ đã xác minh giữa hai hồ sơ.',
     parameters: {
@@ -263,6 +280,7 @@ function detail(person: Member, members: Member[]) {
     branch: memberBranchName(person, members),
     ...(person.born !== undefined ? { birthYear: person.born } : {}),
     lifeStatus: memberLifeStatus(person),
+    dataStatus: person.dataStatus || 'PARTIAL',
     ...(person.needsVerification ? { needsVerification: true } : {}),
   };
 }
@@ -419,6 +437,12 @@ export function createAIAgentToolRegistry(members: Member[]): ToolRegistry {
         return firstId && secondId
           ? tools.getRelationship(firstId, secondId) || { status: 'NOT_FOUND' }
           : { status: 'INVALID', message: 'Cần hai ID hồ sơ.' };
+      case 'validate_relationship': {
+        const candidate = textArg(args.candidate_relationship_code);
+        return firstId && secondId && candidate
+          ? tools.validateRelationship(firstId, secondId, candidate)
+          : { status: 'INVALID', message: 'Cần hai ID hồ sơ và mã quan hệ ứng viên.' };
+      }
       case 'get_relationship_path':
         return firstId && secondId
           ? tools.getRelationshipPath(firstId, secondId)

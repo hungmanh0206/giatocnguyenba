@@ -39,7 +39,57 @@ function relationshipPath(path: RelationshipPathStep[]) {
     .join('\n');
 }
 
+function naturalName(value: string) {
+  return value.replace(/^(?:Ông|Bà)(?:\s+Tổ)?\s*:\s*/iu, '');
+}
+
+function cousinAddressingTerm(term: string | undefined) {
+  if (term === 'anh họ') return 'anh/anh họ';
+  if (term === 'em họ') return 'em/em họ';
+  return term || 'anh/em họ';
+}
+
+function formatCousinRelationshipAnswer(result: GenealogyRelationshipResult) {
+  const from = naturalName(result.personA.name);
+  const to = naturalName(result.personB.name);
+  const cousin = result.cousin;
+  if (!cousin) return null;
+
+  const firstParent = naturalName(cousin.personAParent.name);
+  const secondParent = naturalName(cousin.personBParent.name);
+  const parentYear = (year?: number) => year ? ` (${year})` : '';
+  const relationshipName = result.paternalOrMaternal === 'paternal'
+    ? 'anh em họ bên nội, cụ thể là anh em con chú bác'
+    : result.paternalOrMaternal === 'maternal'
+      ? 'anh em họ bên ngoại'
+      : 'anh em họ';
+  const ancestor = result.commonAncestor
+    ? naturalName(result.commonAncestor.ancestor.name)
+    : null;
+  const branchLine = cousin.personABranch && cousin.personBBranch
+    ? `${from} thuộc nhánh ${cousin.personABranch}, còn ${to} thuộc nhánh ${cousin.personBBranch}.`
+    : null;
+  const ageLine = result.addressingStatus === 'EXACT' && result.personA.birthYear && result.personB.birthYear
+    ? `${from} sinh năm ${result.personA.birthYear}, ${to} sinh năm ${result.personB.birthYear}; vì vậy ${from} có thể gọi ${to} là ${cousinAddressingTerm(result.addressing?.BtoA)}, còn ${to} gọi ${from} là ${cousinAddressingTerm(result.addressing?.AtoB)}.`
+    : result.missingFacts.length
+      ? `Cách xưng hô anh/em họ chưa thể chốt vì ${result.missingFacts.join(' ')}`
+      : null;
+  const path = relationshipPath(result.path);
+
+  return [
+    `**${from} và ${to} là ${relationshipName}.**`,
+    `Cha/mẹ được ghi nhận của ${from} là ${firstParent}${parentYear(cousin.personAParent.birthYear)}, còn của ${to} là ${secondParent}${parentYear(cousin.personBParent.birthYear)}. Hai người này là anh chị em theo dữ liệu gia phả${ancestor ? ` và đều là con của ${ancestor}` : ''}.`,
+    branchLine,
+    ageLine,
+    path ? `Đường quan hệ đã xác nhận:\n${path}` : null,
+  ].filter(Boolean).join('\n\n');
+}
+
 function formatRelationshipAnswer(result: GenealogyRelationshipResult) {
+  const cousinAnswer = /FIRST_COUSIN$/.test(result.relationshipCode || '')
+    ? formatCousinRelationshipAnswer(result)
+    : null;
+  if (cousinAnswer) return cousinAnswer;
   const from = result.personA.name;
   const to = result.personB.name;
   const path = relationshipPath(result.path);

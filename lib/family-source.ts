@@ -97,6 +97,26 @@ function displayName(record: SourceRecord) {
   return record.full_name.trim();
 }
 
+function explicitAliases(record: SourceRecord) {
+  const aliases = new Set<string>();
+  const roleTaboo = /(?:^|[;,]\s*)húy\s+([^;,.\n]+)/iu.exec(record.role);
+  if (roleTaboo?.[1]?.trim()) aliases.add(roleTaboo[1].trim());
+
+  for (const match of record.notes.matchAll(
+    /(?:tên\s+húy|húy|tên\s+gọi\s+khác|còn\s+gọi\s+là)\s*:\s*([^;,.\n]+)/giu,
+  )) {
+    if (match[1]?.trim()) aliases.add(match[1].trim());
+  }
+  return [...aliases];
+}
+
+function sourceDataStatus(record: SourceRecord): Member['dataStatus'] {
+  if (String(record.needs_verification) === 'true') return 'CONFLICTING';
+  if (!record.full_name.trim() || /chưa rõ tên/iu.test(record.full_name)) return 'UNKNOWN';
+  if (!record.source_lines.trim()) return 'PARTIAL';
+  return 'VERIFIED';
+}
+
 function sourceBiography(record: SourceRecord, name: string) {
   const details = [
     name !== record.full_name ? `Tên theo gia phả: ${record.full_name}.` : '',
@@ -253,7 +273,8 @@ export const familySeedMembers: Member[] = siblingOrders(
       parents.length > 0 ||
       DISCONNECTED_SOURCE_ROOTS.has(record.id);
     const role = record.role || '';
-    const tabooName = role.match(/húy\s+([^;]+)/iu)?.[1]?.trim();
+    const aliases = explicitAliases(record);
+    const tabooName = aliases[0];
     const styleName = role.match(/hiệu\s+([^;]+)/iu)?.[1]?.trim();
     const memorial = sourceAnniversary(record.memorial_date);
     // In the supplied records, a full lunar death date can be stored either
@@ -275,6 +296,8 @@ export const familySeedMembers: Member[] = siblingOrders(
       displayName: record.full_name || undefined,
       nameKnown: record.id === 'P002' ? false : undefined,
       tabooName,
+      ...(aliases.length ? { aliases } : {}),
+      dataStatus: sourceDataStatus(record),
       styleName,
       gender,
       isClanMember,

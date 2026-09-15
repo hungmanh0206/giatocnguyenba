@@ -11,6 +11,9 @@ export type ParentRelation = {
 export const marriageStatuses = ['current', 'divorced', 'widowed', 'deceased', 'unknown'] as const;
 export type MarriageStatus = (typeof marriageStatuses)[number];
 
+export const familyDataStatuses = ['VERIFIED', 'PARTIAL', 'UNKNOWN', 'CONFLICTING'] as const;
+export type FamilyDataStatus = (typeof familyDataStatuses)[number];
+
 export type SpouseRelation = {
   spouseId: string;
   order?: number;
@@ -27,6 +30,10 @@ export type Member = {
   nameKnown?: boolean;
   tabooName?: string;
   styleName?: string;
+  // Explicit aliases supplied by the genealogy source. Similar-looking names
+  // are intentionally never stored here or used as an identity shortcut.
+  aliases?: string[];
+  dataStatus?: FamilyDataStatus;
   gender: 'male' | 'female' | 'unknown';
   isClanMember: boolean;
   lineageType: 'direct' | 'maternal-terminal';

@@ -10,15 +10,19 @@ import {
   ancestorTerm,
   auntOrUncleTerm,
   childTerm,
+  cousinTerm,
   descendantTerm,
   parentTerm,
   possibleAuntOrUncleTerms,
   siblingTerm,
   type FamilySide,
   type RelativeAge,
+  type SiblingKind,
 } from './vietnamese-kinship-engine.ts';
 
 export type RelationshipStatus = 'EXACT' | 'AMBIGUOUS' | 'UNKNOWN' | 'UNSUPPORTED';
+export type AddressingStatus = RelationshipStatus;
+export type RelationshipValidationStatus = 'VALID' | 'INVALID' | 'AMBIGUOUS' | 'UNKNOWN' | 'UNSUPPORTED';
 
 export type RelationshipPathStep = {
   fromId: string;
@@ -35,6 +39,22 @@ export type PersonSummary = {
   generation: number;
   branch: string;
   birthYear?: number;
+  dataStatus?: Member['dataStatus'];
+};
+
+export type VerifiedFamilyFact = {
+  type: 'BIOLOGICAL_PARENT' | 'ADOPTIVE_PARENT' | 'STEP_PARENT' | 'SIBLING' | 'SPOUSE';
+  personAId: string;
+  personBId: string;
+  relationshipCode?: string;
+};
+
+export type CousinRelationshipContext = {
+  personAParent: PersonSummary;
+  personBParent: PersonSummary;
+  parentRelationshipCode: string;
+  personABranch?: string;
+  personBBranch?: string;
 };
 
 export type CommonAncestorResult = {
@@ -49,6 +69,7 @@ export type GenealogyRelationshipResult = {
   personA: PersonSummary;
   personB: PersonSummary;
   status: RelationshipStatus;
+  relationshipStatus?: RelationshipStatus;
   relationshipCode?: string;
   relationshipFromAToB?: string;
   relationshipFromBToA?: string;
@@ -62,10 +83,24 @@ export type GenealogyRelationshipResult = {
   missingFacts: string[];
   possibleTerms?: string[];
   commonAncestor?: CommonAncestorResult;
+  addressingStatus?: AddressingStatus;
+  addressing?: { AtoB?: string; BtoA?: string };
+  verifiedFacts?: VerifiedFamilyFact[];
+  cousin?: CousinRelationshipContext;
+};
+
+export type RelationshipCandidateValidation = {
+  status: RelationshipValidationStatus;
+  candidateRelationshipCode: string;
+  validatedRelationshipCode?: string;
+  correctRelationshipCode?: string;
+  evidence: VerifiedFamilyFact[];
+  verifiedPath: RelationshipPathStep[];
+  missingFacts: string[];
 };
 
 export type PersonResolution = {
-  status: 'RESOLVED' | 'AMBIGUOUS' | 'UNKNOWN';
+  status: 'RESOLVED' | 'AMBIGUOUS' | 'CANDIDATES' | 'UNKNOWN';
   query: string;
   people: Member[];
 };
@@ -84,16 +119,27 @@ function normalise(value: string) {
     .trim();
 }
 
-function aliases(person: Member) {
+function originalNames(person: Member) {
   return [...new Set([
     person.name,
     person.displayName,
+  ].filter((value): value is string => Boolean(value?.trim()))
+    .map((value) => value.trim())
+    .filter((value) => value.length >= 3))];
+}
+
+function explicitAliases(person: Member) {
+  return [...new Set([
     person.tabooName,
     person.styleName,
-    memberName(person).replace(/^(Ông|Bà|Anh|Chị)(?:\s+Tổ)?\s*:\s*/i, ''),
+    ...(person.aliases || []),
   ].filter((value): value is string => Boolean(value?.trim()))
-    .map(normalise)
+    .map((value) => value.trim())
     .filter((value) => value.length >= 3))];
+}
+
+function searchableNames(person: Member) {
+  return [...new Set([...originalNames(person), ...explicitAliases(person)].map(normalise))];
 }
 
 function summary(person: Member, members: Member[]): PersonSummary {
@@ -104,6 +150,7 @@ function summary(person: Member, members: Member[]): PersonSummary {
     generation: person.generation,
     branch: memberBranchName(person, members),
     ...(person.born !== undefined ? { birthYear: person.born } : {}),
+    ...(person.dataStatus ? { dataStatus: person.dataStatus } : {}),
   };
 }
 
@@ -166,15 +213,23 @@ function parentPath(child: Member, parent: Member, kind: ParentageKind): Relatio
   };
 }
 
-function siblingKind(first: Member, second: Member, byId: Map<string, Member>) {
+function siblingKind(first: Member, second: Member, byId: Map<string, Member>): SiblingKind | null {
   const firstBiological = biologicalParentIds(first, byId);
   const secondBiological = biologicalParentIds(second, byId);
   const shared = [...firstBiological].filter((id) => secondBiological.has(id));
   const sharedFather = shared.some((id) => byId.get(id)?.gender === 'male');
   const sharedMother = shared.some((id) => byId.get(id)?.gender === 'female');
   if (sharedFather && sharedMother) return 'full' as const;
-  if (sharedFather) return 'paternal-half' as const;
-  if (sharedMother) return 'maternal-half' as const;
+  const firstHasMother = [...firstBiological].some((id) => byId.get(id)?.gender === 'female');
+  const secondHasMother = [...secondBiological].some((id) => byId.get(id)?.gender === 'female');
+  const firstHasFather = [...firstBiological].some((id) => byId.get(id)?.gender === 'male');
+  const secondHasFather = [...secondBiological].some((id) => byId.get(id)?.gender === 'male');
+  if (sharedFather) return firstHasMother && secondHasMother
+    ? 'paternal-half' as const
+    : 'shared-father-unknown-mother' as const;
+  if (sharedMother) return firstHasFather && secondHasFather
+    ? 'maternal-half' as const
+    : 'shared-mother-unknown-father' as const;
 
   const firstStep = new Set(parentLinks(first, byId).filter((link) => link.kind === 'step').map((link) => link.parent.id));
   const secondStep = new Set(parentLinks(second, byId).filter((link) => link.kind === 'step').map((link) => link.parent.id));
@@ -271,7 +326,28 @@ function relationshipBase(
   members: Member[],
   values: Omit<GenealogyRelationshipResult, 'personA' | 'personB'>,
 ): GenealogyRelationshipResult {
-  return { personA: summary(personA, members), personB: summary(personB, members), ...values };
+  const relationshipStatus = values.relationshipStatus || values.status;
+  const addressingStatus = values.addressingStatus || (
+    relationshipStatus === 'EXACT' && values.kinshipTermAtoB && values.kinshipTermBtoA
+      ? 'EXACT'
+      : relationshipStatus
+  );
+  return {
+    personA: summary(personA, members),
+    personB: summary(personB, members),
+    ...values,
+    relationshipStatus,
+    addressingStatus,
+    ...(values.addressing || values.kinshipTermAtoB || values.kinshipTermBtoA
+      ? {
+          addressing: values.addressing || {
+            ...(values.kinshipTermAtoB ? { AtoB: values.kinshipTermAtoB } : {}),
+            ...(values.kinshipTermBtoA ? { BtoA: values.kinshipTermBtoA } : {}),
+          },
+        }
+      : {}),
+    ...(values.verifiedFacts ? {} : { verifiedFacts: [] }),
+  };
 }
 
 export function findCommonAncestor(
@@ -287,7 +363,11 @@ export function findCommonAncestor(
   const secondAncestors = ancestorPaths(second, byId);
   const common = [...firstAncestors.entries()]
     .filter(([id]) => secondAncestors.has(id))
-    .sort(([, left], [, right]) => left.distance - right.distance || left.path.length - right.path.length);
+    .sort(([leftId, left], [rightId, right]) => {
+      const leftTotal = left.distance + secondAncestors.get(leftId)!.distance;
+      const rightTotal = right.distance + secondAncestors.get(rightId)!.distance;
+      return leftTotal - rightTotal || left.distance - right.distance || left.path.length - right.path.length;
+    });
   const best = common[0];
   if (!best) return undefined;
   const ancestor = byId.get(best[0]);
@@ -303,32 +383,49 @@ export function findCommonAncestor(
 }
 
 export function resolvePeople(members: Member[], message: string): PersonResolution[] {
-  const question = normalise(message);
-  const candidateIds = new Set<string>();
-  const namesByPerson = new Map<string, string[]>();
-  for (const person of members) {
-    const personAliases = aliases(person);
-    namesByPerson.set(person.id, personAliases);
-    if (personAliases.some((name) => question.includes(name))) candidateIds.add(person.id);
-  }
-
-  const candidates = members.filter((person) => candidateIds.has(person.id));
   const groups = new Map<string, Member[]>();
-  for (const person of candidates) {
-    const matched = namesByPerson.get(person.id)?.find((name) => question.includes(name));
-    if (!matched) continue;
-    const people = groups.get(matched) || [];
+
+  const phrasePattern = (phrase: string, unicode = false) => {
+    const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return unicode
+      ? new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}])`, 'iu')
+      : new RegExp(`(?:^|[^a-z0-9])${escaped}(?=$|[^a-z0-9])`, 'i');
+  };
+
+  const addMatch = (query: string, person: Member) => {
+    const people = groups.get(query) || [];
     people.push(person);
-    groups.set(matched, people);
+    groups.set(query, people);
+  };
+
+  const resolvedGroups = (statusWhenSingle: PersonResolution['status']) =>
+    [...groups.entries()]
+      .sort(([left], [right]) => right.length - left.length || right.localeCompare(left, 'vi'))
+      .map(([query, people]) => ({
+        status: people.length === 1 ? statusWhenSingle : 'AMBIGUOUS' as const,
+        query,
+        people,
+      }));
+
+  for (const person of members) {
+    const matched = originalNames(person).find((name) => phrasePattern(name, true).test(message));
+    if (matched) addMatch(matched, person);
   }
 
-  return [...groups.entries()]
-    .sort(([left], [right]) => right.length - left.length || right.localeCompare(left, 'vi'))
-    .map(([query, people]) => ({
-      status: people.length === 1 ? 'RESOLVED' : 'AMBIGUOUS',
-      query,
-      people,
-    }));
+  for (const person of members) {
+    const matched = explicitAliases(person).find((alias) => phrasePattern(alias, true).test(message));
+    if (matched) addMatch(matched, person);
+  }
+  if (groups.size) return resolvedGroups('RESOLVED');
+
+  const normalizedMessage = normalise(message);
+  for (const person of members) {
+    const matched = searchableNames(person).find((name) => phrasePattern(name).test(normalizedMessage));
+    if (matched) addMatch(matched, person);
+  }
+  // Normalized lookup intentionally returns candidates, even if one happens
+  // to be found. It is never sufficient to decide a person's identity.
+  return resolvedGroups('CANDIDATES');
 }
 
 export function getRelationship(
@@ -388,16 +485,136 @@ export function getRelationship(
   if (sibling) {
     const firstAge = ageComparedTo(first, second);
     const secondAge = firstAge === 'older' ? 'younger' : firstAge === 'younger' ? 'older' : 'unknown';
-    const code = sibling === 'full' ? 'FULL_SIBLING' : sibling === 'paternal-half' ? 'PATERNAL_HALF_SIBLING' : sibling === 'maternal-half' ? 'MATERNAL_HALF_SIBLING' : 'STEP_SIBLING';
+    const code = sibling === 'full'
+      ? 'FULL_SIBLING'
+      : sibling === 'paternal-half'
+        ? 'PATERNAL_HALF_SIBLING'
+        : sibling === 'maternal-half'
+          ? 'MATERNAL_HALF_SIBLING'
+          : sibling === 'shared-father-unknown-mother'
+            ? 'VERIFIED_SHARED_FATHER'
+            : sibling === 'shared-mother-unknown-father'
+              ? 'VERIFIED_SHARED_MOTHER'
+              : 'STEP_SIBLING';
     return relationshipBase(first, second, members, {
       status: 'EXACT', relationshipCode: code, relationshipFromAToB: siblingTerm(first.gender, firstAge, sibling),
       relationshipFromBToA: siblingTerm(second.gender, secondAge, sibling), kinshipTermAtoB: siblingTerm(first.gender, firstAge, sibling),
       kinshipTermBtoA: siblingTerm(second.gender, secondAge, sibling), generationDifference: 0,
-      paternalOrMaternal: sibling === 'paternal-half' ? 'paternal' : sibling === 'maternal-half' ? 'maternal' : 'both',
+      paternalOrMaternal: sibling === 'paternal-half' || sibling === 'shared-father-unknown-mother'
+        ? 'paternal'
+        : sibling === 'maternal-half' || sibling === 'shared-mother-unknown-father'
+          ? 'maternal'
+          : 'both',
       bloodRelation: sibling !== 'step', path: siblingPath(first, second, byId),
       explanation: `${memberName(first)} và ${memberName(second)} là ${siblingTerm(first.gender, firstAge, sibling)} được ghi nhận trong gia phả.`,
       missingFacts: firstAge === 'unknown' ? ['Chưa có thứ tự sinh hoặc năm sinh đủ để xác định ai lớn tuổi hơn.'] : [],
+      addressingStatus: firstAge === 'unknown' ? 'AMBIGUOUS' : 'EXACT',
+      verifiedFacts: [{
+        type: 'SIBLING',
+        personAId: first.id,
+        personBId: second.id,
+        relationshipCode: code,
+      }],
     });
+  }
+
+  const firstBiologicalParents = parentLinks(first, byId).filter((link) => link.kind === 'biological');
+  const secondBiologicalParents = parentLinks(second, byId).filter((link) => link.kind === 'biological');
+  for (const firstParentLink of firstBiologicalParents) {
+    for (const secondParentLink of secondBiologicalParents) {
+      const parentSibling = siblingKind(firstParentLink.parent, secondParentLink.parent, byId);
+      if (!parentSibling || parentSibling === 'step') continue;
+
+      const parentRelationship = getRelationship(
+        firstParentLink.parent.id,
+        secondParentLink.parent.id,
+        members,
+      );
+      const commonAncestor = findCommonAncestor(first.id, second.id, members);
+      const parentAge = ageComparedTo(firstParentLink.parent, secondParentLink.parent);
+      const firstAge = ageComparedTo(first, second);
+      const secondAge = firstAge === 'older' ? 'younger' : firstAge === 'younger' ? 'older' : 'unknown';
+      const side = firstParentLink.parent.gender === 'male' && secondParentLink.parent.gender === 'male'
+        ? 'paternal' as const
+        : firstParentLink.parent.gender === 'female' && secondParentLink.parent.gender === 'female'
+          ? 'maternal' as const
+          : 'unknown' as const;
+      const relationshipCode = side === 'paternal'
+        ? 'PATERNAL_FIRST_COUSIN'
+        : side === 'maternal'
+          ? 'MATERNAL_FIRST_COUSIN'
+          : 'FIRST_COUSIN';
+      const personABranch = side === 'paternal'
+        ? parentAge === 'older' ? 'con bác' : parentAge === 'younger' ? 'con chú' : undefined
+        : undefined;
+      const personBBranch = side === 'paternal'
+        ? parentAge === 'older' ? 'con chú' : parentAge === 'younger' ? 'con bác' : undefined
+        : undefined;
+      const path = [
+        parentPath(first, firstParentLink.parent, firstParentLink.kind),
+        ...siblingPath(firstParentLink.parent, secondParentLink.parent, byId),
+        {
+          fromId: secondParentLink.parent.id,
+          fromName: memberName(secondParentLink.parent),
+          relation: relationLabelForChild(second, secondParentLink.kind),
+          toId: second.id,
+          toName: memberName(second),
+        },
+      ];
+      const parentFacts: VerifiedFamilyFact[] = [
+        { type: 'BIOLOGICAL_PARENT', personAId: firstParentLink.parent.id, personBId: first.id },
+        { type: 'BIOLOGICAL_PARENT', personAId: secondParentLink.parent.id, personBId: second.id },
+        {
+          type: 'SIBLING',
+          personAId: firstParentLink.parent.id,
+          personBId: secondParentLink.parent.id,
+          relationshipCode: parentRelationship?.relationshipCode || 'VERIFIED_SIBLING',
+        },
+      ];
+      if (commonAncestor?.distanceFromA === 2 && commonAncestor.distanceFromB === 2) {
+        parentFacts.push(
+          { type: 'BIOLOGICAL_PARENT', personAId: commonAncestor.ancestor.id, personBId: firstParentLink.parent.id },
+          { type: 'BIOLOGICAL_PARENT', personAId: commonAncestor.ancestor.id, personBId: secondParentLink.parent.id },
+        );
+      }
+      const branchDetail = personABranch && personBBranch
+        ? ` ${memberName(first)} thuộc nhánh ${personABranch}, còn ${memberName(second)} thuộc nhánh ${personBBranch}.`
+        : '';
+      const ageDetail = firstAge === 'unknown'
+        ? ' Chưa có đủ năm sinh hoặc thứ tự sinh để xác định ai nên xưng anh/chị/em họ.'
+        : ` ${memberName(first)} ${firstAge === 'older' ? 'lớn tuổi hơn' : 'nhỏ tuổi hơn'} ${memberName(second)} nên cách xưng hô anh/em họ đã được xác định.`;
+      return relationshipBase(first, second, members, {
+        status: 'EXACT',
+        relationshipCode,
+        relationshipFromAToB: cousinTerm(firstAge),
+        relationshipFromBToA: cousinTerm(secondAge),
+        kinshipTermAtoB: cousinTerm(firstAge),
+        kinshipTermBtoA: cousinTerm(secondAge),
+        generationDifference: 0,
+        paternalOrMaternal: side,
+        bloodRelation: true,
+        path,
+        commonAncestor,
+        explanation: `${memberName(first)} và ${memberName(second)} là ${side === 'paternal' ? 'anh em họ bên nội (anh em con chú bác)' : side === 'maternal' ? 'anh em họ bên ngoại' : 'anh em họ'}. Cha/mẹ của hai người là anh chị em được xác nhận trong gia phả.${branchDetail}${ageDetail}`,
+        missingFacts: [
+          ...(parentAge === 'unknown' && side === 'paternal'
+            ? ['Chưa có thứ tự sinh hoặc năm sinh đủ để xác định nhánh con bác/con chú.']
+            : []),
+          ...(firstAge === 'unknown'
+            ? ['Chưa có thứ tự sinh hoặc năm sinh đủ để xác định cách xưng hô anh/em họ.']
+            : []),
+        ],
+        addressingStatus: firstAge === 'unknown' ? 'AMBIGUOUS' : 'EXACT',
+        verifiedFacts: parentFacts,
+        cousin: {
+          personAParent: summary(firstParentLink.parent, members),
+          personBParent: summary(secondParentLink.parent, members),
+          parentRelationshipCode: parentRelationship?.relationshipCode || 'VERIFIED_SIBLING',
+          ...(personABranch ? { personABranch } : {}),
+          ...(personBBranch ? { personBBranch } : {}),
+        },
+      });
+    }
   }
 
   const secondAncestors = ancestorPaths(second, byId);
@@ -473,6 +690,90 @@ export function getRelationship(
     paternalOrMaternal: 'unknown', bloodRelation: false, path: [],
     explanation: `Hiện gia phả chưa có dữ liệu đủ để xác nhận quan hệ giữa ${memberName(first)} và ${memberName(second)}.`, missingFacts: ['Chưa có đường quan hệ cha/mẹ, hôn nhân hoặc tổ tiên chung được xác nhận.'],
   });
+}
+
+function normalizedRelationshipCode(value: string) {
+  return value.trim().toUpperCase().replace(/[\s-]+/g, '_');
+}
+
+function candidateMatchesRelationship(candidate: string, actual: string | undefined) {
+  if (!actual) return false;
+  const normalizedCandidate = normalizedRelationshipCode(candidate);
+  const normalizedActual = normalizedRelationshipCode(actual);
+  return normalizedCandidate === normalizedActual || (
+    normalizedCandidate === 'FIRST_COUSIN' &&
+    /(?:PATERNAL|MATERNAL)_FIRST_COUSIN$/.test(normalizedActual)
+  );
+}
+
+/**
+ * Validates a candidate derived by an AI model against the deterministic graph
+ * result. The graph remains authoritative even when the candidate is wrong.
+ */
+export function validateRelationship(
+  firstId: string,
+  secondId: string,
+  members: Member[],
+  candidateRelationshipCode: string,
+): RelationshipCandidateValidation {
+  const relationship = getRelationship(firstId, secondId, members);
+  const candidate = normalizedRelationshipCode(candidateRelationshipCode);
+  if (!relationship) {
+    return {
+      status: 'UNKNOWN',
+      candidateRelationshipCode: candidate,
+      evidence: [],
+      verifiedPath: [],
+      missingFacts: ['Không tìm thấy đủ hai hồ sơ để kiểm tra quan hệ.'],
+    };
+  }
+  if (relationship.status === 'UNKNOWN') {
+    return {
+      status: 'UNKNOWN',
+      candidateRelationshipCode: candidate,
+      evidence: relationship.verifiedFacts || [],
+      verifiedPath: relationship.path,
+      missingFacts: relationship.missingFacts,
+    };
+  }
+  if (relationship.status === 'UNSUPPORTED') {
+    return {
+      status: 'UNSUPPORTED',
+      candidateRelationshipCode: candidate,
+      validatedRelationshipCode: relationship.relationshipCode,
+      evidence: relationship.verifiedFacts || [],
+      verifiedPath: relationship.path,
+      missingFacts: relationship.missingFacts,
+    };
+  }
+  if (relationship.status === 'AMBIGUOUS') {
+    return {
+      status: 'AMBIGUOUS',
+      candidateRelationshipCode: candidate,
+      validatedRelationshipCode: relationship.relationshipCode,
+      evidence: relationship.verifiedFacts || [],
+      verifiedPath: relationship.path,
+      missingFacts: relationship.missingFacts,
+    };
+  }
+  if (candidateMatchesRelationship(candidate, relationship.relationshipCode)) {
+    return {
+      status: 'VALID',
+      candidateRelationshipCode: candidate,
+      validatedRelationshipCode: relationship.relationshipCode,
+      evidence: relationship.verifiedFacts || [],
+      verifiedPath: relationship.path,
+      missingFacts: relationship.missingFacts,
+    };
+  }
+  return {
+    status: 'INVALID',
+    candidateRelationshipCode: candidate,
+    correctRelationshipCode: relationship.relationshipCode,
+    evidence: relationship.verifiedFacts || [],
+    verifiedPath: relationship.path,
+    missingFacts: relationship.missingFacts,
+  };
 }
 
 export type GenealogyValidation = { errors: string[]; warnings: string[] };

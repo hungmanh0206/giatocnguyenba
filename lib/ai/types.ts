@@ -1,6 +1,6 @@
 import type { CalendarActivityId } from '@/lib/lunar-calendar/activity-advice';
 import type { GenealogyRelationshipResult } from '@/lib/genealogy/relationship-engine';
-import type { MarriageStatus, ParentageKind } from '@/lib/family';
+import type { FamilyDataStatus, MarriageStatus, ParentageKind } from '@/lib/family';
 
 export const aiModes = [
   'general',
@@ -60,6 +60,7 @@ export type AIPersonFact = {
   deathDate?: string;
   memorialDate?: string;
   needsVerification: boolean;
+  dataStatus?: FamilyDataStatus;
 };
 
 export type AIGenealogyPerson = {

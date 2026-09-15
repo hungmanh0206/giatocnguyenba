@@ -9,6 +9,7 @@ import {
   findCommonAncestor,
   getRelationship,
   resolvePeople,
+  validateRelationship,
   type PersonResolution,
 } from './relationship-engine.ts';
 
@@ -108,6 +109,18 @@ export function createGenealogyTools(members: Member[]) {
     },
     getRelationship(personAId: string, personBId: string) {
       return getRelationship(personAId, personBId, members);
+    },
+    validateRelationship(
+      personAId: string,
+      personBId: string,
+      candidateRelationshipCode: string,
+    ) {
+      return validateRelationship(
+        personAId,
+        personBId,
+        members,
+        candidateRelationshipCode,
+      );
     },
     getRelationshipPath(personAId: string, personBId: string) {
       return getRelationship(personAId, personBId, members)?.path || [];

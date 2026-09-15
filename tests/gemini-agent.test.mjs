@@ -132,4 +132,24 @@ test('agent registry exposes concise verified statistics, records tool trace, an
   assert.ok(
     registry.declarations.some((tool) => tool.name === 'get_relationship'),
   );
+  assert.ok(
+    registry.declarations.some((tool) => tool.name === 'validate_relationship'),
+  );
+});
+
+test('agent registry validates a derived cousin candidate against the family graph', async () => {
+  const registry = createAIAgentToolRegistry(seedMembers);
+  const [result] = await registry.execute([
+    {
+      name: 'validate_relationship',
+      args: {
+        person_a_id: 'P087',
+        person_b_id: 'P082',
+        candidate_relationship_code: 'PATERNAL_FIRST_COUSIN',
+      },
+    },
+  ]);
+  const validation = result?.response.result;
+  assert.equal(validation?.status, 'VALID');
+  assert.equal(validation?.validatedRelationshipCode, 'PATERNAL_FIRST_COUSIN');
 });

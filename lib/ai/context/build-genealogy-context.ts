@@ -35,6 +35,7 @@ function personFact(person: Member, members: Member[]): AIPersonFact {
       ? `${person.anniversary.day}/${person.anniversary.month} âm lịch`
       : undefined,
     needsVerification: Boolean(person.needsVerification),
+    dataStatus: person.dataStatus || 'PARTIAL',
   };
 }
 
@@ -152,7 +153,7 @@ export function buildGenealogyContext({
     .filter((person): person is Member => Boolean(person));
   const resolutions = tools.resolvePerson(message);
   const ambiguities = resolutions
-    .filter((resolution) => resolution.status === 'AMBIGUOUS')
+    .filter((resolution) => resolution.status !== 'RESOLVED')
     .map((resolution) => ({
       query: resolution.query,
       candidates: resolution.people.map((person) =>

@@ -2,6 +2,13 @@ import type { Member, ParentageKind } from '../family.ts';
 
 export type FamilySide = 'paternal' | 'maternal' | 'both' | 'unknown';
 export type RelativeAge = 'older' | 'younger' | 'unknown';
+export type SiblingKind =
+  | 'full'
+  | 'paternal-half'
+  | 'maternal-half'
+  | 'shared-father-unknown-mother'
+  | 'shared-mother-unknown-father'
+  | 'step';
 
 function byGender(
   gender: Member['gender'],
@@ -57,7 +64,7 @@ export function descendantTerm(
 export function siblingTerm(
   gender: Member['gender'],
   age: RelativeAge,
-  kind: 'full' | 'paternal-half' | 'maternal-half' | 'step',
+  kind: SiblingKind,
 ) {
   const core = age === 'older'
     ? byGender(gender, 'anh', 'chị', 'anh/chị')
@@ -68,10 +75,20 @@ export function siblingTerm(
     ? ' ruột'
     : kind === 'paternal-half'
       ? ' cùng cha khác mẹ'
-      : kind === 'maternal-half'
-        ? ' cùng mẹ khác cha'
+    : kind === 'maternal-half'
+      ? ' cùng mẹ khác cha'
+      : kind === 'shared-father-unknown-mother'
+        ? ' cùng cha (chưa rõ thông tin mẹ)'
+        : kind === 'shared-mother-unknown-father'
+          ? ' cùng mẹ (chưa rõ thông tin cha)'
         : ' kế';
   return `${core}${qualifier}`;
+}
+
+export function cousinTerm(age: RelativeAge) {
+  if (age === 'older') return 'anh họ';
+  if (age === 'younger') return 'em họ';
+  return 'anh/em họ';
 }
 
 export function auntOrUncleTerm({

@@ -4,8 +4,10 @@ import {
   findCommonAncestor,
   getRelationship,
   resolvePeople,
+  validateRelationship,
   validateGenealogyRelations,
 } from '../lib/genealogy/relationship-engine.ts';
+import { seedMembers, spouseRelationsOf } from '../lib/family.ts';
 
 function person({
   id,
@@ -108,7 +110,7 @@ test('a spouse never becomes a biological parent without a parent-child link', (
   assert.equal(getRelationship('a', 'g', members)?.relationshipCode, 'BIOLOGICAL_PARENT');
 });
 
-test('relationship engine returns the nearest verified common ancestor and leaves cousin naming unsupported', () => {
+test('relationship engine derives first cousins from verified parent siblings', () => {
   const members = [
     person({ id: 'root', gender: 'male' }),
     person({ id: 'left-parent', gender: 'male', generation: 2, parents: ['root'] }),
@@ -120,7 +122,63 @@ test('relationship engine returns the nearest verified common ancestor and leave
   assert.equal(common?.ancestor.id, 'root');
   assert.equal(common?.distanceFromA, 2);
   assert.equal(common?.distanceFromB, 2);
-  assert.equal(getRelationship('left-child', 'right-child', members)?.status, 'UNSUPPORTED');
+  const relationship = getRelationship('left-child', 'right-child', members);
+  assert.equal(relationship?.status, 'EXACT');
+  assert.equal(relationship?.relationshipCode, 'FIRST_COUSIN');
+  assert.equal(relationship?.addressingStatus, 'AMBIGUOUS');
+});
+
+test('actual Nguyễn Bá genealogy keeps Tưởng and Tường distinct and validates Mạnh/Tú as paternal first cousins', () => {
+  const people = resolvePeople(
+    seedMembers,
+    'Nguyễn Hùng Mạnh, Nguyễn Văn Tú, Nguyễn Bá Tưởng, Nguyễn Bá Tường và Nguyễn Bá Tú',
+  );
+  const resolved = new Map(
+    people.filter((item) => item.status === 'RESOLVED').map((item) => [item.query, item.people[0]?.id]),
+  );
+  assert.equal(resolved.get('Nguyễn Bá Tưởng'), 'P065');
+  assert.equal(resolved.get('Nguyễn Bá Tường'), 'P066');
+  assert.equal(resolved.get('Nguyễn Bá Tú'), 'P082');
+  assert.notEqual(
+    seedMembers.find((person) => person.id === 'P065')?.id,
+    seedMembers.find((person) => person.id === 'P066')?.id,
+  );
+
+  const relationship = getRelationship('P087', 'P082', seedMembers);
+  assert.equal(relationship?.status, 'EXACT');
+  assert.equal(relationship?.relationshipCode, 'PATERNAL_FIRST_COUSIN');
+  assert.equal(relationship?.commonAncestor?.ancestor.id, 'P057');
+  assert.equal(relationship?.cousin?.personAParent.id, 'P066');
+  assert.equal(relationship?.cousin?.personBParent.id, 'P065');
+  assert.equal(relationship?.cousin?.personABranch, 'con chú');
+  assert.equal(relationship?.cousin?.personBBranch, 'con bác');
+  assert.equal(relationship?.addressing?.AtoB, 'em họ');
+  assert.equal(relationship?.addressing?.BtoA, 'anh họ');
+
+  const validation = validateRelationship(
+    'P087',
+    'P082',
+    seedMembers,
+    'PATERNAL_FIRST_COUSIN',
+  );
+  assert.equal(validation.status, 'VALID');
+  assert.ok(validation.evidence.some((fact) => fact.type === 'SIBLING'));
+  assert.equal(
+    validateRelationship('P087', 'P082', seedMembers, 'FULL_SIBLING').correctRelationshipCode,
+    'PATERNAL_FIRST_COUSIN',
+  );
+});
+
+test('actual multiple marriages preserve biological parentage and source uncertainty', () => {
+  const firstWife = getRelationship('P007', 'P049', seedMembers);
+  const father = getRelationship('P005', 'P049', seedMembers);
+  const an = seedMembers.find((person) => person.id === 'P005');
+  assert.notEqual(firstWife?.relationshipCode, 'BIOLOGICAL_PARENT');
+  assert.equal(firstWife?.bloodRelation, false);
+  assert.equal(father?.relationshipCode, 'BIOLOGICAL_PARENT');
+  assert.deepEqual(spouseRelationsOf(an || { spouses: [] }).map((item) => item.order), [1, 2]);
+  assert.equal(seedMembers.find((person) => person.id === 'P008')?.dataStatus, 'UNKNOWN');
+  assert.equal(seedMembers.find((person) => person.id === 'P085')?.dataStatus, 'CONFLICTING');
 });
 
 test('person resolver never picks a duplicate name and supports adopted parentage', () => {

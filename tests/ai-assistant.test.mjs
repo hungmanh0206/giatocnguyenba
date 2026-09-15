@@ -109,6 +109,24 @@ test('genealogy assistant resolves the clan founder and family graph before usin
   );
 });
 
+test('genealogy assistant explains the verified Mạnh/Tú cousin relationship naturally', async () => {
+  const context = buildGenealogyContext({
+    members: seedMembers,
+    message: 'Nguyễn Hùng Mạnh và Nguyễn Văn Tú có quan hệ với nhau như thế nào và cách xưng hô?',
+  });
+  const result = await new MockProvider().generate({
+    message: 'Nguyễn Hùng Mạnh và Nguyễn Văn Tú có quan hệ với nhau như thế nào và cách xưng hô?',
+    history: [],
+    context: resolvedContext({ genealogy: context }),
+    systemInstruction: buildSystemPrompt(resolvedContext({ genealogy: context })),
+  });
+  assert.match(result.answer, /anh em họ bên nội/i);
+  assert.match(result.answer, /con chú/i);
+  assert.match(result.answer, /con bác/i);
+  assert.match(result.answer, /anh\/anh họ/i);
+  assert.match(result.answer, /em\/em họ/i);
+});
+
 test('calendar assistant context comes from the existing lunar calendar engine', () => {
   const calendar = buildCalendarContext({
     source: 'activity',
