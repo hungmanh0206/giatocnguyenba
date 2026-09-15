@@ -12704,9 +12704,17 @@ main#main .timeline-entry p {
 }
 
 .activity-date-field {
-  width: 196px;
-  flex: 0 0 auto;
+  width: 100%;
+  margin-top: 16px;
   gap: 7px;
+}
+
+.fortune-form-panel .calendar-tool-section-heading p {
+  margin: 5px 0 0;
+  color: #887864;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .tool-reset-button {
@@ -12727,13 +12735,21 @@ main#main .timeline-entry p {
 }
 
 .activity-picker-heading {
-  align-items: end;
-  padding-bottom: 17px;
-  border-bottom: 1px solid #eee5d9;
+  display: block;
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .activity-picker-heading h2 {
-  padding-bottom: 4px;
+  padding-bottom: 0;
+}
+
+.activity-picker-heading p {
+  margin: 5px 0 0;
+  color: #887864;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .activity-date-field > span:first-child {
@@ -12784,7 +12800,6 @@ main#main .timeline-entry p {
 
 .tool-date-value {
   position: static;
-  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   color: #4a3c30;
@@ -12794,6 +12809,24 @@ main#main .timeline-entry p {
   line-height: 1;
   white-space: nowrap;
   pointer-events: none;
+}
+
+.tool-date-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 3px;
+  text-align: left;
+}
+
+.tool-date-description {
+  overflow: hidden;
+  color: #897b6b;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tool-date-value.is-placeholder {
@@ -12821,11 +12854,35 @@ main#main .timeline-entry p {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
 }
 
+.activity-date-control {
+  height: 58px;
+  min-width: 0;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.activity-date-control .tool-date-trigger {
+  padding: 9px 12px;
+}
+
+.activity-date-control .tool-date-value {
+  color: #47372c;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.activity-date-control .tool-date-icon {
+  width: 20px;
+  height: 20px;
+  flex-basis: 20px;
+  margin-left: 12px;
+}
+
 .activity-option-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
-  margin-top: 20px;
+  gap: 10px;
+  margin-top: 22px;
 }
 
 .activity-option {
@@ -12851,6 +12908,15 @@ main#main .timeline-entry p {
 
 .activity-option[data-active='true'] {
   box-shadow: inset 3px 0 #8d2d29;
+}
+
+.activity-option[data-active='true'] strong,
+.activity-option[data-active='true'] small {
+  color: #8d2d29;
+}
+
+.activity-option:last-child {
+  grid-column: 1 / -1;
 }
 
 .activity-option .heritage-icon {
@@ -12936,6 +13002,39 @@ main#main .timeline-entry p {
   color: #746653;
   font-size: 12px;
   font-weight: 650;
+}
+
+.activity-ai-options {
+  margin-top: 12px;
+  border-top: 1px solid #ebe2d6;
+}
+
+.activity-ai-options summary {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  cursor: pointer;
+  color: #7b6c5a;
+  font-size: 12px;
+  font-weight: 650;
+  list-style: none;
+}
+
+.activity-ai-options summary::-webkit-details-marker { display: none; }
+
+.activity-ai-options summary::after {
+  margin-left: auto;
+  content: '+';
+  color: #9a856c;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.activity-ai-options[open] summary::after { content: '-'; }
+
+.activity-ai-options .ai-model-controls {
+  margin-top: 0;
+  padding-bottom: 2px;
 }
 
 .ai-model-controls {
@@ -13598,8 +13697,26 @@ main#main .timeline-entry p {
   background: #fffefa !important;
 }
 
+.fortune-time-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+.fortune-time-picker .choice {
+  min-width: 0;
+}
+
+.fortune-time-separator {
+  color: #796958;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .fortune-field-date {
-  grid-column: 1 / -1;
+  grid-column: auto;
 }
 
 .fortune-birth-calendar-preview {
@@ -13642,33 +13759,23 @@ main#main .timeline-entry p {
 
 .fortune-unknown-time {
   display: flex;
+  min-height: 22px;
   align-items: center;
   gap: 8px;
+  margin-top: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: #635446;
   font-size: 12px;
   font-weight: 650;
 }
 
-.fortune-unknown-time {
-  min-height: 40px;
-  margin-top: 15px;
-  padding: 0 12px;
-  border: 1px solid #e4dacd;
-  border-radius: 6px;
-  background: #fffaf2;
-}
-
 .fortune-time-accuracy-row {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 12px;
-}
-
-.fortune-time-accuracy-row .fortune-unknown-time {
-  margin-top: 0;
-  white-space: nowrap;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
 }
 
 .fortune-time-note {
@@ -13714,6 +13821,16 @@ main#main .timeline-entry p {
   box-shadow: inset 3px 0 #8d2d29;
 }
 
+.fortune-focus-option[data-active='true'] strong {
+  color: #8d2d29;
+}
+
+.fortune-focus-option[data-active='true'] strong::before {
+  margin-right: 5px;
+  color: #8d2d29;
+  content: '✓';
+}
+
 .fortune-focus-option strong {
   font-size: 13px;
   font-weight: 700;
@@ -13748,6 +13865,14 @@ main#main .timeline-entry p {
   color: #8e7c66;
   font-size: 11px;
   line-height: 1.55;
+}
+
+.fortune-ai-options {
+  margin-top: 12px;
+}
+
+.fortune-ai-options .fortune-model-controls {
+  padding-bottom: 4px;
 }
 
 .fortune-reading-panel {
@@ -14115,7 +14240,7 @@ main#main .timeline-entry p {
   }
 
   .activity-option-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .activity-option {
@@ -14194,17 +14319,21 @@ main#main .timeline-entry p {
   }
 
   .activity-date-field {
-    width: 145px;
+    width: 100%;
   }
 
   .activity-picker-heading {
-    padding-bottom: 14px;
+    padding-bottom: 0;
   }
 
   .activity-option-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 8px;
     margin-top: 16px;
+  }
+
+  .activity-option:last-child {
+    grid-column: auto;
   }
 
   .activity-option {
@@ -14287,13 +14416,7 @@ main#main .timeline-entry p {
 
   .fortune-time-accuracy-row {
     grid-column: auto;
-    gap: 9px;
-  }
-
-  .fortune-time-accuracy-row .fortune-unknown-time {
-    min-height: 40px;
-    padding-inline: 9px;
-    font-size: 11px;
+    gap: 0;
   }
 
   .fortune-profile-facts {
@@ -14330,10 +14453,6 @@ main#main .timeline-entry p {
     width: 13px;
     height: 13px;
     flex-basis: 13px;
-  }
-
-  .activity-date-field {
-    width: 125px;
   }
 
   .activity-result-facts {
@@ -14380,7 +14499,7 @@ main#main .timeline-entry p {
   }
 
   .activity-option-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -14403,10 +14522,14 @@ main#main .timeline-entry p {
     box-shadow: 0 6px 16px #48331b0d;
   }
 
-  .activity-option-grid,
+  .activity-option-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
   .fortune-focus-group > div {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .activity-option,

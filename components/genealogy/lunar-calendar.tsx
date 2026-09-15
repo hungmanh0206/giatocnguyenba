@@ -85,6 +85,16 @@ const aiModelOptions = [
   { value: 'openai', label: 'OpenAI GPT-5 mini' },
 ];
 
+const birthHourOptions = Array.from({ length: 24 }, (_, hour) => {
+  const value = String(hour).padStart(2, '0');
+  return { value, label: value };
+});
+
+const birthMinuteOptions = Array.from({ length: 60 }, (_, minute) => {
+  const value = String(minute).padStart(2, '0');
+  return { value, label: value };
+});
+
 function inputDateValue(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -105,11 +115,15 @@ function dateControlLabel(value: string) {
 
 function ToolDateInput({
   ariaLabel,
+  className,
+  description,
   disabled = false,
   onValueChange,
   value,
 }: {
   ariaLabel: string;
+  className?: string;
+  description?: string;
   disabled?: boolean;
   onValueChange: (value: string) => void;
   value: string;
@@ -117,7 +131,7 @@ function ToolDateInput({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <span className="tool-date-control">
+    <span className={['tool-date-control', className, description ? 'has-description' : ''].filter(Boolean).join(' ')}>
       <button
         aria-label={ariaLabel}
         className="tool-date-trigger"
@@ -125,8 +139,11 @@ function ToolDateInput({
         onClick={() => openNativeDatePicker(inputRef.current)}
         type="button"
       >
-        <span className={value ? 'tool-date-value' : 'tool-date-value is-placeholder'}>
-          {dateControlLabel(value)}
+        <span className="tool-date-copy">
+          <span className={value ? 'tool-date-value' : 'tool-date-value is-placeholder'}>
+            {dateControlLabel(value)}
+          </span>
+          {description ? <span className="tool-date-description">{description}</span> : null}
         </span>
         <HeritageIcon className="tool-date-icon" name="today" size={18} />
       </button>
@@ -807,6 +824,14 @@ function ActivityDayView() {
     () => resolveCustomActivity(otherActivityInput),
     [otherActivityInput],
   );
+  const selectedDateLunarLabel = useMemo(() => {
+    const info = getLunarDayInfo(selectedDate);
+    if (!info.supported) return undefined;
+
+    const lunarDay = String(info.lunar.day).padStart(2, '0');
+    const lunarMonth = String(info.lunar.month).padStart(2, '0');
+    return `${lunarDay}/${lunarMonth}${info.lunar.leapMonth ? ' nhuận' : ''} ${info.canChi.year} · Âm lịch`;
+  }, [selectedDate]);
   const canAnalyze = Boolean(
     activityId || (customResolution && customResolution.kind !== 'ambiguous'),
   );
@@ -967,15 +992,20 @@ function ActivityDayView() {
         <div className="activity-day-layout">
           <section className="activity-picker" aria-labelledby="activity-picker-title">
             <div className="calendar-tool-section-heading activity-picker-heading">
-              <h2 id="activity-picker-title">Việc cần xem</h2>
-              <label className="activity-date-field">
-                <span>Ngày dương</span>
+              <div>
+                <h2 id="activity-picker-title">Việc cần xem</h2>
+                <p>Chọn ngày và mục đích bạn muốn xem</p>
+              </div>
+            </div>
+            <div className="activity-date-field">
+                <span>Ngày cần xem</span>
                 <ToolDateInput
                   ariaLabel="Chọn ngày dương lịch"
+                  className="activity-date-control"
+                  description={selectedDateLunarLabel}
                   value={inputDateValue(selectedDate)}
                   onValueChange={selectDate}
                 />
-              </label>
             </div>
 
             <div className="activity-option-grid">
@@ -1003,6 +1033,7 @@ function ActivityDayView() {
                 aria-label="Nhập công việc khác"
                 id="other-activity"
                 maxLength={120}
+                placeholder="Ví dụ: ký hợp đồng, đi xa, động thổ..."
                 value={otherActivityInput}
                 onChange={(event) => changeOtherActivity(event.target.value)}
               />
@@ -1030,36 +1061,39 @@ function ActivityDayView() {
                 <AIButtonIcon variant="light" />
                 {isAnalyzing ? 'Đang phân tích...' : 'Hỏi AI về ngày này'}
             </Button>
-            <div className="ai-model-controls">
-              <span className="ai-model-label">Mô hình AI</span>
-              <label className="ai-model-switch">
-                <Select
-                  items={aiModelOptions}
-                  value={modelPreference}
-                  onValueChange={(value) => setModelPreference(value as AIModelPreference)}
+            <details className="activity-ai-options">
+              <summary>Tùy chọn AI</summary>
+              <div className="ai-model-controls">
+                <span className="ai-model-label">Mô hình AI</span>
+                <label className="ai-model-switch">
+                  <Select
+                    items={aiModelOptions}
+                    value={modelPreference}
+                    onValueChange={(value) => setModelPreference(value as AIModelPreference)}
+                  >
+                    <SelectTrigger aria-label="Mô hình AI cho xem ngày" className="choice">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aiModelOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </label>
+                <Button
+                  aria-label="Đặt lại xem ngày"
+                  className="tool-reset-button"
+                  onClick={resetActivityTool}
+                  size="xs"
+                  title="Đặt lại xem ngày"
+                  type="button"
+                  variant="ghost"
                 >
-                  <SelectTrigger aria-label="Mô hình AI cho xem ngày" className="choice">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {aiModelOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </label>
-              <Button
-                aria-label="Đặt lại xem ngày"
-                className="tool-reset-button"
-                onClick={resetActivityTool}
-                size="xs"
-                title="Đặt lại xem ngày"
-                type="button"
-                variant="ghost"
-              >
-                Đặt lại
-              </Button>
-            </div>
+                  Đặt lại
+                </Button>
+              </div>
+            </details>
           </section>
 
           <section className="activity-result" aria-live="polite">
@@ -1438,6 +1472,9 @@ function FortuneView() {
   }
 
   const isLoading = loadingStage !== null;
+  const [storedBirthHour = '', storedBirthMinute = ''] = birthTime.split(':');
+  const selectedBirthHour = birthHourOptions.some((option) => option.value === storedBirthHour) ? storedBirthHour : '';
+  const selectedBirthMinute = birthMinuteOptions.some((option) => option.value === storedBirthMinute) ? storedBirthMinute : '';
   const fullNameLabel = profile?.identity.fullName || 'Luận giải của bạn';
   const dateLabel = profile
     ? `${String(profile.birth.solarDate).split('-').reverse().join('/')} dương lịch · ${String(profile.birth.lunarDate.day).padStart(2, '0')}/${String(profile.birth.lunarDate.month).padStart(2, '0')}/${profile.birth.lunarDate.year} âm lịch${profile.birth.lunarDate.isLeapMonth ? ' (tháng nhuận)' : ''}`
@@ -1468,6 +1505,7 @@ function FortuneView() {
               <div>
                 <span className="eyebrow">THÔNG TIN</span>
                 <h2 id="fortune-form-title">Xem tử vi</h2>
+                <p>Nhập thông tin để luận giải lá số của bạn</p>
               </div>
             </div>
 
@@ -1528,28 +1566,68 @@ function FortuneView() {
                   </SelectContent>
                 </Select>
               </label>
-              <label className="fortune-field">
+              <div className="fortune-field">
                 <span>Giờ sinh</span>
-                <Input aria-label="Giờ sinh" className="activity-date-input" disabled={unknownBirthTime} inputMode="numeric" maxLength={5} onChange={(event) => setBirthTime(event.target.value)} value={birthTime} />
-              </label>
+                <div aria-label="Giờ sinh theo định dạng 24 giờ" className="fortune-time-picker" role="group">
+                  <Select
+                    disabled={unknownBirthTime}
+                    items={birthHourOptions}
+                    value={selectedBirthHour}
+                    onValueChange={(value) => {
+                      setBirthTime(`${value}:${storedBirthMinute}`);
+                      setError(null);
+                    }}
+                  >
+                    <SelectTrigger aria-label="Chọn giờ sinh" className="choice">
+                      <SelectValue placeholder="HH" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {birthHourOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <span aria-hidden="true" className="fortune-time-separator">:</span>
+                  <Select
+                    disabled={unknownBirthTime}
+                    items={birthMinuteOptions}
+                    value={selectedBirthMinute}
+                    onValueChange={(value) => {
+                      setBirthTime(`${storedBirthHour}:${value}`);
+                      setError(null);
+                    }}
+                  >
+                    <SelectTrigger aria-label="Chọn phút sinh" className="choice">
+                      <SelectValue placeholder="mm" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {birthMinuteOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <label className="fortune-unknown-time">
+                  <Checkbox
+                    checked={unknownBirthTime}
+                    onCheckedChange={(checked) => {
+                      setUnknownBirthTime(checked === true);
+                      setError(null);
+                    }}
+                  />
+                  <span>Không rõ giờ sinh</span>
+                </label>
+              </div>
               <div className="fortune-time-accuracy-row">
                 <label className="fortune-field">
-                  <span>Độ chính xác giờ sinh</span>
+                  <span>Mức độ chính xác giờ sinh</span>
                   <Select items={[{ value: 'exact', label: 'Chính xác' }, { value: 'approximate', label: 'Ước chừng' }]} value={birthTimeAccuracy} onValueChange={(value) => setBirthTimeAccuracy(value as BirthTimeAccuracy)} disabled={unknownBirthTime}>
-                    <SelectTrigger aria-label="Độ chính xác giờ sinh" className="choice"><SelectValue /></SelectTrigger>
+                    <SelectTrigger aria-label="Mức độ chính xác giờ sinh" className="choice"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="exact">Chính xác</SelectItem><SelectItem value="approximate">Ước chừng</SelectItem></SelectContent>
                   </Select>
-                </label>
-                <label className="fortune-unknown-time">
-                  <Checkbox checked={unknownBirthTime} onCheckedChange={(checked) => setUnknownBirthTime(checked === true)} />
-                  <span>Không rõ giờ sinh</span>
                 </label>
               </div>
             </div>
             {unknownBirthTime ? <p className="fortune-time-note">Bạn vẫn có thể xem luận giải cơ bản. Các nội dung phụ thuộc giờ sinh sẽ không được tính.</p> : null}
 
-            <div className="fortune-focus-group" aria-label="Chủ đề luận giải">
-              <span>Chủ đề</span>
+            <div className="fortune-focus-group" aria-label="Chủ đề muốn xem">
+              <span>Chủ đề muốn xem</span>
               <div>
                 {astrologyFocuses.map((item) => (
                   <button
@@ -1558,9 +1636,10 @@ function FortuneView() {
                     key={item.id}
                     type="button"
                     aria-pressed={focus === item.id}
-                    onClick={() =>
-                      setFocus((current) => current === item.id ? null : item.id)
-                    }
+                    onClick={() => {
+                      setFocus((current) => current === item.id ? null : item.id);
+                      setError(null);
+                    }}
                   >
                     <strong>{item.label}</strong>
                     <small>{item.description}</small>
@@ -1572,43 +1651,46 @@ function FortuneView() {
             {error && <p className="fortune-error" role="alert">{error}</p>}
             <Button
               className="action-button fortune-submit"
-              disabled={isLoading}
+              disabled={isLoading || !focus || !inputFromForm()}
               type="submit"
             >
               <AIButtonIcon size={19} variant="light" />
               {loadingStage === 'calendar' ? 'Đang tính dữ liệu ngày sinh...' : loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : loadingStage === 'ai' ? 'Đang luận giải bằng AI...' : 'Luận giải tử vi'}
             </Button>
-            <div className="ai-model-controls fortune-model-controls">
-              <span className="ai-model-label">Mô hình AI</span>
-              <label className="ai-model-switch fortune-model-switch">
-                <Select
-                  items={aiModelOptions}
-                  value={modelPreference}
-                  onValueChange={(value) => setModelPreference(value as AIModelPreference)}
+            <details className="activity-ai-options fortune-ai-options">
+              <summary>Tùy chọn AI</summary>
+              <div className="ai-model-controls fortune-model-controls">
+                <span className="ai-model-label">Mô hình AI</span>
+                <label className="ai-model-switch fortune-model-switch">
+                  <Select
+                    items={aiModelOptions}
+                    value={modelPreference}
+                    onValueChange={(value) => setModelPreference(value as AIModelPreference)}
+                  >
+                    <SelectTrigger aria-label="Mô hình AI cho tử vi" className="choice">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aiModelOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </label>
+                <Button
+                  aria-label="Đặt lại tử vi"
+                  className="tool-reset-button"
+                  disabled={isLoading || isFollowingUp}
+                  onClick={resetFortuneTool}
+                  size="xs"
+                  title="Đặt lại tử vi"
+                  type="button"
+                  variant="ghost"
                 >
-                  <SelectTrigger aria-label="Mô hình AI cho tử vi" className="choice">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {aiModelOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </label>
-              <Button
-                aria-label="Đặt lại tử vi"
-                className="tool-reset-button"
-                disabled={isLoading || isFollowingUp}
-                onClick={resetFortuneTool}
-                size="xs"
-                title="Đặt lại tử vi"
-                type="button"
-                variant="ghost"
-              >
-                Đặt lại
-              </Button>
-            </div>
+                  Đặt lại
+                </Button>
+              </div>
+            </details>
             <p className="fortune-disclaimer">
               Nội dung mang tính tham khảo và giải trí, không thay thế tư vấn
               chuyên môn hay quyết định quan trọng.
