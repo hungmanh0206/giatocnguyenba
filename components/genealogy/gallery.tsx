@@ -133,8 +133,14 @@ function GalleryDateInput({
   onValueChange: (value: string) => void;
   value: string;
 }) {
+  const formattedValue = value ? value.split('-').reverse().join('/') : 'Chọn ngày';
+
   return (
     <span className="gallery-date-control">
+      <span aria-hidden="true" className={value ? 'gallery-date-value' : 'gallery-date-value is-placeholder'}>
+        {formattedValue}
+      </span>
+      <GalleryIcon className="gallery-date-icon" name="calendar-day" size={18} />
       <Input
         aria-label="Ngày chụp"
         className="gallery-date-input"
@@ -143,8 +149,6 @@ function GalleryDateInput({
         value={value}
         onChange={(event) => onValueChange(event.target.value)}
       />
-      {!value && <span aria-hidden="true" className="gallery-date-placeholder">Chọn ngày</span>}
-      <GalleryIcon className="gallery-date-icon" name="calendar-day" size={18} />
     </span>
   );
 }

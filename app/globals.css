@@ -10692,18 +10692,32 @@ main#main .timeline-entry p {
 .gallery-date-control {
   position: relative;
   display: block;
+  height: 38px;
   min-width: 0;
+  overflow: hidden;
+  border: 1px solid #d8cfbf;
+  border-radius: 8px;
+  background: #fff;
 }
 .gallery-date-input {
-  padding-right: 42px !important;
-  color: #544436 !important;
-  font-variant-numeric: tabular-nums;
+  position: absolute !important;
+  z-index: 3;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent !important;
+  color: transparent !important;
+  cursor: pointer;
+  opacity: 0;
+  font-size: 16px;
 }
 .gallery-date-input::-webkit-calendar-picker-indicator {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 44px;
+  width: 100%;
   height: 100%;
   margin: 0;
   cursor: pointer;
@@ -10719,17 +10733,29 @@ main#main .timeline-entry p {
   pointer-events: none;
   transform: translateY(-50%);
 }
-.gallery-date-placeholder {
+.gallery-date-value {
   position: absolute;
   z-index: 1;
   top: 50%;
   left: 12px;
-  color: #8e806e;
+  right: 42px;
+  overflow: hidden;
+  color: #544436;
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
   font-weight: 500;
   line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   pointer-events: none;
   transform: translateY(-50%);
+}
+.gallery-date-value.is-placeholder {
+  color: #8e806e;
+}
+.gallery-date-control:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
 }
 .gallery-field textarea {
   min-height: 86px;
@@ -12730,27 +12756,61 @@ main#main .timeline-entry p {
 .tool-date-control {
   position: relative;
   display: block;
+  height: 42px;
   min-width: 0;
+  overflow: hidden;
+  border: 1px solid #ddd1bf;
+  border-radius: 10px;
+  background: #fffefa;
 }
 
-.activity-date-input {
-  height: 42px !important;
-  border-radius: 10px !important;
-  padding-right: 44px !important;
-  border-color: #ddd1bf !important;
-  background: #fffefa !important;
-  color: #4a3c30 !important;
+.tool-date-input {
+  position: absolute !important;
+  z-index: 3;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent !important;
+  color: transparent !important;
+  cursor: pointer;
+  opacity: 0;
+  font-size: 16px;
 }
 
-.activity-date-input::-webkit-calendar-picker-indicator {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 44px;
+.tool-date-input::-webkit-calendar-picker-indicator {
+  width: 100%;
   height: 100%;
   margin: 0;
   cursor: pointer;
   opacity: 0;
+}
+
+.tool-date-value {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: 42px;
+  left: 12px;
+  overflow: hidden;
+  color: #4a3c30;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.tool-date-value.is-placeholder {
+  color: #8e806e;
+  font-weight: 500;
 }
 
 .tool-date-icon {
@@ -12768,6 +12828,11 @@ main#main .timeline-entry p {
 
 .tool-date-control > .tool-date-icon {
   margin: 0;
+}
+
+.tool-date-control:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
 }
 
 .activity-option-grid {
@@ -13549,22 +13614,6 @@ main#main .timeline-entry p {
 
 .fortune-field-date {
   grid-column: 1 / -1;
-}
-
-.fortune-date-input {
-  font-variant-numeric: tabular-nums;
-  padding-right: 42px !important;
-}
-
-.fortune-date-input::-webkit-calendar-picker-indicator {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 44px;
-  height: 100%;
-  margin: 0;
-  cursor: pointer;
-  opacity: 0;
 }
 
 .fortune-birth-calendar-preview {

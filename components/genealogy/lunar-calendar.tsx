@@ -98,6 +98,40 @@ function inputDateToDate(value: string, fallback: Date) {
   return Number.isNaN(date.getTime()) ? fallback : date;
 }
 
+function dateControlLabel(value: string) {
+  const [year, month, day] = value.split('-');
+  return year && month && day ? `${day}/${month}/${year}` : 'Chọn ngày';
+}
+
+function ToolDateInput({
+  ariaLabel,
+  disabled = false,
+  onValueChange,
+  value,
+}: {
+  ariaLabel: string;
+  disabled?: boolean;
+  onValueChange: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <span className="tool-date-control">
+      <span aria-hidden="true" className={value ? 'tool-date-value' : 'tool-date-value is-placeholder'}>
+        {dateControlLabel(value)}
+      </span>
+      <HeritageIcon className="tool-date-icon" name="today" size={18} />
+      <Input
+        aria-label={ariaLabel}
+        className="tool-date-input"
+        disabled={disabled}
+        type="date"
+        value={value}
+        onChange={(event) => onValueChange(event.target.value)}
+      />
+    </span>
+  );
+}
+
 function readToolSession<T>(key: string): T | null {
   if (typeof window === 'undefined') return null;
 
@@ -879,16 +913,11 @@ function ActivityDayView() {
               <h2 id="activity-picker-title">Việc cần xem</h2>
               <label className="activity-date-field">
                 <span>Ngày dương</span>
-                <span className="tool-date-control">
-                  <Input
-                    aria-label="Chọn ngày dương lịch"
-                    className="activity-date-input"
-                    type="date"
-                    value={inputDateValue(selectedDate)}
-                    onChange={(event) => selectDate(event.target.value)}
-                  />
-                  <HeritageIcon className="tool-date-icon" name="today" size={18} />
-                </span>
+                <ToolDateInput
+                  ariaLabel="Chọn ngày dương lịch"
+                  value={inputDateValue(selectedDate)}
+                  onValueChange={selectDate}
+                />
               </label>
             </div>
 
@@ -1401,19 +1430,14 @@ function FortuneView() {
               </label>
               <div className="fortune-field fortune-birth-date fortune-date-field">
                 <span>Ngày sinh dương lịch</span>
-                <span className="tool-date-control">
-                  <Input
-                    aria-label="Ngày sinh, tháng sinh, năm sinh"
-                    className="fortune-date-input"
-                    type="date"
-                    onChange={(event) => {
-                      setBirthDate(event.target.value);
-                      setError(null);
-                    }}
-                    value={birthDate}
-                  />
-                  <HeritageIcon className="tool-date-icon" name="today" size={18} />
-                </span>
+                <ToolDateInput
+                  ariaLabel="Ngày sinh, tháng sinh, năm sinh"
+                  value={birthDate}
+                  onValueChange={(value) => {
+                    setBirthDate(value);
+                    setError(null);
+                  }}
+                />
               </div>
               {birthDatePreview ? (
                 <div className="fortune-birth-calendar-preview" aria-live="polite">
