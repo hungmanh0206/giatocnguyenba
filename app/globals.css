@@ -12621,7 +12621,7 @@ main#main .timeline-entry p {
 }
 
 .fortune-layout {
-  grid-template-columns: minmax(320px, 0.82fr) minmax(0, 1.18fr);
+  grid-template-columns: minmax(340px, 0.92fr) minmax(0, 1.08fr);
 }
 
 .activity-picker,
@@ -13674,6 +13674,26 @@ main#main .timeline-entry p {
   background: #fffefa !important;
 }
 
+.fortune-inline-fields {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(116px, 0.78fr) minmax(150px, 1fr) auto;
+  align-items: end;
+  gap: 6px;
+}
+
+.fortune-inline-fields > * {
+  min-width: 0;
+}
+
+.fortune-inline-fields .fortune-unknown-time {
+  min-height: 40px;
+  align-self: end;
+  margin-top: 0;
+  gap: 6px;
+  white-space: nowrap;
+}
+
 .fortune-time-picker {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -13707,7 +13727,7 @@ main#main .timeline-entry p {
 
 .fortune-time-separator {
   display: grid;
-  width: 22px;
+  width: 18px;
   height: 100%;
   place-items: center;
   color: #796958;
@@ -14401,6 +14421,19 @@ main#main .timeline-entry p {
     grid-template-columns: 1fr;
     gap: 11px;
     margin-top: 16px;
+  }
+
+  .fortune-inline-fields {
+    grid-column: auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+
+  .fortune-inline-fields .fortune-unknown-time {
+    grid-column: 1 / -1;
+    min-height: 22px;
+    align-self: start;
+    margin-top: -3px;
   }
 
   .fortune-field-date {

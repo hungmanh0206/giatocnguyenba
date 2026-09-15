@@ -1551,61 +1551,63 @@ function FortuneView() {
                   </div>
                 </div>
               ) : null}
-              <label className="fortune-field">
-                <span>Giới tính</span>
-                <Select
-                  items={[{ value: 'male', label: 'Nam' }, { value: 'female', label: 'Nữ' }]}
-                  value={gender}
-                  onValueChange={(value) => {
-                    setGender(value as AstrologyGender);
-                    setError(null);
-                  }}
-                >
-                  <SelectTrigger aria-label="Giới tính" className="choice">
-                    <SelectValue placeholder="Chọn giới tính" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Nam</SelectItem>
-                    <SelectItem value="female">Nữ</SelectItem>
-                  </SelectContent>
-                </Select>
-              </label>
-              <div className="fortune-field">
-                <span>Giờ sinh</span>
-                <div aria-label="Giờ sinh theo định dạng 24 giờ" className="fortune-time-picker" role="group">
+              <div className="fortune-inline-fields">
+                <label className="fortune-field">
+                  <span>Giới tính</span>
                   <Select
-                    disabled={unknownBirthTime}
-                    items={birthHourOptions}
-                    value={selectedBirthHour}
+                    items={[{ value: 'male', label: 'Nam' }, { value: 'female', label: 'Nữ' }]}
+                    value={gender}
                     onValueChange={(value) => {
-                      setBirthTime(`${value}:${storedBirthMinute}`);
+                      setGender(value as AstrologyGender);
                       setError(null);
                     }}
                   >
-                    <SelectTrigger aria-label="Chọn giờ sinh" className="choice">
-                      <SelectValue placeholder="HH" />
+                    <SelectTrigger aria-label="Giới tính" className="choice">
+                      <SelectValue placeholder="Chọn giới tính" />
                     </SelectTrigger>
                     <SelectContent>
-                      {birthHourOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                      <SelectItem value="male">Nam</SelectItem>
+                      <SelectItem value="female">Nữ</SelectItem>
                     </SelectContent>
                   </Select>
-                  <span aria-hidden="true" className="fortune-time-separator">:</span>
-                  <Select
-                    disabled={unknownBirthTime}
-                    items={birthMinuteOptions}
-                    value={selectedBirthMinute}
-                    onValueChange={(value) => {
-                      setBirthTime(`${storedBirthHour}:${value}`);
-                      setError(null);
-                    }}
-                  >
-                    <SelectTrigger aria-label="Chọn phút sinh" className="choice">
-                      <SelectValue placeholder="mm" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {birthMinuteOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                </label>
+                <div className="fortune-field">
+                  <span>Giờ sinh</span>
+                  <div aria-label="Giờ sinh theo định dạng 24 giờ" className="fortune-time-picker" role="group">
+                    <Select
+                      disabled={unknownBirthTime}
+                      items={birthHourOptions}
+                      value={selectedBirthHour}
+                      onValueChange={(value) => {
+                        setBirthTime(`${value}:${storedBirthMinute}`);
+                        setError(null);
+                      }}
+                    >
+                      <SelectTrigger aria-label="Chọn giờ sinh" className="choice">
+                        <SelectValue placeholder="HH" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {birthHourOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <span aria-hidden="true" className="fortune-time-separator">:</span>
+                    <Select
+                      disabled={unknownBirthTime}
+                      items={birthMinuteOptions}
+                      value={selectedBirthMinute}
+                      onValueChange={(value) => {
+                        setBirthTime(`${storedBirthHour}:${value}`);
+                        setError(null);
+                      }}
+                    >
+                      <SelectTrigger aria-label="Chọn phút sinh" className="choice">
+                        <SelectValue placeholder="mm" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {birthMinuteOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <label className="fortune-unknown-time">
                   <Checkbox
