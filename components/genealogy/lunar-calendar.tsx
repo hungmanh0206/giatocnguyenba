@@ -582,7 +582,7 @@ function LunarCalendarView() {
 
                 <section className="day-traditional">
                   <h3>
-                    <HeritageIcon name="family-record" size={17} /> Lịch truyền thống
+                    <HeritageIcon name="calendar" size={17} /> Lịch truyền thống
                   </h3>
                   <Tabs
                     defaultValue="overview"

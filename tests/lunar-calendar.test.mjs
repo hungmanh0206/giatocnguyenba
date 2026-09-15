@@ -11,6 +11,7 @@ import {
   solarToLunar,
 } from '../lib/lunar-calendar/service.ts';
 import {
+  calendarActivities,
   evaluateActivityDay,
   getCalendarActivityAdvice,
   resolveCustomActivity,
@@ -87,6 +88,18 @@ test('day-by-activity guidance is derived from the selected lunar day', () => {
   assert.ok(['favorable', 'neutral', 'caution'].includes(advice.tone));
   assert.equal(advice.goodHours.length, 3);
   assert.equal(advice.reasons.length, 3);
+});
+
+test('Mua nhà is a primary calendar activity with the house-purchase icon', () => {
+  const housePurchase = calendarActivities.find((activity) => activity.id === 'buy_house');
+  assert.deepEqual(housePurchase, {
+    id: 'buy_house',
+    label: 'Mua nhà',
+    description: 'Ký kết, nhận nhà',
+    icon: 'activity-house-purchase',
+    favorable: ['An cư', 'Ký kết'],
+    caution: ['Di chuyển lớn'],
+  });
 });
 
 test('almanac evaluation stays deterministic and custom activities resolve before AI', () => {

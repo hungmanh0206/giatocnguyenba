@@ -6456,9 +6456,16 @@ main#main.admin-page {
   color: #745f4d;
 }
 
-.ai-empty-state > .ai-button-icon {
-  width: 40px;
-  height: 40px;
+.ai-empty-greeting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-empty-greeting .ai-button-icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
 }
 
 .ai-context-icon .heritage-icon {
@@ -6471,9 +6478,10 @@ main#main.admin-page {
   height: 20px;
 }
 
-.ai-empty-state strong {
+.ai-empty-greeting strong {
   color: #45362b;
   font-size: 16px;
+  line-height: 1.35;
 }
 
 .ai-empty-state p {
@@ -6919,6 +6927,96 @@ main#main.admin-page {
   .main-nav.is-open {
     animation: mobile-nav-enter 240ms cubic-bezier(0.22, 1, 0.36, 1);
     transform-origin: top center;
+  }
+
+  .family-tree-tabs > a {
+    transition:
+      color 180ms ease,
+      background-color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .family-tree-tabs > a .heritage-icon {
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .family-tree-tabs > a:hover .heritage-icon {
+    transform: translateY(-1px) scale(1.08);
+  }
+
+  .family-tree-tabs > a.is-active .heritage-icon {
+    animation: tab-icon-settle 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .family-tree-tabs > a.is-active::after {
+    transform-origin: center;
+    animation: tab-indicator-enter 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .ai-empty-greeting {
+    animation: content-rise-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .ai-empty-state > p {
+    animation: content-rise-in 280ms 55ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .ai-quick-actions button {
+    animation: quick-action-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .ai-quick-actions button:nth-child(1) {
+    animation-delay: 100ms;
+  }
+
+  .ai-quick-actions button:nth-child(2) {
+    animation-delay: 135ms;
+  }
+
+  .ai-quick-actions button:nth-child(3) {
+    animation-delay: 170ms;
+  }
+
+  .ai-quick-actions button:nth-child(4) {
+    animation-delay: 205ms;
+  }
+
+  .ai-message {
+    animation: assistant-message-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .ai-message.is-user {
+    animation-name: user-message-enter;
+  }
+
+  .ai-pending,
+  .ai-error {
+    animation: status-notice-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .activity-option,
+  .fortune-focus-option {
+    transition:
+      border-color 180ms ease,
+      background-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .activity-option:hover,
+  .fortune-focus-option:hover {
+    transform: translateY(-2px);
+  }
+
+  .activity-option[data-active='true'],
+  .fortune-focus-option[data-active='true'] {
+    animation: choice-activate 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .activity-result-state,
+  .fortune-reading-summary,
+  .fortune-profile-section {
+    animation: content-rise-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .action-button:hover .heritage-icon:last-child,
@@ -9607,8 +9705,12 @@ main#main .timeline-entry p {
 }
 
 .family-tree-tabs-band {
+  position: sticky;
+  top: 84px;
+  z-index: 30;
   border-bottom: 1px solid var(--border);
   background: transparent;
+  box-shadow: 0 6px 12px #3d2e1708;
 }
 
 .family-tree-tabs {
@@ -9623,6 +9725,7 @@ main#main .timeline-entry p {
   display: inline-flex;
   min-height: 50px;
   align-items: center;
+  gap: 8px;
   padding: 0;
   color: #766554;
   font-size: 14px;
@@ -9649,7 +9752,8 @@ main#main .timeline-entry p {
 }
 
 .family-tree-tabs > a .heritage-icon {
-  display: none;
+  display: block;
+  flex: 0 0 18px;
 }
 
 .family-tree-page .tree-page {
@@ -14189,6 +14293,10 @@ main#main .timeline-entry p {
 }
 
 @media (max-width: 359px) {
+  .activity-option-grid {
+    grid-template-columns: 1fr;
+  }
+
   .activity-picker .calendar-tool-section-heading {
     display: grid;
     grid-template-columns: 1fr;
@@ -14308,7 +14416,7 @@ main#main .timeline-entry p {
   }
 
   .activity-option-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     margin-top: 16px;
   }
@@ -14509,7 +14617,7 @@ main#main .timeline-entry p {
 
   .activity-option-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .fortune-focus-group > div {
@@ -14520,5 +14628,106 @@ main#main .timeline-entry p {
   .activity-option,
   .fortune-focus-option {
     align-content: center;
+  }
+}
+
+@keyframes tab-icon-settle {
+  from {
+    opacity: 0.7;
+    transform: translateY(2px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes tab-indicator-enter {
+  from {
+    opacity: 0;
+    transform: scaleX(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes content-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes quick-action-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes assistant-message-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes user-message-enter {
+  from {
+    opacity: 0;
+    transform: translateX(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes status-notice-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes choice-activate {
+  0% {
+    transform: scale(0.985);
+  }
+  60% {
+    transform: scale(1.012);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  .family-tree-tabs-band {
+    top: 78px;
+  }
+}
+
+@media (max-width: 560px) {
+  .family-tree-tabs-band {
+    top: 70px;
   }
 }

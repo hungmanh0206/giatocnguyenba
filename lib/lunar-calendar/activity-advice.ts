@@ -3,12 +3,13 @@ import type { LunarCalendarDayInfo } from './types.ts';
 
 export const calendarActivities = [
   { id: 'wedding', label: 'Cưới hỏi', description: 'Thành hôn, lễ cưới', icon: 'activity-wedding', favorable: ['Thành hôn'], caution: ['Cưới hỏi'] },
-  { id: 'funeral', label: 'Ma chay', description: 'Tang lễ, an táng', icon: 'activity-funeral', favorable: ['Tế tự', 'Cầu an'], caution: ['An táng'] },
-  { id: 'buy_car', label: 'Mua xe', description: 'Nhận xe, khởi hành', icon: 'activity-vehicle', favorable: ['Cầu tài', 'Ký kết'], caution: ['Di chuyển lớn'] },
+  { id: 'buy_house', label: 'Mua nhà', description: 'Ký kết, nhận nhà', icon: 'activity-house-purchase', favorable: ['An cư', 'Ký kết'], caution: ['Di chuyển lớn'] },
   { id: 'build_house', label: 'Xây nhà', description: 'Động thổ, khởi công', icon: 'activity-construction', favorable: ['Khởi công'], caution: ['Động thổ', 'Khởi công'] },
-  { id: 'grand_opening', label: 'Khai trương', description: 'Mở hàng, ký kết', icon: 'activity-opening', favorable: ['Khai trương', 'Mở hàng', 'Mở cửa hàng', 'Ký kết'], caution: ['Khai trương'] },
   { id: 'moving_house', label: 'Nhập trạch', description: 'An cư, về nhà mới', icon: 'activity-moving', favorable: ['An cư'], caution: ['Di chuyển lớn'] },
+  { id: 'buy_car', label: 'Mua xe', description: 'Nhận xe, khởi hành', icon: 'activity-vehicle', favorable: ['Cầu tài', 'Ký kết'], caution: ['Di chuyển lớn'] },
+  { id: 'grand_opening', label: 'Khai trương', description: 'Mở hàng, ký kết', icon: 'activity-opening', favorable: ['Khai trương', 'Mở hàng', 'Mở cửa hàng', 'Ký kết'], caution: ['Khai trương'] },
   { id: 'travel', label: 'Xuất hành', description: 'Đi xa, khởi hành', icon: 'activity-travel', favorable: ['Xuất hành'], caution: ['Xuất hành xa', 'Xuất hành'] },
+  { id: 'funeral', label: 'Ma chay', description: 'Tang lễ, an táng', icon: 'activity-funeral', favorable: ['Tế tự', 'Cầu an'], caution: ['An táng'] },
 ] as const;
 
 export type CalendarActivityId = (typeof calendarActivities)[number]['id'];
@@ -59,7 +60,7 @@ const customActivityRules: Array<{ id: Exclude<AlmanacActivity, 'other'>; label:
   { id: 'engagement', label: 'Ăn hỏi', base: 'wedding', matches: ['an hoi', 'dam ngo', 'dinh hon'], preferredTruc: ['Thành', 'Định', 'Khai'] },
   { id: 'exhumation', label: 'Cải táng, sang cát', base: 'funeral', matches: ['cai tang', 'sang cat'], preferredTruc: ['Định', 'Thành', 'Bình'] },
   { id: 'burial', label: 'An táng', base: 'funeral', matches: ['an tang', 'mai tang'], preferredTruc: [], supportLevel: 'partial', supportNote: 'Dữ kiện lịch chỉ dùng để tham khảo; nghi thức tang lễ cần theo phong tục, tôn giáo và người phụ trách tại địa phương.' },
-  { id: 'buy_house', label: 'Mua nhà', base: 'moving_house', matches: ['mua nha', 'hop dong mua nha'], preferredTruc: ['Định', 'Thành', 'Khai'] },
+  { id: 'buy_house', label: 'Mua nhà', base: 'buy_house', matches: ['mua nha', 'hop dong mua nha'], preferredTruc: ['Định', 'Thành', 'Khai'] },
   { id: 'buy_land', label: 'Mua đất', base: 'moving_house', matches: ['mua dat'], preferredTruc: ['Định', 'Thành', 'Khai'] },
   { id: 'sign_contract', label: 'Ký hợp đồng', base: 'grand_opening', matches: ['ky hop dong', 'ky ket', 'giao dich'], preferredTruc: ['Định', 'Thành', 'Chấp'] },
   { id: 'groundbreaking', label: 'Động thổ', base: 'build_house', matches: ['dong tho'], preferredTruc: ['Kiến', 'Thành', 'Định'] },
@@ -78,6 +79,7 @@ const customActivityRules: Array<{ id: Exclude<AlmanacActivity, 'other'>; label:
 
 const preferredTrucByActivity: Partial<Record<CalendarActivityId, string[]>> = {
   wedding: ['Thành', 'Định', 'Khai'],
+  buy_house: ['Định', 'Thành', 'Khai'],
   buy_car: ['Thành', 'Định', 'Khai'],
   build_house: ['Kiến', 'Thành', 'Định'],
   grand_opening: ['Khai', 'Thành', 'Định'],
