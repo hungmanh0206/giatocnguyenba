@@ -1263,7 +1263,8 @@ function FortuneView() {
         setFullName(saved.fullName || '');
         setBirthDate(birthDateInputValue(saved.birthDate));
         setGender(saved.gender === 'male' || saved.gender === 'female' ? saved.gender : '');
-        setBirthTime(saved.birthTime || '');
+        const savedBirthTime = saved.birthTime || '';
+        setBirthTime(/^\d{2}:\d{2}$/.test(savedBirthTime) ? savedBirthTime : '');
         setUnknownBirthTime(saved.unknownBirthTime === true);
         setBirthTimeAccuracy(saved.birthTimeAccuracy === 'approximate' ? 'approximate' : 'exact');
         setFocus(isKnownFocus(saved.focus) ? saved.focus : null);
@@ -1357,6 +1358,10 @@ function FortuneView() {
   }
 
   async function requestReading() {
+    if (!focus) {
+      setError('Vui lòng chọn một chủ đề muốn xem.');
+      return;
+    }
     const input = inputFromForm();
     if (!input) {
       setError('Vui lòng nhập họ tên, ngày sinh, giới tính và giờ sinh hoặc chọn không rõ giờ sinh.');
@@ -1471,7 +1476,7 @@ function FortuneView() {
   const isLoading = loadingStage !== null;
   const [storedBirthHour = '', storedBirthMinute = ''] = birthTime.split(':');
   const selectedBirthHour = birthHourOptions.some((option) => option.value === storedBirthHour) ? storedBirthHour : '';
-  const selectedBirthMinute = selectedBirthHour && birthMinuteOptions.some((option) => option.value === storedBirthMinute)
+  const selectedBirthMinute = birthMinuteOptions.some((option) => option.value === storedBirthMinute)
     ? storedBirthMinute
     : '';
   const fullNameLabel = profile?.identity.fullName || 'Luận giải của bạn';
@@ -1573,7 +1578,7 @@ function FortuneView() {
                     items={birthHourOptions}
                     value={selectedBirthHour}
                     onValueChange={(value) => {
-                      setBirthTime(`${value}:`);
+                      setBirthTime(`${value}:${storedBirthMinute}`);
                       setError(null);
                     }}
                   >
@@ -1586,7 +1591,7 @@ function FortuneView() {
                   </Select>
                   <span aria-hidden="true" className="fortune-time-separator">:</span>
                   <Select
-                    disabled={unknownBirthTime || !selectedBirthHour}
+                    disabled={unknownBirthTime}
                     items={birthMinuteOptions}
                     value={selectedBirthMinute}
                     onValueChange={(value) => {
@@ -1650,7 +1655,7 @@ function FortuneView() {
             {error && <p className="fortune-error" role="alert">{error}</p>}
             <Button
               className="action-button fortune-submit"
-              disabled={isLoading || !focus || !inputFromForm()}
+              disabled={isLoading}
               type="submit"
             >
               <AIButtonIcon size={19} variant="light" />
