@@ -10,17 +10,15 @@ import {
   type AlmanacActivity,
   type CalendarActivityId,
 } from '@/lib/lunar-calendar/activity-advice';
+import {
+  buildEngineActivityInterpretation,
+  type ActivityAIInterpretation,
+} from '@/lib/lunar-calendar/activity-interpretation';
 import { getLunarDayInfo } from '@/lib/lunar-calendar/service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
-
-type ActivityAIInterpretation = {
-  shortSummary: string;
-  detailedExplanation: string;
-  practicalSuggestion?: string;
-};
 
 const evaluationCache = new Map<string, ActivityDayEvaluation>();
 const maxCacheEntries = 120;
@@ -101,6 +99,7 @@ async function generateInterpretation(evaluation: ActivityDayEvaluation, modelPr
     history: [],
     context: aiContext(),
     systemInstruction: systemInstruction(evaluation),
+    deadlineAt: Date.now() + 28_000,
     responseMimeType: 'application/json' as const,
   };
   try {
@@ -108,13 +107,14 @@ async function generateInterpretation(evaluation: ActivityDayEvaluation, modelPr
     const first = await provider.generate(request);
     const parsed = parseInterpretation(first.answer);
     if (parsed) return { interpretation: parsed, source: 'ai' as const };
-    const retry = await provider.generate({ ...request, message: 'Hãy trả lại đúng JSON theo cấu trúc đã nêu.' });
-    const retried = parseInterpretation(retry.answer);
-    return retried ? { interpretation: retried, source: 'ai' as const } : { interpretation: null, source: 'engine' as const };
   } catch (error) {
     if (!(error instanceof AIProviderError)) console.warn('[almanac] AI interpretation failed');
-    return { interpretation: null, source: 'engine' as const };
   }
+
+  return {
+    interpretation: buildEngineActivityInterpretation(evaluation),
+    source: 'engine' as const,
+  };
 }
 
 export async function POST(request: Request) {

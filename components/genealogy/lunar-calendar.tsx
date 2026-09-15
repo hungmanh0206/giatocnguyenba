@@ -52,6 +52,10 @@ import {
   type AlmanacActivity,
   type CalendarActivityId,
 } from '@/lib/lunar-calendar/activity-advice';
+import {
+  buildEngineActivityInterpretation,
+  type ActivityAIInterpretation,
+} from '@/lib/lunar-calendar/activity-interpretation';
 import type {
   AstrologyGender,
   AstrologyInput,
@@ -136,15 +140,9 @@ function birthDateInputValue(value: string | undefined) {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-type ActivityAIInterpretation = {
-  shortSummary: string;
-  detailedExplanation: string;
-  practicalSuggestion?: string;
-};
-
 type ActivityAnalysis = {
   evaluation: ActivityDayEvaluation;
-  interpretation: ActivityAIInterpretation | null;
+  interpretation: ActivityAIInterpretation;
   source: 'ai' | 'engine';
 };
 
@@ -183,6 +181,21 @@ function isKnownFocus(value: unknown): value is AstrologyFocus {
 
 function isKnownModel(value: unknown): value is AIModelPreference {
   return value === 'auto' || value === 'gemini' || value === 'openai';
+}
+
+function restoreActivityAnalysis(value: ActivityAnalysis | null | undefined) {
+  if (!value?.evaluation) return null;
+  const interpretation = value.interpretation;
+  const isComplete =
+    typeof interpretation?.shortSummary === 'string' &&
+    typeof interpretation?.detailedExplanation === 'string';
+  return {
+    ...value,
+    interpretation: isComplete
+      ? interpretation
+      : buildEngineActivityInterpretation(value.evaluation),
+    source: isComplete ? value.source : ('engine' as const),
+  } satisfies ActivityAnalysis;
 }
 
 function LunarCalendarView() {
@@ -722,7 +735,7 @@ function ActivityDayView() {
         setActivityId(isKnownActivity(saved.activityId) ? saved.activityId : null);
         setOtherActivityInput(saved.otherActivityInput || '');
         setModelPreference(isKnownModel(saved.modelPreference) ? saved.modelPreference : 'auto');
-        setAnalysis(saved.analysis?.evaluation ? saved.analysis : null);
+        setAnalysis(restoreActivityAnalysis(saved.analysis));
       }
       setSessionReady(true);
     });
@@ -798,7 +811,8 @@ function ActivityDayView() {
       if (!controller.signal.aborted) {
         setAnalysis({
           evaluation: data.evaluation,
-          interpretation: data.interpretation || null,
+          interpretation:
+            data.interpretation || buildEngineActivityInterpretation(data.evaluation),
           source: data.source,
         });
       }
@@ -931,8 +945,8 @@ function ActivityDayView() {
                 {isAnalyzing ? 'Đang phân tích...' : 'Hỏi AI về ngày này'}
             </Button>
             <div className="ai-model-controls">
+              <span className="ai-model-label">Mô hình AI</span>
               <label className="ai-model-switch">
-                <span>Mô hình AI</span>
                 <Select
                   items={aiModelOptions}
                   value={modelPreference}
@@ -1040,8 +1054,13 @@ function ActivityDayView() {
                 </section> : null}
 
                 <section className="activity-ai-analysis activity-result-block">
-                  <span className="activity-section-label">PHÂN TÍCH AI</span>
-                  {analysis.interpretation ? <div className="activity-ai-answer"><p>{analysis.interpretation.detailedExplanation}</p>{analysis.interpretation.practicalSuggestion ? <p><strong>Gợi ý:</strong> {analysis.interpretation.practicalSuggestion}</p> : null}</div> : <p className="activity-ai-placeholder">Phần gợi ý chi tiết đang được hoàn thiện. Bạn vẫn có thể tham khảo các thông tin ngày ở trên.</p>}
+                  <span className="activity-section-label">
+                    {analysis.source === 'ai' ? 'PHÂN TÍCH AI' : 'PHÂN TÍCH THEO LỊCH'}
+                  </span>
+                  <div className="activity-ai-answer">
+                    <p>{analysis.interpretation.detailedExplanation}</p>
+                    {analysis.interpretation.practicalSuggestion ? <p><strong>Gợi ý:</strong> {analysis.interpretation.practicalSuggestion}</p> : null}
+                  </div>
                 </section>
                 <section className="activity-ai-conclusion activity-result-block">
                   <span className="activity-section-label">KẾT LUẬN</span>
@@ -1479,8 +1498,8 @@ function FortuneView() {
               {loadingStage === 'calendar' ? 'Đang tính dữ liệu ngày sinh...' : loadingStage === 'astrology' ? 'Đang lập dữ liệu tử vi...' : loadingStage === 'ai' ? 'Đang luận giải bằng AI...' : 'Luận giải tử vi'}
             </Button>
             <div className="ai-model-controls fortune-model-controls">
+              <span className="ai-model-label">Mô hình AI</span>
               <label className="ai-model-switch fortune-model-switch">
-                <span>Mô hình AI</span>
                 <Select
                   items={aiModelOptions}
                   value={modelPreference}

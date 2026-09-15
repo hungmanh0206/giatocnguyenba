@@ -15,6 +15,7 @@ import {
   getCalendarActivityAdvice,
   resolveCustomActivity,
 } from '../lib/lunar-calendar/activity-advice.ts';
+import { buildEngineActivityInterpretation } from '../lib/lunar-calendar/activity-interpretation.ts';
 
 const solarParts = (date) => [
   date.getDate(),
@@ -114,6 +115,18 @@ test('almanac evaluation stays deterministic and custom activities resolve befor
     label: 'Lễ ma chay',
   });
   assert.equal(resolveCustomActivity('Làm việc lớn')?.kind, 'ambiguous');
+});
+
+test('engine fallback always provides a complete activity interpretation', () => {
+  const info = getLunarDayInfo(new Date(2024, 1, 10));
+  assert.equal(info.supported, true);
+
+  const interpretation = buildEngineActivityInterpretation(
+    evaluateActivityDay(info, 'wedding'),
+  );
+  assert.match(interpretation.shortSummary, /cưới hỏi/i);
+  assert.match(interpretation.detailedExplanation, /Can Chi ngày/i);
+  assert.ok(interpretation.practicalSuggestion);
 });
 
 test('funeral activity remains distinct from exhumation and reports partial support', () => {
