@@ -12770,12 +12770,6 @@ main#main .timeline-entry p {
   overflow: hidden;
 }
 
-.activity-day-layout .activity-result {
-  height: auto;
-  min-height: 440px;
-  align-self: stretch;
-}
-
 .tool-result-scroll {
   min-height: 0;
   flex: 1 1 auto;
@@ -13972,6 +13966,10 @@ main#main .timeline-entry p {
 }
 
 @media (min-width: 1101px) {
+  .activity-result {
+    height: var(--activity-panel-height, clamp(440px, calc(100dvh - 210px), 700px));
+  }
+
   .fortune-reading-panel {
     height: var(--fortune-panel-height, clamp(440px, calc(100dvh - 210px), 700px));
   }

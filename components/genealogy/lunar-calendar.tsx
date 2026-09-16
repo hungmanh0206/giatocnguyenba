@@ -806,6 +806,7 @@ function LunarCalendarView() {
 }
 
 function ActivityDayView() {
+  const activityPickerRef = useRef<HTMLElement>(null);
   const [today] = useState(vietnamToday);
   const [selectedDate, setSelectedDate] = useState(today);
   const [activityId, setActivityId] = useState<CalendarActivityId | null>(null);
@@ -814,6 +815,7 @@ function ActivityDayView() {
   const [analysis, setAnalysis] = useState<ActivityAnalysis | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [activityPickerHeight, setActivityPickerHeight] = useState<number | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const analysisController = useRef<AbortController | null>(null);
   const customResolution = useMemo(
@@ -838,6 +840,24 @@ function ActivityDayView() {
     },
     [],
   );
+
+  useEffect(() => {
+    const picker = activityPickerRef.current;
+    if (!picker) return;
+
+    const updateHeight = () => {
+      setActivityPickerHeight(Math.ceil(picker.getBoundingClientRect().height));
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(picker);
+    return () => observer.disconnect();
+  }, []);
+
+  const activityLayoutStyle = activityPickerHeight
+    ? ({ '--activity-panel-height': `${activityPickerHeight}px` } as CSSProperties)
+    : undefined;
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -985,8 +1005,8 @@ function ActivityDayView() {
           </div>
         </div>
 
-        <div className="activity-day-layout">
-          <section className="activity-picker" aria-labelledby="activity-picker-title">
+        <div className="activity-day-layout" style={activityLayoutStyle}>
+          <section className="activity-picker" aria-labelledby="activity-picker-title" ref={activityPickerRef}>
             <div className="calendar-tool-section-heading activity-picker-heading">
               <div>
                 <h2 id="activity-picker-title">Việc cần xem</h2>
