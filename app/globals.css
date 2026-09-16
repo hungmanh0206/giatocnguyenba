@@ -60,6 +60,8 @@
   --foreground: #292824;
   --card: #fff;
   --primary: #7e2424;
+  --ring: #a67d45;
+  --site-header-height: 78px;
   --muted-foreground: #73716b;
   --border: #e5e4de;
   --surface-muted: #f6f4ee;
@@ -325,7 +327,7 @@ svg {
   padding: 0 48px;
 }
 .site-header {
-  height: 78px;
+  height: var(--site-header-height);
   background: #fffefaef;
   border-bottom: 1px solid #d9cfbf;
   position: sticky;
@@ -1169,6 +1171,10 @@ h1 > span {
   }
 }
 @media (max-width: 560px) {
+  :root {
+    --site-header-height: 70px;
+  }
+
   .container {
     padding-left: 20px;
     padding-right: 20px;
@@ -1177,7 +1183,7 @@ h1 > span {
     padding: 0 20px;
   }
   .site-header {
-    height: 70px;
+    height: var(--site-header-height);
   }
   .brand small {
     font-size: 9px;
@@ -1190,7 +1196,7 @@ h1 > span {
     height: 37px;
   }
   .main-nav.is-open {
-    top: 70px;
+    top: var(--site-header-height);
   }
   .header-actions {
     gap: 4px;
@@ -5401,8 +5407,12 @@ main#main:not(.tree-page) {
 }
 
 @media (min-width: 901px) {
+  :root {
+    --site-header-height: 84px;
+  }
+
   .site-header {
-    height: 84px;
+    height: var(--site-header-height);
   }
 
   .brand-mark {
@@ -6457,15 +6467,16 @@ main#main.admin-page {
 }
 
 .ai-empty-greeting {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  min-height: 48px;
+  gap: 14px;
 }
 
 .ai-empty-greeting .ai-button-icon {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
 }
 
 .ai-context-icon .heritage-icon {
@@ -9706,11 +9717,12 @@ main#main .timeline-entry p {
 
 .family-tree-tabs-band {
   position: sticky;
-  top: 84px;
-  z-index: 30;
+  top: var(--site-header-height);
+  z-index: 39;
   border-bottom: 1px solid var(--border);
-  background: transparent;
+  background: #fffefa;
   box-shadow: 0 6px 12px #3d2e1708;
+  isolation: isolate;
 }
 
 .family-tree-tabs {
@@ -12960,8 +12972,14 @@ main#main .timeline-entry p {
 }
 
 .tool-date-control:focus-within {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
+  border-color: #a67d45;
+  box-shadow: 0 0 0 3px #b58a4b20;
+}
+
+.tool-date-trigger:focus-visible,
+.tool-date-input:focus,
+.tool-date-input:focus-visible {
+  outline: 0;
 }
 
 .activity-date-control {
@@ -13027,10 +13045,6 @@ main#main .timeline-entry p {
 .activity-option[data-active='true'] strong,
 .activity-option[data-active='true'] small {
   color: #8d2d29;
-}
-
-.activity-option:last-child {
-  grid-column: 1 / -1;
 }
 
 .activity-option .heritage-icon {
@@ -13812,8 +13826,7 @@ main#main .timeline-entry p {
 }
 
 .fortune-time-picker .choice:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: -2px;
+  outline: 0;
 }
 
 .fortune-time-picker .choice:disabled {
@@ -13831,9 +13844,10 @@ main#main .timeline-entry p {
   line-height: 1;
 }
 
-.fortune-time-picker:focus-within {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
+.fortune-time-picker:focus-within,
+.fortune-time-picker:has(.choice[aria-expanded='true']) {
+  border-color: #a67d45;
+  box-shadow: 0 0 0 3px #b58a4b20;
 }
 
 .fortune-field-date {
@@ -14421,10 +14435,6 @@ main#main .timeline-entry p {
     margin-top: 16px;
   }
 
-  .activity-option:last-child {
-    grid-column: auto;
-  }
-
   .activity-option {
     min-height: 68px;
     padding: 9px;
@@ -14717,17 +14727,5 @@ main#main .timeline-entry p {
   }
   100% {
     transform: scale(1);
-  }
-}
-
-@media (max-width: 900px) {
-  .family-tree-tabs-band {
-    top: 78px;
-  }
-}
-
-@media (max-width: 560px) {
-  .family-tree-tabs-band {
-    top: 70px;
   }
 }
